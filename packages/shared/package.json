@@ -1,0 +1,28 @@
+{
+  "name": "@workspace/shared",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    "./format-date": {
+      "types": "./src/format-date.ts",
+      "import": "./dist/format-date.js",
+      "require": "./dist/format-date.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json --outDir dist",
+    "dev": "vite build && tsc -p tsconfig.build.json --outDir dist",
+    "check-types": "tsc --noEmit",
+    "format": "prettier --write .",
+    "test": "NODE_ENV=test vitest run"
+  },
+  "devDependencies": {
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.1.2"
+  }
+}
