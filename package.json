@@ -1,5 +1,6 @@
 {
   "name": "typescript-fullstack-template",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -26,7 +27,7 @@
     "generate:api-types": "openapi-typescript http://localhost:3000/openapi.yaml -o ./packages/api-contracts/src/openapi.d.ts && pnpm format --filter @workspace/api-contracts"
   },
   "devDependencies": {
-    "@types/node": "24.10.2",
+    "@types/node": "26.0.0",
     "eslint": "^10.5.0",
     "globals": "17.7.0",
     "husky": "^9.1.7",
@@ -37,7 +38,7 @@
     "prettier-plugin-sql": "^0.20.0",
     "syncpack": "15.3.2",
     "turbo": "^2.9.18",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=24.0.0",
@@ -48,7 +49,7 @@
     "peerDependencyRules": {},
     "ignoredBuiltDependencies": [],
     "overrides": {
-      "@types/node": "24.10.2",
+      "@types/node": "26.0.0",
       "js-yaml@>=4.0.0 <4.1.1": ">=4.1.1",
       "qs@<6.14.1": ">=6.14.1",
       "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",

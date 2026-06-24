@@ -48,14 +48,14 @@
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
-    "@types/node": "24.10.2",
+    "@types/node": "26.0.0",
     "@vitest/ui": "^4.1.9",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^10.5.0",
     "globals": "17.7.0",
     "jiti": "2.7.0",
     "prettier": "^3.8.4",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },
   "peerDependencies": {
@@ -63,7 +63,7 @@
     "globals": "17.7.0",
     "jiti": "2.7.0",
     "prettier": "^3.8.4",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=22.18.0"

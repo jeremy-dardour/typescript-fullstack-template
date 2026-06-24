@@ -10,7 +10,7 @@ import { router } from '@/app/router';
 import { AuthContext } from '@/auth';
 import { bootstrap } from '@/bootstrap';
 import { ApiErrorProvider } from '@/errors/api-error-provider';
-import '@/i18n/i18n.ts';
+import '@/i18n/i18n';
 
 import './main.css';
 
