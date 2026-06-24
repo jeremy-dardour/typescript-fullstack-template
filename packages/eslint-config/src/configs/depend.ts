@@ -4,7 +4,7 @@ import dependPlugin from 'eslint-plugin-depend';
 import { GLOB_SRC } from '../utils';
 
 import type { OptionsOverrides } from '../types';
-import type { ESLint, Linter } from 'eslint';
+import type { Linter } from 'eslint';
 
 /**
  * Depend configuration options
@@ -85,7 +85,7 @@ export function depend(options: DependOptions = {}): Linter.Config[] {
       name: 'depend/rules',
       files: [GLOB_SRC],
       plugins: {
-        depend: fixupPluginRules(dependPlugin as unknown as ESLint.Plugin),
+        depend: fixupPluginRules(dependPlugin),
       },
       rules: {
         'depend/ban-dependencies': [
