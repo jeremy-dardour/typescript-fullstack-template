@@ -1,10 +1,10 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router';
 
 import { AppLayout } from '@/app/components/layout/app-layout';
 import { ProtectedRoute } from '@/app/components/protected-route';
 import { ItemsPage } from '@/features/items/items-page';
 
-import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from 'react-router';
 
 const routes: RouteObject[] = [
   {

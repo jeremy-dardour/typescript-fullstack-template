@@ -55,7 +55,7 @@ export function imports(options: ImportsOptions = {}): Linter.Config[] {
       name: 'imports/rules',
       files,
       plugins: {
-        'import-x': importX as unknown,
+        'import-x': importX,
       },
       // Conditionally add TypeScript support
       settings: {
@@ -167,6 +167,6 @@ export function imports(options: ImportsOptions = {}): Linter.Config[] {
         // User custom overrides (applied last, highest priority)
         ...overrides,
       },
-    } as Linter.Config,
+    },
   ];
 }
