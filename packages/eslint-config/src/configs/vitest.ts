@@ -5,7 +5,7 @@ import { defineConfig } from 'eslint/config';
 import { GLOB_TESTS, isInEditorEnv } from '../utils';
 
 import type { OptionsFiles, OptionsOverrides } from '../types';
-import type { ESLint, Linter } from 'eslint';
+import type { Linter } from 'eslint';
 
 export type VitestOptions = OptionsFiles &
   OptionsOverrides & {
@@ -46,7 +46,7 @@ export function vitest(options: VitestOptions = {}): Linter.Config[] {
       name: 'vitest/rules',
       files,
       plugins: {
-        vitest: fixupPluginRules(vitestPlugin as unknown as ESLint.Plugin), // Compatibility fix
+        vitest: fixupPluginRules(vitestPlugin),
       },
       rules: {
         ...vitestPlugin.configs.recommended.rules,

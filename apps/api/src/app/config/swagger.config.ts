@@ -54,11 +54,12 @@ function addDefaultErrorResponses(document: OpenAPIObject): void {
       'head',
     ] as const) {
       const operation = pathItem[method];
+      // eslint-disable-next-line unicorn/no-break-in-nested-loop
       if (!operation || typeof operation !== 'object') continue;
 
       // Add default error response if not already defined
       if (!operation.responses?.default) {
-        operation.responses = operation.responses || {};
+        operation.responses ||= {};
         operation.responses.default = {
           description: 'Error response (400/401/403/404/422/429/500 etc.)',
           content: {

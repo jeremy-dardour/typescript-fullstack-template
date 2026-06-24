@@ -111,7 +111,7 @@ async function bootstrap() {
   logger.log(startupMessage);
 }
 
-// eslint-disable-next-line unicorn/prefer-top-level-await
+// eslint-disable-next-line unicorn/prefer-top-level-await, unicorn/prefer-await
 bootstrap().catch((error) => {
   console.log(error);
 });

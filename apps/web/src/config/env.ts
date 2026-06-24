@@ -30,17 +30,19 @@ function getEnv(): ValidatedEnv {
     const errorDetails = JSON.stringify(z.treeifyError(result.error), null, 2);
     const errorMessage = `Invalid environment variables:\n${errorDetails}\n\nCheck your .env file.`;
     console.error(errorMessage);
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function
     validationError = new Error(errorMessage);
     throw validationError;
   }
 
+  // eslint-disable-next-line unicorn/no-top-level-assignment-in-function
   validatedEnv = result.data;
   return validatedEnv;
 }
 
 export const env = {
   get apiUrl() {
-    return getEnv().VITE_API_URL ?? `${globalThis.location.origin}`;
+    return getEnv().VITE_API_URL ?? globalThis.location.origin;
   },
   get dev() {
     return getEnv().DEV;

@@ -11,5 +11,6 @@ export const jwtPayloadSchema = z.object({
   exp: z.number().optional(),
   nbf: z.number().optional(),
   iss: z.string().optional(),
+  // eslint-disable-next-line unicorn/max-nested-calls
   aud: z.union([z.string(), z.array(z.string())]).optional(),
 });

@@ -155,9 +155,9 @@ describe('authGuard', () => {
       vi.mocked(reflector.getAllAndOverride).mockReturnValueOnce(true);
 
       const context = createMockExecutionContext();
-      const result = await guard.canActivate(context);
+      const isResult = await guard.canActivate(context);
 
-      expect(result).toBe(true);
+      expect(isResult).toBe(true);
       expect(jwtAuthStrategy.authenticate).not.toHaveBeenCalled();
       expect(mockAuthStrategy.authenticate).not.toHaveBeenCalled();
     });
@@ -197,9 +197,9 @@ describe('authGuard', () => {
       vi.mocked(reflector.getAllAndOverride).mockReturnValueOnce(false);
 
       const context = createMockExecutionContext();
-      const result = await guard.canActivate(context);
+      const isResult = await guard.canActivate(context);
 
-      expect(result).toBe(true);
+      expect(isResult).toBe(true);
       expect(jwtAuthStrategy.authenticate).toHaveBeenCalledTimes(1);
     });
 

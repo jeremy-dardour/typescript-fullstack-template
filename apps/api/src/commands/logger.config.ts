@@ -14,17 +14,15 @@ export function createCliLogger(config: ConfigService<Env, true>) {
       paths: ['*.password', '*.token', '*.secret'], // minimal sensitive redaction
       censor: '[REDACTED]',
     },
-    ...(isProduction
-      ? {}
-      : {
-          transport: {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              singleLine: true,
-              translateTime: 'HH:MM:ss',
-            },
-          },
-        }),
+    ...(!isProduction && {
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          singleLine: true,
+          translateTime: 'HH:MM:ss',
+        },
+      },
+    }),
   };
 }

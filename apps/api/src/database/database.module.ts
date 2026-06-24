@@ -20,7 +20,7 @@ export class DatabaseModule {
    */
   static forRoot(): DynamicModule {
     return {
-      module: DatabaseModule,
+      module: this,
       global: true,
 
       imports: [

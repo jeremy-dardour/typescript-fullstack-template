@@ -20,7 +20,6 @@ export class LocationHeaderInterceptor implements NestInterceptor {
       tap((data: unknown) => {
         const httpContext = context.switchToHttp();
         const response = httpContext.getResponse<Response>();
-        const request = httpContext.getRequest<Request>();
 
         // Only handle 201 Created responses
         if (response.statusCode !== 201) {
@@ -37,6 +36,7 @@ export class LocationHeaderInterceptor implements NestInterceptor {
           return;
         }
 
+        const request = httpContext.getRequest<Request>();
         const baseUrl = `${request.protocol}://${request.get('host')}`;
         const resourcePath = this.buildResourcePath(request.path, data.id);
 

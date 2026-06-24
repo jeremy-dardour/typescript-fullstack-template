@@ -28,12 +28,12 @@ export class TransformInterceptor implements NestInterceptor {
           return data;
         }
 
-        const useEnvelope = this.reflector.get<boolean>(
+        const isUseEnvelope = this.reflector.get<boolean>(
           USE_ENVELOPE_KEY,
           context.getHandler(),
         );
 
-        if (useEnvelope) {
+        if (isUseEnvelope) {
           return data;
         }
 

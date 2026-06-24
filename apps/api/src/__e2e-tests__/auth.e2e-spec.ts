@@ -33,11 +33,11 @@ describe('Auth E2E Tests', () => {
   describe('with valid OIDC configuration', () => {
     let app: INestApplication;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       app = await createTestApp({ oidcOverride: mockOidc });
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
       await app.close();
     });
 

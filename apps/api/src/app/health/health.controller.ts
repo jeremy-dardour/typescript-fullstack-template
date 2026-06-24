@@ -160,15 +160,17 @@ export class HealthController {
 
     const details: string[] = [];
     for (const [key, value] of Object.entries(errors)) {
-      if (typeof value === 'object' && value !== null) {
-        const info = value as Record<string, unknown>;
-        const rawMessage = info.message ?? info.error ?? 'check failed';
-        const message =
-          typeof rawMessage === 'string'
-            ? rawMessage
-            : JSON.stringify(rawMessage);
-        details.push(`${key}: ${message}`);
+      if (!(typeof value === 'object' && value !== null)) {
+        continue;
       }
+
+      const info = value as Record<string, unknown>;
+      const rawMessage = info.message ?? info.error ?? 'check failed';
+      const message =
+        typeof rawMessage === 'string'
+          ? rawMessage
+          : JSON.stringify(rawMessage);
+      details.push(`${key}: ${message}`);
     }
 
     return details.length > 0 ? details.join('; ') : 'Health check failed';

@@ -99,7 +99,7 @@ export interface ComposeConfigOptions {
 // Main Function
 // ============================================================================
 
-const getOpts = <T>(opt: boolean | T | undefined): T =>
+const getOptions = <T>(opt: boolean | T | undefined): T =>
   (typeof opt === 'object' ? opt : {}) as T;
 
 /** Compose ESLint configs in the correct order */
@@ -110,65 +110,65 @@ export function composeConfig(
 
   // Enabled by default
   if (options.ignores !== false) {
-    const opts = getOpts(options.ignores);
+    const opts = getOptions(options.ignores);
     configs.push(...ignores(opts.ignores, opts.gitignore));
   }
 
   if (options.typescript !== false) {
-    configs.push(...typescript(getOpts(options.typescript)));
+    configs.push(...typescript(getOptions(options.typescript)));
   }
 
   if (options.stylistic !== false) {
-    configs.push(...stylistic(getOpts(options.stylistic)));
+    configs.push(...stylistic(getOptions(options.stylistic)));
   }
 
   if (options.unicorn !== false) {
-    configs.push(...unicorn(getOpts(options.unicorn)));
+    configs.push(...unicorn(getOptions(options.unicorn)));
   }
 
   if (options.depend !== false) {
-    configs.push(...depend(getOpts(options.depend)));
+    configs.push(...depend(getOptions(options.depend)));
   }
 
   // Must be explicitly enabled
   if (options.imports) {
-    const enableTypeScript = options.typescript !== false;
+    const isTypeScriptEnabled = options.typescript !== false;
     configs.push(
       ...imports(
         typeof options.imports === 'object'
-          ? { typescript: enableTypeScript, ...options.imports }
-          : { typescript: enableTypeScript },
+          ? { typescript: isTypeScriptEnabled, ...options.imports }
+          : { typescript: isTypeScriptEnabled },
       ),
     );
   }
 
   if (options.react) {
-    configs.push(...react(getOpts(options.react)));
+    configs.push(...react(getOptions(options.react)));
   }
 
   if (options.a11y) {
-    configs.push(...a11y(getOpts(options.a11y)));
+    configs.push(...a11y(getOptions(options.a11y)));
   }
 
   if (options.jsdoc) {
-    configs.push(...jsdoc(getOpts(options.jsdoc)));
+    configs.push(...jsdoc(getOptions(options.jsdoc)));
   }
 
   if (options.boundaries) {
-    configs.push(...boundaries(getOpts(options.boundaries)));
+    configs.push(...boundaries(getOptions(options.boundaries)));
   }
 
   if (options.packageJson) {
-    configs.push(...packageJson(getOpts(options.packageJson)));
+    configs.push(...packageJson(getOptions(options.packageJson)));
   }
 
   if (options.vitest) {
-    configs.push(...vitest(getOpts(options.vitest)));
+    configs.push(...vitest(getOptions(options.vitest)));
   }
 
   // prettier must be last
   if (options.prettier) {
-    configs.push(...prettier(getOpts(options.prettier)));
+    configs.push(...prettier(getOptions(options.prettier)));
   }
 
   return configs;

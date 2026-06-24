@@ -33,7 +33,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
-    const request = context.getRequest<Request>();
 
     // Convert MikroORM NotFoundError to 404
     if (exception instanceof NotFoundError) {
@@ -52,13 +51,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.problemDetailsFilter.catch(exception, host);
     }
 
+    const request = context.getRequest<Request>();
     // Handle non-HTTP exceptions (system errors)
     const status = HttpStatus.INTERNAL_SERVER_ERROR;
 
-    let message: string | string[] = 'Internal server error';
-    if (exception instanceof Error) {
-      message = exception.message;
-    }
+    const message: string | string[] =
+      exception instanceof Error ? exception.message : 'Internal server error';
 
     const requestId = this.cls?.getId();
     const correlationId = this.cls?.get<string>('correlationId');

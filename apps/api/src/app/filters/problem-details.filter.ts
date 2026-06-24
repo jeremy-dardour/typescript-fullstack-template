@@ -29,7 +29,6 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
     const request = context.getRequest<Request>();
     const status = exception.getStatus();
-    const exceptionResponse = exception.getResponse();
 
     // Silent handling for specific paths
     if (status === 404 && this.#silentPaths.includes(request.url)) {
@@ -37,6 +36,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       return;
     }
 
+    const exceptionResponse = exception.getResponse();
     const problemDetails: ProblemDetailsDto = {
       type: this.getTypeUri(status),
       title: this.getTitle(status, exception),

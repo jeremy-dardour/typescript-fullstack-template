@@ -79,20 +79,18 @@ export function createLoggerConfig(config: ConfigService<Env, true>): Params {
       },
 
       // Dev: use pino-pretty
-      ...(isProduction
-        ? {}
-        : {
-            transport: {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                singleLine: true,
-                translateTime: 'HH:MM:ss',
-                ignore: 'pid,hostname',
-                messageFormat: '{context} | {msg}',
-              },
-            },
-          }),
+      ...(!isProduction && {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            singleLine: true,
+            translateTime: 'HH:MM:ss',
+            ignore: 'pid,hostname',
+            messageFormat: '{context} | {msg}',
+          },
+        },
+      }),
     },
 
     // Exclude health check routes

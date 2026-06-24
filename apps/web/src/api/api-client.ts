@@ -10,5 +10,6 @@ type ApiClient = ReturnType<typeof createClient<paths>>;
 export let $api: ApiClient;
 
 export function setApiClient(fetchClient: TypedFetchClient) {
+  // eslint-disable-next-line unicorn/no-top-level-assignment-in-function
   $api = createClient<paths>(fetchClient);
 }

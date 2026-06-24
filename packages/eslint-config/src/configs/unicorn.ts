@@ -42,7 +42,15 @@ export function unicorn(options: UnicornOptions = {}): Linter.Config[] {
     rules: defu(overrides, {
       // Modern libraries like drizzle, react-query use null by default, incompatible with data operations
       'unicorn/no-null': 'off',
-      'unicorn/prevent-abbreviations': 'off',
+      'unicorn/name-replacements': 'off',
+      'unicorn/no-non-function-verb-prefix': 'off',
+      'unicorn/no-top-level-side-effects': 'off',
+      'unicorn/consistent-class-member-order': 'off',
+      'unicorn/no-array-sort': 'off',
+      'unicorn/filename-case': [
+        'error',
+        { case: 'kebabCase', ignore: [/^__[\w-]+__$/.source] },
+      ],
     }),
   });
 }

@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 /**
  * Utility functions and constants
  */

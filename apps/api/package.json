@@ -90,7 +90,7 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "dotenv": "^17.4.2",
-    "eslint": "^9.39.4",
+    "eslint": "^10.5.0",
     "istanbul-lib-coverage": "^3.2.2",
     "nest-commander-testing": "^3.5.1",
     "nyc": "^18.0.0",
@@ -98,7 +98,7 @@
     "supertest": "^7.2.2",
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.9",
-    "vite-tsconfig-paths": "^5.1.4",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.9"
   },
   "mikro-orm": {

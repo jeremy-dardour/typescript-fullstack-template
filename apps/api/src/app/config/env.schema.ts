@@ -7,7 +7,7 @@ export const envSchema = baseEnvSchema.extend({
   PORT: z
     .string()
     .default('3000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0 && value < 65_536, {
       message: 'PORT must be between 1-65535',
     }),

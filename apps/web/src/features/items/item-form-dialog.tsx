@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface ItemFormDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (isOpen: boolean) => void;
   onSubmit: (data: { name: string; description?: string }) => void;
   title: string;
   defaultValues?: { name: string; description?: string | null };

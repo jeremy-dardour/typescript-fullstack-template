@@ -75,7 +75,7 @@ export function packageJson(options: PackageJsonOptions = {}): Linter.Config[] {
     },
     extends: [plugin.configs.recommended],
     rules: {
-      ...(stylistic ? plugin.configs.stylistic.rules : {}),
+      ...(stylistic && plugin.configs.stylistic.rules),
       'package-json/valid-local-dependency': 'off', // Allow link: local dependencies
       ...overrides,
     },

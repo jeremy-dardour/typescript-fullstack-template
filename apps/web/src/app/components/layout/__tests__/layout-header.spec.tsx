@@ -39,8 +39,8 @@ describe('layoutHeader', () => {
   });
 
   it('should render the user name', () => {
-    const userName = screen.getByText('Jane Doe');
-    expect(userName).toBeVisible();
+    const username = screen.getByText('Jane Doe');
+    expect(username).toBeVisible();
   });
 
   it('should show display signout button', async () => {

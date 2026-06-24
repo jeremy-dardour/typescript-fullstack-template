@@ -1,21 +1,21 @@
-import { Entity, OptionalProps, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+
+import type { Opt } from '@mikro-orm/core';
 
 @Entity()
 export class Item {
-  [OptionalProps]?: 'id' | 'description' | 'createdAt' | 'updatedAt';
-
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
-  id!: string;
+  id!: Opt<string>;
 
   @Property({ length: 255 })
   name!: string;
 
   @Property({ type: 'text', nullable: true })
-  description?: string | null;
+  description?: Opt<string | null>;
 
   @Property({ type: 'timestamptz', defaultRaw: 'now()' })
-  createdAt!: Date;
+  createdAt!: Opt<Date>;
 
   @Property({ type: 'timestamptz', defaultRaw: 'now()' })
-  updatedAt!: Date;
+  updatedAt!: Opt<Date>;
 }

@@ -25,11 +25,11 @@ function createRequest(app: INestApplication): TestAgent<SuperTestType> {
 describe('Health E2E Tests', () => {
   let app: INestApplication;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     app = await createTestApp({});
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await app.close();
   });
 

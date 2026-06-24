@@ -5,6 +5,21 @@ import { AuthContext, useAuth } from '@/auth/auth-context';
 
 import type { AuthProvider } from '@/auth/auth-provider.interface';
 
+function PersonalComponent() {
+  const auth = useAuth();
+  const account = auth.getAuthenticatedUser();
+  return <div data-testid="username">{account?.username}</div>;
+}
+
+function LoginButton() {
+  const auth = useAuth();
+  return (
+    <button onClick={() => auth.login()} type="button">
+      Login
+    </button>
+  );
+}
+
 describe('authContext', () => {
   const mockAuthProvider: AuthProvider = {
     initialize: vi.fn(),
@@ -43,12 +58,6 @@ describe('authContext', () => {
     });
 
     it('should return the correct auth provider instance', () => {
-      function PersonalComponent() {
-        const auth = useAuth();
-        const account = auth.getAuthenticatedUser();
-        return <div data-testid="username">{account?.username}</div>;
-      }
-
       render(
         <AuthContext value={mockAuthProvider}>
           <PersonalComponent />
@@ -61,15 +70,6 @@ describe('authContext', () => {
     });
 
     it('should allow calling auth provider methods', () => {
-      function LoginButton() {
-        const auth = useAuth();
-        return (
-          <button onClick={() => auth.login()} type="button">
-            Login
-          </button>
-        );
-      }
-
       render(
         <AuthContext value={mockAuthProvider}>
           <LoginButton />
