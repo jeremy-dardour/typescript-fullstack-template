@@ -39,9 +39,7 @@ export class DatabaseModule {
               // so we must pass ssl config explicitly for managed PostgreSQL services
               ...(isProduction && {
                 driverOptions: {
-                  connection: {
-                    ssl: { rejectUnauthorized: false },
-                  },
+                  ssl: { rejectUnauthorized: false },
                 },
               }),
 
@@ -60,13 +58,6 @@ export class DatabaseModule {
                   { infer: true },
                 ),
               },
-
-              // Timezone handling
-              forceUtcTimezone: true,
-
-              // Validation & safety
-              strict: true, // Enables stricter type checking and validation
-              validate: !isProduction, // Validates entity metadata on startup (catches config errors early)
 
               // Debugging
               debug: !isProduction, // When true, MikroORM logs all SQL queries to the console

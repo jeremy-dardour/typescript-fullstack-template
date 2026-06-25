@@ -18,9 +18,7 @@ export default defineConfig({
   // so we must pass ssl config explicitly for managed PostgreSQL services
   ...(process.env.NODE_ENV === 'production' && {
     driverOptions: {
-      connection: {
-        ssl: { rejectUnauthorized: false },
-      },
+      ssl: { rejectUnauthorized: false },
     },
   }),
 

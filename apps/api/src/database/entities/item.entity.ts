@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 
 import type { Opt } from '@mikro-orm/core';
 
@@ -7,10 +7,10 @@ export class Item {
   @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
   id!: Opt<string>;
 
-  @Property({ length: 255 })
+  @Property()
   name!: string;
 
-  @Property({ type: 'text', nullable: true })
+  @Property({ type: 'text' })
   description?: Opt<string | null>;
 
   @Property({ type: 'timestamptz', defaultRaw: 'now()' })

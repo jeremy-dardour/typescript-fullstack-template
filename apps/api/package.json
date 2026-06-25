@@ -39,13 +39,14 @@
     "test:watch": "NODE_ENV=test vitest"
   },
   "dependencies": {
-    "@mikro-orm/cli": "^6.6.15",
-    "@mikro-orm/core": "^6.6.15",
-    "@mikro-orm/migrations": "^6.6.15",
-    "@mikro-orm/nestjs": "^6.1.2",
-    "@mikro-orm/postgresql": "^6.6.15",
-    "@mikro-orm/reflection": "^6.6.15",
-    "@mikro-orm/seeder": "^6.6.15",
+    "@mikro-orm/cli": "^7.1.4",
+    "@mikro-orm/core": "^7.1.4",
+    "@mikro-orm/decorators": "^7.1.4",
+    "@mikro-orm/migrations": "^7.1.4",
+    "@mikro-orm/nestjs": "^7.0.2",
+    "@mikro-orm/postgresql": "^7.1.4",
+    "@mikro-orm/reflection": "^7.1.4",
+    "@mikro-orm/seeder": "^7.1.4",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "4.0.4",
     "@nestjs/core": "^11.1.27",
@@ -78,6 +79,7 @@
     "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.27",
+    "@swc-node/register": "^1.11.1",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.43",
     "@types/bcrypt": "^6.0.0",
@@ -105,6 +107,7 @@
     "configPaths": [
       "./src/database/mikro-orm.cli.config.ts"
     ],
-    "tsConfigPath": "./tsconfig.mikro-cli.json"
+    "tsConfigPath": "./tsconfig.mikro-cli.json",
+    "tsLoader": "swc"
   }
 }
