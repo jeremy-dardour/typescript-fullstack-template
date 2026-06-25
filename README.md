@@ -7,9 +7,9 @@ A production-ready fullstack monorepo template with a **NestJS** API, **React** 
 | Layer        | Technologies                                                                       |
 | ------------ | ---------------------------------------------------------------------------------- |
 | **Monorepo** | Turborepo, pnpm workspaces                                                         |
-| **Frontend** | React 19, Vite 7, TanStack Query 5, shadcn/ui (Tailwind CSS 4), Playwright, Vitest |
-| **Backend**  | NestJS 11, MikroORM 6, PostgreSQL, Swagger/OpenAPI, jose (JWT)                     |
-| **Shared**   | TypeScript, ESLint (flat config), Prettier, OpenAPI contract generation            |
+| **Frontend** | React 19, Vite 8, TanStack Query 5, shadcn/ui (Tailwind CSS 4), Playwright, Vitest |
+| **Backend**  | NestJS 11, MikroORM 7, PostgreSQL, Swagger/OpenAPI, jose (JWT)                     |
+| **Shared**   | TypeScript 6, ESLint 10 (flat config), Prettier, OpenAPI contract generation       |
 
 ## Architecture
 
@@ -134,6 +134,14 @@ All jobs use a shared `ci-setup` composite action for consistent Node.js/pnpm se
 | `pnpm --filter api test:e2e` | API E2E tests (supertest)                 |
 | `pnpm --filter web test:e2e` | Web E2E tests (Playwright)                |
 | `pnpm generate:api-types`    | Regenerate OpenAPI types from running API |
+
+## Coding Standards
+
+For coding conventions, architecture patterns, and entity definitions, see the standards files:
+
+- [Global standards](./STANDARDS.md) — TypeScript, imports, naming
+- [API standards](./apps/api/STANDARDS.md) — NestJS modules, MikroORM entities, DTOs
+- [Web standards](./apps/web/STANDARDS.md) — React components, API hooks, auth, i18n
 
 ## Adapting This Template
 
