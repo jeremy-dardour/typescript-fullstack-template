@@ -2,7 +2,8 @@ import { test as base } from '@playwright/test';
 
 import type { Page } from '@playwright/test';
 
-const PLAYWRIGHT_USE_API_MOCK = process.env.PLAYWRIGHT_USE_API_MOCK === 'true';
+const IS_PLAYWRIGHT_USE_API_MOCK =
+  process.env.PLAYWRIGHT_USE_API_MOCK === 'true';
 
 interface ItemResponse {
   id: string;
@@ -30,7 +31,7 @@ export const test = base.extend<{ apiMock: ApiMock; page: Page }>({
   apiMock: async ({ page }, use) => {
     const mocks: ApiMock = {
       getItems: async (response, status = 200) => {
-        if (!PLAYWRIGHT_USE_API_MOCK) return response;
+        if (!IS_PLAYWRIGHT_USE_API_MOCK) return response;
         await page.route(/\/api\/items(\?.*)?$/, (route) =>
           route.fulfill({ status, json: response }),
         );
