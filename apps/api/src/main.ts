@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AuthInitializerService } from '@/app/auth';
@@ -11,22 +11,25 @@ import { createValidationPipe } from '@/app/config/validation.config';
 import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
 import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filter';
-import { CorrelationIdInterceptor } from '@/app/interceptors/correlation-id.interceptor';
+import { ContextHeadersInterceptor } from '@/app/interceptors/context-headers.interceptor';
 import { LinkHeaderInterceptor } from '@/app/interceptors/link-header.interceptor';
 import { LocationHeaderInterceptor } from '@/app/interceptors/location-header.interceptor';
-import { RequestContextInterceptor } from '@/app/interceptors/request-context.interceptor';
 import { TimeoutInterceptor } from '@/app/interceptors/timeout.interceptor';
-import { TraceContextInterceptor } from '@/app/interceptors/trace-context.interceptor';
-import { TransformInterceptor } from '@/app/interceptors/transform.interceptor';
 
 import { AppModule } from './app.module';
 
 import type { Env } from '@/app/config/env.schema';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true, // Buffer logs until Logger is ready
   });
+
+  // Trust X-Forwarded-* from the reverse proxy in front (ALB, nginx, ...):
+  // absolute URLs (Location/Link headers) get the right protocol and the
+  // throttler sees real client IPs. See docs/adr/0003-trust-proxy.md.
+  app.set('trust proxy', true);
   const logger = app.get(Logger);
   const configService = app.get(ConfigService<Env, true>);
   const env: Env['NODE_ENV'] = configService.get('NODE_ENV');
@@ -62,10 +65,8 @@ async function bootstrap() {
 
   // Global interceptors (in execution order)
   app.useGlobalInterceptors(
-    // 1. Request context (add trace headers to response)
-    app.get(RequestContextInterceptor),
-    app.get(CorrelationIdInterceptor),
-    app.get(TraceContextInterceptor),
+    // 1. Tracing headers (X-Request-Id, X-Correlation-Id, Trace-Id)
+    app.get(ContextHeadersInterceptor),
 
     // 2. Timeout control (15s)
     new TimeoutInterceptor(15_000),
@@ -75,9 +76,6 @@ async function bootstrap() {
 
     // 4. Link header (pagination links)
     new LinkHeaderInterceptor(),
-
-    // 5. Response formatting (executed last)
-    new TransformInterceptor(app.get(Reflector)),
   );
 
   // Global validation pipe
