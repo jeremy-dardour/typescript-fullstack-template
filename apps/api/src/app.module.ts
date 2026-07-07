@@ -12,9 +12,7 @@ import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
 import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filter';
 import { HealthModule } from '@/app/health/health.module';
-import { CorrelationIdInterceptor } from '@/app/interceptors/correlation-id.interceptor';
-import { RequestContextInterceptor } from '@/app/interceptors/request-context.interceptor';
-import { TraceContextInterceptor } from '@/app/interceptors/trace-context.interceptor';
+import { ContextHeadersInterceptor } from '@/app/interceptors/context-headers.interceptor';
 import { LoggerModule } from '@/app/logger/logger.module';
 import { SwaggerDevController } from '@/app/swagger/swagger-dev.controller';
 import { DatabaseModule } from '@/database/database.module';
@@ -57,9 +55,7 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     AllExceptionsFilter,
     ProblemDetailsFilter,
     ThrottlerExceptionFilter,
-    RequestContextInterceptor,
-    CorrelationIdInterceptor,
-    TraceContextInterceptor,
+    ContextHeadersInterceptor,
   ],
 })
 export class AppModule implements NestModule {
