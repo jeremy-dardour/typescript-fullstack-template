@@ -1,56 +1,28 @@
-import defu from 'defu';
 import { defineConfig } from 'eslint/config';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 
 import { GLOB_SRC } from '../utils';
 
-import type { OptionsFiles, OptionsOverrides } from '../types';
 import type { Linter } from 'eslint';
 
 /**
- * Unicorn best practices configuration
- *
- * Provides 100+ powerful ESLint rules to improve code quality and consistency
- *
- * @param options - Configuration options
- * @param options.files - File patterns to apply this config
- * @param options.overrides - Custom rule overrides
- * @returns ESLint config array
- *
- * @example
- * ```ts
- * import { unicorn } from 'infra-es';
- *
- * export default [
- *   ...unicorn({
- *     overrides: {
- *       'unicorn/prevent-abbreviations': 'off',
- *     },
- *   }),
- * ];
- * ```
+ * Unicorn best practices (recommended set with workspace adjustments)
  */
-export type UnicornOptions = OptionsFiles & OptionsOverrides;
-
-export function unicorn(options: UnicornOptions = {}): Linter.Config[] {
-  const { files = [GLOB_SRC], overrides = {} } = options;
-
-  return defineConfig({
-    name: 'unicorn/rules',
-    files,
-    extends: [eslintPluginUnicorn.configs.recommended],
-    rules: defu(overrides, {
-      // Modern libraries like drizzle, react-query use null by default, incompatible with data operations
-      'unicorn/no-null': 'off',
-      'unicorn/name-replacements': 'off',
-      'unicorn/no-non-function-verb-prefix': 'off',
-      'unicorn/no-top-level-side-effects': 'off',
-      'unicorn/consistent-class-member-order': 'off',
-      'unicorn/no-array-sort': 'off',
-      'unicorn/filename-case': [
-        'error',
-        { case: 'kebabCase', ignore: [/^__[\w-]+__$/.source] },
-      ],
-    }),
-  });
-}
+export const unicorn: Linter.Config[] = defineConfig({
+  name: 'unicorn/rules',
+  files: [GLOB_SRC],
+  extends: [eslintPluginUnicorn.configs.recommended],
+  rules: {
+    // Modern libraries like MikroORM and react-query use null by default
+    'unicorn/no-null': 'off',
+    'unicorn/name-replacements': 'off',
+    'unicorn/no-non-function-verb-prefix': 'off',
+    'unicorn/no-top-level-side-effects': 'off',
+    'unicorn/consistent-class-member-order': 'off',
+    'unicorn/no-array-sort': 'off',
+    'unicorn/filename-case': [
+      'error',
+      { case: 'kebabCase', ignore: [/^__[\w-]+__$/.source] },
+    ],
+  },
+});

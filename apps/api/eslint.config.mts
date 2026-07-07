@@ -1,45 +1,16 @@
-import { composeConfig } from '@workspace/eslint-config';
+import { boundariesModules, node } from '@workspace/eslint-config';
 
 export default [
-  ...composeConfig({
-    typescript: {
-      tsconfigRootDir: import.meta.dirname,
+  ...node(import.meta.dirname),
+  // Module boundary checks for VSA/DDD
+  ...boundariesModules,
+  {
+    files: ['**/package.json'],
+    rules: {
+      'package-json/valid-devDependencies': 'off', // Allow link: local deps
+      'package-json/require-type': 'off', // CJS Nest build has no "type" field
     },
-    prettier: true,
-    packageJson: {
-      overrides: {
-        'package-json/valid-devDependencies': 'off', // Allow link: local deps
-        'package-json/require-type': 'off', // Allow "type" field to be missing
-      },
-    },
-    vitest: true,
-    // Enable module boundary checks for VSA/DDD
-    boundaries: {
-      preset: 'modules',
-    },
-    unicorn: {
-      overrides: {},
-    },
-
-    // Disallow ../ relative imports, use @/ alias
-    imports: {
-      // Allow setup side-effect imports (dotenv/config) without warnings
-      warnOnUnassignedImports: false,
-      overrides: {
-        'no-restricted-imports': [
-          'error',
-          {
-            patterns: [
-              {
-                group: ['../*', '../**'],
-                message: 'Use @/ path alias instead of ../ relative imports',
-              },
-            ],
-          },
-        ],
-      },
-    },
-  }),
+  },
   {
     files: ['**/*Migration*.ts'],
     rules: {

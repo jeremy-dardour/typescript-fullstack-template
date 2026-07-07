@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
 
 import { includeIgnoreFile } from '@eslint/config-helpers';
 
@@ -34,67 +35,16 @@ export const DEFAULT_IGNORES: string[] = [
   '**/*.d.ts',
 ];
 
-/**
- * Ignore files configuration
- *
- * @param userIgnores - Array to extend defaults, or false to disable defaults
- * @param gitignorePath - gitignore file path or enable flag
- *   - true: Auto-find .gitignore in project root (default)
- *   - string: Use gitignore at specified path
- *   - false: Disable gitignore import
- * @returns ESLint config array
- */
-export function ignores(
-  userIgnores?: string[] | false,
-  gitignorePath?: string | boolean,
-): Linter.Config[] {
-  const configs: Linter.Config[] = [];
-
-  // Handle gitignore import
-  if (gitignorePath !== false) {
-    try {
-      // Use ternary instead of if-else
-      const gitignoreFile =
-        typeof gitignorePath === 'string'
-          ? path.resolve(gitignorePath) // Use specified path
-          : path.resolve(process.cwd(), '.gitignore'); // Default: find in project root
-
-      // Import only if file exists
-      if (existsSync(gitignoreFile)) {
-        configs.push(includeIgnoreFile(gitignoreFile));
-      }
-    } catch {
-      // Silently skip errors to ensure config is always valid
-    }
-  }
-
-  // Handle default and user-defined ignore rules
-  const finalIgnores =
-    userIgnores === false
-      ? []
-      : userIgnores
-        ? [...DEFAULT_IGNORES, ...userIgnores]
-        : DEFAULT_IGNORES;
-
-  if (finalIgnores.length > 0) {
-    configs.push({
-      name: 'defaults',
-      ignores: finalIgnores,
-    });
-  }
-
-  return configs.map((config) => ({
-    ...config,
-    name: `ignores/globals/${config.name}`,
-  }));
-}
+const gitignorePath = path.resolve(process.cwd(), '.gitignore');
 
 /**
- * Ignores configuration options
+ * Ignore configuration: the package's `.gitignore` (when present, resolved
+ * from the directory ESLint runs in) plus the defaults above.
  */
-export interface IgnoresOptions {
-  /** Custom ignore rules, or false to disable defaults */
-  ignores?: string[] | false;
-  /** gitignore file path or enable flag */
-  gitignore?: string | boolean;
-}
+export const ignores: Linter.Config[] = [
+  ...(existsSync(gitignorePath) ? [includeIgnoreFile(gitignorePath)] : []),
+  {
+    name: 'ignores/defaults',
+    ignores: DEFAULT_IGNORES,
+  },
+];
