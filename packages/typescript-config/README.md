@@ -4,15 +4,13 @@ Shared TypeScript configuration presets for the monorepo. Provides base and purp
 
 ## Available Configs
 
-| Config                        | Purpose                            |
-| ----------------------------- | ---------------------------------- |
-| `tsconfig.base.json`          | Base config shared by all packages |
-| `tsconfig.nestjs.json`        | NestJS backend apps                |
-| `tsconfig.vite.json`          | Vite-based frontend apps           |
-| `tsconfig.library.json`       | General library packages           |
-| `tsconfig.react-library.json` | React library packages             |
-| `tsconfig.vitest.json`        | Vitest test configuration          |
-| `tsconfig.nextjs.json`        | Next.js apps (if applicable)       |
+| Config                  | Purpose                            |
+| ----------------------- | ---------------------------------- |
+| `tsconfig.base.json`    | Base config shared by all packages |
+| `tsconfig.nestjs.json`  | NestJS backend apps                |
+| `tsconfig.vite.json`    | Vite-based frontend apps           |
+| `tsconfig.library.json` | General library packages           |
+| `tsconfig.vitest.json`  | Vitest test configuration          |
 
 ## Usage
 

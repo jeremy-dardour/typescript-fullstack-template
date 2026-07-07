@@ -1,6 +1,8 @@
 {
   "name": "@workspace/eslint-config",
   "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
   "description": "Shared ESLint config with Prettier, TypeScript, and EditorConfig",
   "type": "module",
   "exports": {
@@ -66,9 +68,6 @@
     "typescript": "^6.0.3"
   },
   "engines": {
-    "node": ">=22.18.0"
-  },
-  "publishConfig": {
-    "access": "public"
+    "node": ">=24.0.0"
   }
 }

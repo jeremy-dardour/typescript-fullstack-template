@@ -2,14 +2,11 @@
   "name": "@workspace/api-contracts",
   "version": "0.0.0",
   "private": true,
-  "license": "PROPRIETARY",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/openapi.d.ts",
     "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "scripts": {
     "format": "prettier --write ."

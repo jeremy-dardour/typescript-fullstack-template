@@ -2,6 +2,7 @@
   "name": "typescript-fullstack-template",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "db:start": "docker-compose up -d",
