@@ -25,7 +25,6 @@
  */
 
 import { a11y } from './configs/a11y';
-import { boundariesModules } from './configs/boundaries';
 import { depend } from './configs/depend';
 import { ignores } from './configs/ignores';
 import { imports, noRelativeImports } from './configs/imports';

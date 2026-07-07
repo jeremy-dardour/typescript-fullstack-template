@@ -8,7 +8,7 @@
   },
   "include": [
     "./src/**/*",
-    "./scripts/seed.ts",
+    "./scripts/**/*",
     "./*.config.ts",
     "./*.config.mts",
     "./src/__tests__",

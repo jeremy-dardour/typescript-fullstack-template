@@ -7,10 +7,7 @@ config({ path: '.env.e2e' });
 const APP_PORT = 5200;
 
 const e2eEnvSchema = z.object({
-  PLAYWRIGHT_APP_BASE_URL: z
-    .string()
-    .url()
-    .default(`http://localhost:${APP_PORT}`),
+  PLAYWRIGHT_APP_BASE_URL: z.url().default(`http://localhost:${APP_PORT}`),
   PLAYWRIGHT_USE_API_MOCK: z
     .string()
     .default('true')
@@ -51,16 +48,14 @@ export default defineConfig({
     },
   ],
   /* Run local dev server before starting tests -only in local */
-  ...(process.env.CI
-    ? {}
-    : {
-        webServer: {
-          command: `pnpm dev --port ${e2eEnv.PLAYWRIGHT_APP_PORT} --mode e2e`,
-          timeout: 20 * 1000,
-          port: e2eEnv.PLAYWRIGHT_APP_PORT,
-          reuseExistingServer: true,
-          stdout: 'pipe',
-          stderr: 'pipe',
-        },
-      }),
+  ...(!process.env.CI && {
+    webServer: {
+      command: `pnpm dev --port ${e2eEnv.PLAYWRIGHT_APP_PORT} --mode e2e`,
+      timeout: 20 * 1000,
+      port: e2eEnv.PLAYWRIGHT_APP_PORT,
+      reuseExistingServer: true,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  }),
 });
