@@ -5,8 +5,8 @@ React + Vite frontend for the TypeScript Fullstack Template. Consumes OpenAPI-ge
 ## Features
 
 - **React 19** with [SWC](https://swc.rs/) for Fast Refresh
-- **Vite 7** for dev server and builds
-- **shadcn/ui** (Tailwind CSS 4 + Radix UI) for components
+- **Vite 8** for dev server and builds
+- **shadcn/ui** (Tailwind CSS 4 + Base UI) for components
 - **TanStack Query 5** for data fetching and caching
 - **OpenAPI types** auto-generated from the backend contract
 - **i18n** via react-i18next (English, French, Spanish)
@@ -24,7 +24,6 @@ apps/web/src/
   config/       # App-wide configuration
   errors/       # API error context and handling
   features/     # Feature modules organized by domain
-  hooks/        # Shared React hooks
   i18n/         # Localization (en.json, fr.json, es.json)
   lib/          # Utilities (cn, etc.)
   testing/      # Test setup and utilities

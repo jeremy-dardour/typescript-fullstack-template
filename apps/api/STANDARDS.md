@@ -96,6 +96,8 @@ export class Item {
 - Create after entity changes: `pnpm --filter api mikro-orm migration:create`
 - Verify zero schema diff: `pnpm mikro-orm schema:update --dump`
 - CLI uses SWC as TS loader (`tsLoader: "swc"` in package.json)
+- In production, migrations run at container start — see
+  [ADR 0001](../../docs/adr/0001-migrations-run-on-container-start.md)
 
 ## DTOs
 
@@ -105,7 +107,8 @@ export class Item {
 
 ## Environment config
 
-- Zod schemas for env validation (not class-validator)
+- Zod schemas for env validation (not class-validator) — the split is
+  deliberate, see [ADR 0002](../../docs/adr/0002-dual-validation-stack.md)
 - Base schema in `src/shared/types/env.base.schema.ts`
 - App-specific schema extends base in `src/app/config/env.schema.ts`
 

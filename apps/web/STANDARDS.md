@@ -43,3 +43,4 @@ src/
 
 - Unit: `@testing-library/react` + vitest, colocated `*.spec.tsx`
 - E2E: Playwright in `e2e/`, custom fixtures with `ApiMock` for deterministic API interception
+- Mocks for `@/components` or design-system components go in `@/testing/mocks/components.tsx` so they can be reused across specs
