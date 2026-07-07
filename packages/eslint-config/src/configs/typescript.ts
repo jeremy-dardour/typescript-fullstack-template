@@ -3,41 +3,35 @@ import { configs, parser, plugin } from 'typescript-eslint';
 
 import { GLOB_TS } from '../utils';
 
-import type {
-  OptionsFiles,
-  OptionsOverrides,
-  OptionsTypeScript,
-} from '../types';
 import type { Linter } from 'eslint';
 
-export type TypeScriptOptions = OptionsFiles &
-  OptionsOverrides &
-  OptionsTypeScript;
-
-export function typescript(options: TypeScriptOptions = {}): Linter.Config[] {
-  const { files = [GLOB_TS], tsconfigRootDir, overrides = {} } = options;
-
+/**
+ * Type-checked TypeScript rules.
+ *
+ * @param tsconfigRootDir - Always pass `import.meta.dirname` from the app's
+ * eslint config. Without it typescript-eslint falls back to `process.cwd()`,
+ * which breaks whenever ESLint runs from another directory (IDE integrations,
+ * repo-root invocations).
+ */
+export function typescript(tsconfigRootDir: string): Linter.Config[] {
   return defineConfig({
     name: 'typescript/rules',
-    files,
+    files: [GLOB_TS],
     plugins: {
       '@typescript-eslint': plugin,
     },
     extends: [configs.recommendedTypeChecked, configs.stylisticTypeChecked],
-    // For global variables in TS, disable ESLint's `no-undef` rule
-    // Reference: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
     languageOptions: {
       parser: parser,
       parserOptions: {
         projectService: true,
-        // Default process.cwd() may cause inconsistent behavior (depends on execution directory)
-        // Highly recommend explicit: typescript({ tsconfigRootDir: import.meta.dirname })
-        tsconfigRootDir: tsconfigRootDir ?? process.cwd(),
+        tsconfigRootDir,
       },
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      // Stylistic
+      // For global variables in TS, `no-undef` is redundant with the compiler
+      // Reference: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
       '@typescript-eslint/no-unused-vars': 'off', // Works with tsconfig.verbatimModuleSyntax, e.g., `import type {ReactNode} from 'react'`
       // Deprecated API detection (replaces eslint-plugin-n's no-deprecated-api)
       '@typescript-eslint/no-deprecated': 'warn',
@@ -53,8 +47,6 @@ export function typescript(options: TypeScriptOptions = {}): Linter.Config[] {
           },
         },
       ],
-
-      ...overrides,
     },
   });
 }

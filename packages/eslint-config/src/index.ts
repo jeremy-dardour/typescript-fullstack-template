@@ -1,27 +1,34 @@
 /**
  * @workspace/eslint-config
  *
- * Unified ESLint configuration
+ * Layered ESLint flat configs:
+ *
+ * - **Presets** — what apps normally use:
+ *   `node(rootDir)` for backend/Node packages, `web(rootDir)` for React apps.
+ * - **Primitives** — per-concern config arrays (typescript, imports, react, ...)
+ *   for packages that don't fit a preset. Compose them yourself and put
+ *   `prettier` last.
+ *
+ * Overrides are plain flat-config objects appended after the spread —
+ * last one wins:
  *
  * @example
  * ```typescript
- * import { composeConfig } from '@workspace/eslint-config'
+ * import { node, boundariesModules } from '@workspace/eslint-config';
  *
- * export default composeConfig({
- *   typescript: { tsconfigRootDir: import.meta.dirname },
- *   react: true,
- *   imports: { typescript: true },
- *   prettier: true,
- * })
+ * export default [
+ *   ...node(import.meta.dirname),
+ *   ...boundariesModules,
+ *   { files: ['**\/*Migration*.ts'], rules: { 'unicorn/filename-case': 'off' } },
+ * ];
  * ```
  */
 
 import { a11y } from './configs/a11y';
-import { boundaries } from './configs/boundaries';
+import { boundariesModules } from './configs/boundaries';
 import { depend } from './configs/depend';
 import { ignores } from './configs/ignores';
-import { imports } from './configs/imports';
-import { jsdoc } from './configs/jsdoc';
+import { imports, noRelativeImports } from './configs/imports';
 import { packageJson } from './configs/package-json';
 import { prettier } from './configs/prettier';
 import { react } from './configs/react';
@@ -30,153 +37,65 @@ import { typescript } from './configs/typescript';
 import { unicorn } from './configs/unicorn';
 import { vitest } from './configs/vitest';
 
-import type { A11yOptions } from './configs/a11y';
-import type { BoundariesOptions } from './configs/boundaries';
-import type { DependOptions } from './configs/depend';
-import type { IgnoresOptions } from './configs/ignores';
-import type { ImportsOptions } from './configs/imports';
-import type { JsdocOptions } from './configs/jsdoc';
-import type { PackageJsonOptions } from './configs/package-json';
-import type { PrettierOptions } from './configs/prettier';
-import type { ReactOptions } from './configs/react';
-import type { StylisticOptions } from './configs/stylistic';
-import type { TypeScriptOptions } from './configs/typescript';
-import type { UnicornOptions } from './configs/unicorn';
-import type { VitestOptions } from './configs/vitest';
 import type { Linter } from 'eslint';
 
 // ============================================================================
-// Type Definitions
+// Presets
 // ============================================================================
 
 /**
- * Configuration options for composeConfig
+ * Everything shared by all packages. Does NOT include `prettier` —
+ * presets (or your own composition) must append it last.
  *
- * Each option supports:
- * - `true` - Use default options
- * - `object` - Pass custom options
- * - `false` - Disable (for configs enabled by default)
- * - omitted - Not enabled (for non-default configs)
+ * @param tsconfigRootDir - Pass `import.meta.dirname` from the app's eslint config
  */
-export interface ComposeConfigOptions {
-  // Base configs (enabled by default)
-  /** Ignore files config @default true */
-  ignores?: boolean | IgnoresOptions;
-  /** TypeScript config @default true */
-  typescript?: boolean | TypeScriptOptions;
-  /** Code style rules @default true */
-  stylistic?: boolean | StylisticOptions;
-  /** Unicorn best practices @default true */
-  unicorn?: boolean | UnicornOptions;
-  /** Dependency optimization suggestions @default true */
-  depend?: boolean | DependOptions;
+export function base(tsconfigRootDir: string): Linter.Config[] {
+  return [
+    ...ignores,
+    ...typescript(tsconfigRootDir),
+    ...imports,
+    ...stylistic,
+    ...unicorn,
+    ...depend,
+    ...packageJson,
+    noRelativeImports,
+  ];
+}
 
-  // Framework configs
-  /** React config */
-  react?: boolean | ReactOptions;
+/**
+ * Preset for backend/Node packages (NestJS API, libraries)
+ *
+ * @param tsconfigRootDir - Pass `import.meta.dirname` from the app's eslint config
+ */
+export function node(tsconfigRootDir: string): Linter.Config[] {
+  return [...base(tsconfigRootDir), ...vitest, prettier];
+}
 
-  // Tool configs
-  /** Import sorting and rules */
-  imports?: boolean | ImportsOptions;
-  /** Prettier formatting */
-  prettier?: boolean | PrettierOptions;
-
-  // Quality configs
-  /** Accessibility rules */
-  a11y?: boolean | A11yOptions;
-  jsdoc?: boolean | JsdocOptions;
-  /** Module boundary rules */
-  boundaries?: boolean | BoundariesOptions;
-  /** package.json rules */
-  packageJson?: boolean | PackageJsonOptions;
-
-  // Testing configs
-  /** Vitest testing rules */
-  vitest?: boolean | VitestOptions;
+/**
+ * Preset for React apps
+ *
+ * @param tsconfigRootDir - Pass `import.meta.dirname` from the app's eslint config
+ */
+export function web(tsconfigRootDir: string): Linter.Config[] {
+  return [...base(tsconfigRootDir), ...react, ...a11y, ...vitest, prettier];
 }
 
 // ============================================================================
-// Main Function
+// Primitives
 // ============================================================================
 
-const getOptions = <T>(opt: boolean | T | undefined): T =>
-  (typeof opt === 'object' ? opt : {}) as T;
-
-/** Compose ESLint configs in the correct order */
-export function composeConfig(
-  options: ComposeConfigOptions = {},
-): Linter.Config[] {
-  const configs: Linter.Config[] = [];
-
-  // Enabled by default
-  if (options.ignores !== false) {
-    const opts = getOptions(options.ignores);
-    configs.push(...ignores(opts.ignores, opts.gitignore));
-  }
-
-  if (options.typescript !== false) {
-    configs.push(...typescript(getOptions(options.typescript)));
-  }
-
-  if (options.stylistic !== false) {
-    configs.push(...stylistic(getOptions(options.stylistic)));
-  }
-
-  if (options.unicorn !== false) {
-    configs.push(...unicorn(getOptions(options.unicorn)));
-  }
-
-  if (options.depend !== false) {
-    configs.push(...depend(getOptions(options.depend)));
-  }
-
-  // Must be explicitly enabled
-  if (options.imports) {
-    const isTypeScriptEnabled = options.typescript !== false;
-    configs.push(
-      ...imports(
-        typeof options.imports === 'object'
-          ? { typescript: isTypeScriptEnabled, ...options.imports }
-          : { typescript: isTypeScriptEnabled },
-      ),
-    );
-  }
-
-  if (options.react) {
-    configs.push(...react(getOptions(options.react)));
-  }
-
-  if (options.a11y) {
-    configs.push(...a11y(getOptions(options.a11y)));
-  }
-
-  if (options.jsdoc) {
-    configs.push(...jsdoc(getOptions(options.jsdoc)));
-  }
-
-  if (options.boundaries) {
-    configs.push(...boundaries(getOptions(options.boundaries)));
-  }
-
-  if (options.packageJson) {
-    configs.push(...packageJson(getOptions(options.packageJson)));
-  }
-
-  if (options.vitest) {
-    configs.push(...vitest(getOptions(options.vitest)));
-  }
-
-  // prettier must be last
-  if (options.prettier) {
-    configs.push(...prettier(getOptions(options.prettier)));
-  }
-
-  return configs;
-}
-
-// ============================================================================
-// Constant Exports
-// ============================================================================
+export { a11y } from './configs/a11y';
+export { boundariesModules } from './configs/boundaries';
+export { depend } from './configs/depend';
+export { ignores } from './configs/ignores';
+export { imports, noRelativeImports } from './configs/imports';
+export { packageJson } from './configs/package-json';
+export { prettier } from './configs/prettier';
+export { react } from './configs/react';
+export { stylistic } from './configs/stylistic';
+export { typescript } from './configs/typescript';
+export { unicorn } from './configs/unicorn';
+export { vitest } from './configs/vitest';
 
 export {
   GLOB_SRC,

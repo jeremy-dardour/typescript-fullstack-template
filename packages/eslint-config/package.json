@@ -2,8 +2,8 @@
   "name": "@workspace/eslint-config",
   "version": "0.0.1",
   "private": true,
+  "description": "Shared ESLint flat configs: node/web presets plus per-concern primitives",
   "license": "MIT",
-  "description": "Shared ESLint config with Prettier, TypeScript, and EditorConfig",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -21,50 +21,34 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@clack/prompts": "^1.6.0",
     "@eslint-react/eslint-plugin": "^5.9.2",
     "@eslint/compat": "2.1.0",
     "@eslint/config-helpers": "^0.6.0",
-    "@eslint/core": "1.2.1",
-    "@eslint/js": "^10.0.1",
-    "@next/eslint-plugin-next": "^16.2.9",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tanstack/eslint-plugin-query": "^5.101.1",
     "@vitest/eslint-plugin": "^1.6.20",
-    "defu": "^6.1.7",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^6.0.2",
     "eslint-plugin-depend": "^1.5.0",
     "eslint-plugin-import-x": "4.17.0",
-    "eslint-plugin-jsdoc": "^63.0.7",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-package-json": "^1.5.0",
-    "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "eslint-plugin-unicorn": "^68.0.0",
-    "nypm": "^0.6.7",
-    "pkg-types": "^2.3.1",
     "typescript-eslint": "^8.62.0"
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
     "@types/node": "26.0.0",
-    "@vitest/ui": "^4.1.9",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^10.5.0",
-    "globals": "17.7.0",
     "jiti": "2.7.0",
-    "prettier": "^3.8.4",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "eslint": "^10.5.0",
-    "globals": "17.7.0",
-    "jiti": "2.7.0",
-    "prettier": "^3.8.4",
     "typescript": "^6.0.3"
   },
   "engines": {

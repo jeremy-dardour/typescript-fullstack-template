@@ -50,7 +50,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@tanstack/react-query-devtools": "^5.101.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -65,9 +64,6 @@
     "@workspace/typescript-config": "workspace:*",
     "dotenv": "^17.4.2",
     "eslint": "^10.5.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.3",
-    "globals": "17.7.0",
     "openapi-typescript": "^7.13.0",
     "playwright": "^1.61.1",
     "typescript": "^6.0.3",

@@ -1,40 +1,13 @@
-import { defineConfig } from 'eslint/config';
-import prettierConfig from 'eslint-plugin-prettier/recommended';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
-import { GLOB_SRC } from '../utils';
-
-import type { OptionsOverrides } from '../types';
 import type { Linter } from 'eslint';
 
-export type PrettierOptions = OptionsOverrides;
-
 /**
- * Prettier code formatting configuration
- *
- * @param options - Configuration options
- * @param options.overrides - Custom rule overrides
- * @returns ESLint config array
+ * Disables every stylistic rule that conflicts with Prettier.
+ * Formatting itself is owned by the standalone `prettier` CLI —
+ * ESLint never runs Prettier. Must come after all rule-adding configs.
  */
-export function prettier(options: PrettierOptions = {}): Linter.Config[] {
-  const { overrides = {} } = options;
-
-  const files = [GLOB_SRC];
-
-  return defineConfig([
-    {
-      name: 'prettier/rules',
-      files,
-      extends: [prettierConfig],
-      rules: {
-        'prettier/prettier': [
-          'error',
-          {
-            singleQuote: true,
-            traillingComma: 'all',
-          },
-        ],
-        ...overrides,
-      },
-    },
-  ]);
-}
+export const prettier: Linter.Config = {
+  ...eslintConfigPrettier,
+  name: 'prettier/disable-conflicts',
+};

@@ -1,10 +1,14 @@
-import { composeConfig } from './src/index';
+import { node } from './src/index';
 
 import type { Linter } from 'eslint';
 
-const config: Linter.Config[] = composeConfig({
-  typescript: { tsconfigRootDir: import.meta.dirname },
-  imports: { typescript: true },
-  prettier: true,
-});
+const config: Linter.Config[] = [
+  ...node(import.meta.dirname),
+  {
+    // This package has no @/ path alias; relative imports are the idiom here
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
+];
 export default config;

@@ -1,24 +1,93 @@
 # @workspace/eslint-config
 
-Shared, composable ESLint configuration for the monorepo. Provides a unified set of linting rules across all apps and packages.
+Shared ESLint flat configs for the monorepo, organized in two layers:
 
-## Included Configs
+1. **Presets** — what apps normally use. One function call, done.
+2. **Primitives** — per-concern config arrays the presets are built from.
+   Compose them directly for packages that don't fit a preset.
 
-| Config         | Description                    |
-| -------------- | ------------------------------ |
-| `a11y`         | Accessibility rules (jsx-a11y) |
-| `boundaries`   | Module boundary enforcement    |
-| `depend`       | Dependency rules               |
-| `ignores`      | Shared ignore patterns         |
-| `imports`      | Import ordering and resolution |
-| `jsdoc`        | JSDoc linting                  |
-| `package-json` | package.json linting           |
-| `prettier`     | Prettier integration           |
-| `react`        | React and React Hooks rules    |
-| `stylistic`    | Code style rules               |
-| `typescript`   | TypeScript-specific rules      |
-| `unicorn`      | Unicorn best-practice rules    |
-| `vitest`       | Vitest testing rules           |
+There is no options object to configure. Customization is plain ESLint flat
+config: spread a preset, then append `{ files, rules }` objects after it —
+later entries win.
+
+## Presets
+
+| Preset          | Contents                                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base(rootDir)` | Everything shared: ignores, typescript, imports, stylistic, unicorn, depend, package-json, no-relative-imports. **No `prettier`** — compositions must append it last. |
+| `node(rootDir)` | `base` + vitest + prettier. For backend/Node packages.                                                                                                                |
+| `web(rootDir)`  | `base` + react + a11y + vitest + prettier. For React apps.                                                                                                            |
+
+`rootDir` is the directory containing the app's `tsconfig.json` — always pass
+`import.meta.dirname`. It anchors typescript-eslint's project service so
+linting works identically from the repo root, the app directory, and IDEs.
+
+### Usage
+
+```ts
+// apps/web/eslint.config.mts
+import { web } from '@workspace/eslint-config';
+
+export default web(import.meta.dirname);
+```
+
+```ts
+// apps/api/eslint.config.mts — preset + addon + overrides
+import { boundariesModules, node } from '@workspace/eslint-config';
+
+export default [
+  ...node(import.meta.dirname),
+  ...boundariesModules, // opt-in addon
+  {
+    // plain flat-config override, last one wins
+    files: ['**/*Migration*.ts'],
+    rules: { 'unicorn/filename-case': 'off' },
+  },
+];
+```
+
+## Primitives
+
+| Export                | Concern                                                |
+| --------------------- | ------------------------------------------------------ |
+| `ignores`             | Default ignore patterns + the package's `.gitignore`   |
+| `typescript(rootDir)` | Type-checked TypeScript rules (typescript-eslint)      |
+| `imports`             | Import ordering/resolution (import-x, TS resolver)     |
+| `noRelativeImports`   | Bans `../` imports in favor of the `@/` alias          |
+| `stylistic`           | Code style rules (@stylistic)                          |
+| `unicorn`             | Unicorn best practices                                 |
+| `depend`              | Flags replaceable/heavyweight dependencies             |
+| `packageJson`         | package.json consistency rules                         |
+| `react`               | @eslint-react, hooks, react-refresh, TanStack Query    |
+| `a11y`                | Accessibility rules (jsx-a11y)                         |
+| `vitest`              | Vitest test rules (`.only`/`.skip` error in CI)        |
+| `boundariesModules`   | VSA/DDD module boundaries (`src/modules/*` isolation)  |
+| `prettier`            | Disables rules that conflict with Prettier — keep last |
+
+A package with a shape the presets don't cover composes primitives directly:
+
+```ts
+import {
+  ignores,
+  typescript,
+  imports,
+  prettier,
+} from '@workspace/eslint-config';
+
+export default [
+  ...ignores,
+  ...typescript(import.meta.dirname),
+  ...imports,
+  prettier, // always last
+];
+```
+
+## Formatting
+
+Formatting is owned by the standalone Prettier CLI (`pnpm format` /
+`prettier --check` in CI). ESLint never runs Prettier; the `prettier` export
+only disables conflicting stylistic rules. That keeps lint fast and formatting
+configured in exactly one place (`prettier.config.mjs`).
 
 ## Scripts
 
@@ -26,15 +95,3 @@ Shared, composable ESLint configuration for the monorepo. Provides a unified set
 - `pnpm lint:fix` — Run ESLint with auto-fix
 - `pnpm format` — Alias for `lint:fix`
 - `pnpm check-types` — Run TypeScript type checking
-
-## Usage
-
-In an app or package `eslint.config.mts`:
-
-```ts
-import { createConfig } from '@workspace/eslint-config';
-
-export default createConfig({
-  /* options */
-});
-```
