@@ -15,8 +15,7 @@
     "lint": {
       "dependsOn": ["^lint"],
       "inputs": ["$TURBO_DEFAULT$", "eslint.config.*"],
-      "outputs": [],
-      "cache": false
+      "outputs": []
     },
     "lint:fix": {
       "dependsOn": ["^lint:fix"],
