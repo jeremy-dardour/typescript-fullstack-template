@@ -82,6 +82,29 @@ export default [
 ];
 ```
 
+## How overriding works
+
+Flat config evaluates the array top to bottom; when a file matches several
+entries, **the last matching entry wins for each rule**. That gives three
+moves, all plain ESLint — nothing package-specific to learn:
+
+1. **Change or disable a rule** — append `{ rules: { ... } }` after the
+   preset spread.
+2. **Scope it** — add `files: ['**/*Migration*.ts']` to the same object so
+   the override only hits matching files.
+3. **Drop a whole concern** — presets have no opt-out flags; compose
+   primitives yourself instead (see above). Editing this package is also
+   fine — it's workspace-owned, not a published dependency.
+
+Ordering caveat: `prettier` sits last inside each preset and only _disables_
+conflicting rules. Configs you append come after it, so if an override
+_enables_ a formatting-related stylistic rule, config-prettier will not
+neutralize it — don't add rules Prettier already owns.
+
+The switch from the old `composeConfig(options)` factory to this layout is
+documented in
+[ADR 0004](../../docs/adr/0004-eslint-layered-flat-configs.md).
+
 ## Formatting
 
 Formatting is owned by the standalone Prettier CLI (`pnpm format` /
