@@ -12,6 +12,9 @@ export default defineConfig({
     exclude: ['node_modules', 'e2e'],
     coverage: {
       provider: 'v8',
+      // json-summary + json feed the CI coverage comment
+      reporter: ['text', 'json', 'json-summary'],
+      reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         // Entry points — not unit-testable
