@@ -67,7 +67,7 @@ async function bootstrap() {
     app.get(CorrelationIdInterceptor),
     app.get(TraceContextInterceptor),
 
-    // 2. Timeout control (30s)
+    // 2. Timeout control (15s)
     new TimeoutInterceptor(15_000),
 
     // 3. Location header (201 Created)
@@ -94,7 +94,7 @@ async function bootstrap() {
 
   const startupMessage = `
 +-----------------------------------------------------+
-|              NestJS Boilerplate Server              |
+|                     API Server                      |
 +-----------------------------------------------------+
 |  Environment:  ${env.padEnd(35)}  |
 |  Port:         ${String(port).padEnd(35)}  |
@@ -113,5 +113,7 @@ async function bootstrap() {
 
 // eslint-disable-next-line unicorn/prefer-top-level-await, unicorn/prefer-await
 bootstrap().catch((error) => {
-  console.log(error);
+  // Exit non-zero so orchestrators treat a failed boot as a crash, not a clean start
+  console.error(error);
+  process.exitCode = 1;
 });
