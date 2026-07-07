@@ -51,6 +51,9 @@ COPY apps/api/deployment/entrypoint.app.sh /entrypoint.app.sh
 
 RUN chmod +x /entrypoint.app.sh
 
+# Run as the unprivileged user built into the node image
+USER node
+
 EXPOSE 3000
 
 ENTRYPOINT ["/entrypoint.app.sh"]
