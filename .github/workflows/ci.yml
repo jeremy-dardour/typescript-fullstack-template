@@ -27,7 +27,7 @@ jobs:
   format:
     name: Format Check
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   check-dependencies:
     name: Check Dependencies
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
   check-types:
     name: Check Types
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -271,8 +271,11 @@ jobs:
       - name: Build shared packages
         run: pnpm turbo run build --filter=@workspace/shared
 
-      - name: Start web server
-        run: pnpm --filter web dev --port 5173 --mode e2e &
+      - name: Build web app (e2e mode)
+        run: pnpm --filter=web exec vite build --mode e2e
+
+      - name: Serve production build
+        run: pnpm --filter=web exec vite preview --port 5173 &
 
       - name: cache playwright
         uses: actions/cache@v4
