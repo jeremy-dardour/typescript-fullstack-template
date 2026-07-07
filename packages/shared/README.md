@@ -27,23 +27,23 @@ Each export is an explicit entry in `package.json` `"exports"` and maps to a sou
 
 ```json
 "./my-module": {
-  "types": "./src/my-module.ts",
+  "types": "./dist/my-module.d.ts",
   "import": "./dist/my-module.js",
   "require": "./dist/my-module.cjs"
 }
 ```
 
-3. Add the entry to `vite.config.ts` in the `build.lib.entry` array
+3. Add the entry to `tsup.config.ts` in the `entry` map
 4. Run `pnpm build` to verify
 
 ## Scripts
 
-| Script             | Description                    |
-| ------------------ | ------------------------------ |
-| `pnpm build`       | Build the package (Vite + tsc) |
-| `pnpm dev`         | Build in dev mode              |
-| `pnpm check-types` | TypeScript type checking       |
-| `pnpm test`        | Run tests                      |
+| Script             | Description                                |
+| ------------------ | ------------------------------------------ |
+| `pnpm build`       | Build the package (tsup: ESM + CJS + d.ts) |
+| `pnpm dev`         | Rebuild on change (`tsup --watch`)         |
+| `pnpm check-types` | TypeScript type checking                   |
+| `pnpm test`        | Run tests                                  |
 
 ## Rules
 
