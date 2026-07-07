@@ -142,6 +142,7 @@ For coding conventions, architecture patterns, and entity definitions, see the s
 - [Global standards](./STANDARDS.md) — TypeScript, imports, naming
 - [API standards](./apps/api/STANDARDS.md) — NestJS modules, MikroORM entities, DTOs
 - [Web standards](./apps/web/STANDARDS.md) — React components, API hooks, auth, i18n
+- [Architecture decisions](./docs/adr/) — compact ADRs for the trade-offs the template ships with
 
 ## Adapting This Template
 
