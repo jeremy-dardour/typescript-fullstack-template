@@ -1,9 +1,11 @@
-// scripts/merge-coverage.ts
 import fs from 'node:fs';
 
-import { createCoverageMap } from 'istanbul-lib-coverage';
+import istanbulCoverage from 'istanbul-lib-coverage';
 
 import type { CoverageMapData } from 'istanbul-lib-coverage';
+
+// istanbul-lib-coverage is CJS; named imports don't exist under native ESM
+const { createCoverageMap } = istanbulCoverage;
 
 const map = createCoverageMap({});
 

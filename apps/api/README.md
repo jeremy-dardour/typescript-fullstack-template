@@ -61,15 +61,16 @@ Add new commands in `src/commands/`. Environment variables required:
 
 ## Scripts
 
-| Script               | Description                             |
-| -------------------- | --------------------------------------- |
-| `pnpm dev`           | Start in dev mode                       |
-| `pnpm build`         | Build for production                    |
-| `pnpm test`          | Run unit tests                          |
-| `pnpm test:cov`      | Unit tests with coverage                |
-| `pnpm test:e2e`      | E2E tests (requires running PostgreSQL) |
-| `pnpm db:start`      | Start PostgreSQL via Docker             |
-| `pnpm db:migrate:up` | Run pending migrations                  |
-| `pnpm db:seed:local` | Seed development data                   |
-| `pnpm lint`          | ESLint                                  |
-| `pnpm check-types`   | TypeScript type checking                |
+| Script                 | Description                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| `pnpm dev`             | Start in dev mode                                             |
+| `pnpm build`           | Build for production                                          |
+| `pnpm test`            | Run unit tests                                                |
+| `pnpm test:cov`        | Unit tests with coverage                                      |
+| `pnpm test:e2e`        | E2E tests (requires running PostgreSQL)                       |
+| `pnpm test:cov:merged` | Unit + E2E coverage merged into one report (`coverage/final`) |
+| `pnpm db:start`        | Start PostgreSQL via Docker                                   |
+| `pnpm db:migrate:up`   | Run pending migrations                                        |
+| `pnpm db:seed:local`   | Seed development data                                         |
+| `pnpm lint`            | ESLint                                                        |
+| `pnpm check-types`     | TypeScript type checking                                      |

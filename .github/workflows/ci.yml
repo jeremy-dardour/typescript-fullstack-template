@@ -175,8 +175,12 @@ jobs:
         include:
           - task: test:cov --filter=api...
             label: Unit Tests API
+            artifact: coverage-api-unit
+            coverage-path: apps/api/coverage/unit
           - task: test:cov --filter=web...
             label: Unit Tests Web
+            artifact: coverage-web-unit
+            coverage-path: apps/web/coverage
 
     steps:
       - name: Checkout
@@ -194,8 +198,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report-${{ matrix.label }}
-          path: '**/coverage/**'
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.coverage-path }}
           retention-days: 7
 
   # ----------------------------------------------------------------------------
@@ -246,11 +250,101 @@ jobs:
       - name: Build shared packages
         run: pnpm turbo run build --filter=@workspace/shared
 
-      - name: Run E2E tests
-        run: pnpm --filter=api test:e2e
+      - name: Run E2E tests (with coverage)
+        run: pnpm --filter=api test:cov:e2e
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres-ci:postgres-ci@localhost:5433/postgres-ci
+
+      - name: Upload E2E coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-api-e2e
+          path: apps/api/coverage/e2e
+          retention-days: 7
+
+  # ----------------------------------------------------------------------------
+  # Coverage Report (merged API unit+E2E, web unit) — PR comment with evolution
+  # ----------------------------------------------------------------------------
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [tests, api-e2e]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup monorepo
+        uses: ./.github/actions/ci-setup
+
+      - name: Download API unit coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-api-unit
+          path: apps/api/coverage/unit
+
+      - name: Download API E2E coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-api-e2e
+          path: apps/api/coverage/e2e
+
+      - name: Download web coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-web-unit
+          path: apps/web/coverage
+
+      - name: Merge API unit + E2E coverage
+        run: pnpm --filter=api coverage:merge && pnpm --filter=api coverage:report
+
+      # Baseline saved by main builds; on a cache miss (first run, eviction)
+      # the comments render without evolution deltas
+      - name: Restore main coverage baseline
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: coverage-baseline
+          key: coverage-baseline-
+          restore-keys: coverage-baseline-
+
+      - name: Comment API coverage
+        if: github.event_name == 'pull_request'
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          name: API (unit + E2E merged)
+          json-summary-path: apps/api/coverage/final/coverage-summary.json
+          json-final-path: apps/api/coverage/merged/coverage-final.json
+          json-summary-compare-path: ${{ hashFiles('coverage-baseline/api/coverage-summary.json') != '' && 'coverage-baseline/api/coverage-summary.json' || '' }}
+
+      - name: Comment web coverage
+        if: github.event_name == 'pull_request'
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          name: Web (unit)
+          json-summary-path: apps/web/coverage/coverage-summary.json
+          json-final-path: apps/web/coverage/coverage-final.json
+          json-summary-compare-path: ${{ hashFiles('coverage-baseline/web/coverage-summary.json') != '' && 'coverage-baseline/web/coverage-summary.json' || '' }}
+
+      - name: Prepare baseline for cache
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p coverage-baseline/api coverage-baseline/web
+          cp apps/api/coverage/final/coverage-summary.json coverage-baseline/api/
+          cp apps/web/coverage/coverage-summary.json coverage-baseline/web/
+
+      - name: Save main coverage baseline
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: coverage-baseline
+          key: coverage-baseline-${{ github.sha }}
 
   # ----------------------------------------------------------------------------
   # Web E2E Tests (Playwright)

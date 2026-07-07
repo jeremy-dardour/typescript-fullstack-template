@@ -108,16 +108,17 @@ CI checks for contract drift to prevent frontend/backend type mismatches.
 
 The template ships with a comprehensive GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs on every PR and push to `main`:
 
-| Job                    | What it checks                                                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Format Check**       | Prettier formatting compliance                                                                                                                |
-| **Check Dependencies** | Dependency health                                                                                                                             |
-| **Check Types**        | TypeScript `--noEmit` across all packages                                                                                                     |
-| **Lint**               | ESLint (flat config) across all packages                                                                                                      |
-| **API Contract Check** | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift |
-| **Unit Tests**         | Vitest for API and Web (parallel matrix), with coverage upload                                                                                |
-| **API E2E Tests**      | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints                                         |
-| **Web E2E Tests**      | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                              |
+| Job                    | What it checks                                                                                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Format Check**       | Prettier formatting compliance                                                                                                                            |
+| **Check Dependencies** | Dependency health                                                                                                                                         |
+| **Check Types**        | TypeScript `--noEmit` across all packages                                                                                                                 |
+| **Lint**               | ESLint (flat config) across all packages                                                                                                                  |
+| **API Contract Check** | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift             |
+| **Unit Tests**         | Vitest for API and Web (parallel matrix), with coverage upload                                                                                            |
+| **API E2E Tests**      | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
+| **Coverage Report**    | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
+| **Web E2E Tests**      | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                                          |
 
 All jobs use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
 
