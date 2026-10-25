@@ -19,8 +19,7 @@ describe('Item CRUD E2E Tests', () => {
   let token: string;
 
   beforeAll(async () => {
-    const clientId = process.env.AUTH_CLIENT_ID!;
-    const audience = `api://${clientId}`;
+    const audience = process.env.AUTH_AUDIENCE ?? process.env.AUTH_CLIENT_ID!;
     const acceptedScope = process.env.AUTH_ACCEPTED_SCOPES!;
 
     await mockOidc.setup();

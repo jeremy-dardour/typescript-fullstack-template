@@ -71,6 +71,8 @@ This copies `.env.example` → `.env` for the root, `apps/api`, and
 `apps/web`, filling in random free ports for Postgres, the API, and the web
 dev server. The E2E test database port is handled separately — see
 [apps/api/README.md](./apps/api/README.md#parallel-workspace-ports).
+[PORTS.md](./PORTS.md) lists which file holds which port, and the gotchas
+(Vite's IPv6-only bind, its silent fallback to the next free port).
 
 ## What's Included
 
@@ -89,7 +91,8 @@ A complete working example demonstrating the full stack:
 A pluggable JWT authentication system ready for any OIDC provider:
 
 - **Strategy pattern**: `AuthGuard` → `AuthStrategy` interface → `JwtAuthStrategy` / `MockAuthStrategy`
-- **JWT verification**: JWKS, audience, issuer, and scope validation via `jose`
+- **JWT verification**: JWKS, audience, issuer, and scope validation via `jose`;
+  the expected audience is `AUTH_AUDIENCE`, defaulting to `AUTH_CLIENT_ID`
 - **OIDC discovery**: Automatic metadata and JWKS endpoint resolution
 - **Dev mode**: `FAKE_AUTH=true` bypasses auth for local development
 
