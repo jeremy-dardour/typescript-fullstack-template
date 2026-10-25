@@ -23,6 +23,6 @@
     "@workspace/typescript-config": "workspace:*",
     "tsup": "^8.5.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^5.0.5"
   }
 }
