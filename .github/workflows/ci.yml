@@ -408,3 +408,83 @@ jobs:
           name: playwright-screenshots
           path: apps/web/screenshots/
           retention-days: 30
+
+  # ----------------------------------------------------------------------------
+  # Production image: builds, migrates, boots, and routes correctly
+  # ----------------------------------------------------------------------------
+  image-boot:
+    name: Production Image Boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -f deployment/Dockerfile -t template-app:ci .
+
+      # Real-auth config: the image refuses FAKE_AUTH in production. The OIDC
+      # discovery document only has to be reachable for the app to boot.
+      - name: Boot image
+        run: |
+          docker run -d --name app --network host \
+            -e NODE_ENV=production \
+            -e PORT=3000 \
+            -e DATABASE_URL=postgres://app:app@localhost:5432/app \
+            -e DB_SSL=false \
+            -e AUTH_CLIENT_ID=ci-boot-test \
+            -e AUTH_OIDC_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration \
+            -e AUTH_ACCEPTED_SCOPES=api.read \
+            template-app:ci
+          for i in $(seq 1 60); do
+            if curl -sf -m 2 http://localhost:3000/health/ready > /dev/null; then
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' app)" != true ]; then
+              echo "Container exited during boot"
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "API never became ready"
+          exit 1
+
+      - name: Check routing
+        run: |
+          expect_status() {
+            actual="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$2")"
+            if [ "$actual" != "$1" ]; then
+              echo "GET $2: expected $1, got $actual"
+              exit 1
+            fi
+          }
+          expect_status 200 /health
+          expect_status 200 /
+          expect_status 200 /some/client/route
+          expect_status 401 /api/items
+          expect_status 404 /api/does-not-exist
+          expect_status 404 /openapi.yaml
+          curl -sf http://localhost:3000/some/client/route | grep -q '<div id="root">'
+          if docker logs app 2>&1 | grep -q '"level":50'; then
+            echo "Errors were logged"
+            exit 1
+          fi
+
+      - name: Container logs
+        if: always()
+        run: docker logs app || true
