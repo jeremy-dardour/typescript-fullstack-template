@@ -34,14 +34,15 @@ meets it.
      `async ({ page, step, expect }) => {}` (full Playwright `page` API, each
      user action wrapped in `step()`), save it under `.verify-app/` (ignored)
      or next to `apps/web/e2e/probe/scenarios/items-crud.ts` if it is worth
-     keeping, and run `pnpm probe <file>`.
+     keeping, and run `pnpm probe <file>` from the repo root (paths resolve from there).
    - It exits non-zero on a failed step, a console or page error, or a 5xx,
      and saves screenshots to `.verify-app/probe/`. Chrome logs every 4xx as a
      console error: when the flow expects one, pass
      `--allow-console 'status of 404'`.
    - First run on a machine: `pnpm --filter web exec playwright install chromium`.
 
-5. **Stop.** Run `scripts/verify-app.sh stop`, even after a failure.
+5. **Stop.** Run `scripts/verify-app.sh stop`, even after a failure. It stops
+   the API and web it started; Postgres keeps running (`pnpm db:stop`).
 
 Report what you exercised and the result of each step — including anything
 you could not check.

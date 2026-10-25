@@ -72,19 +72,14 @@ export const boundariesModules: Linter.Config[] = defineConfig([
                 { to: { element: { type: ['shared', 'app'] } } },
                 { to: { file: { categories: 'main' } } },
               ],
-              message:
-                'Modules cannot import each other. Use shared for shared code or decouple via events',
             },
             {
               from: { element: { type: 'shared' } },
               allow: { to: { element: { type: 'shared' } } },
-              message: 'shared cannot import other modules',
             },
             {
               from: { element: { type: 'app' } },
               allow: { to: { element: { type: ['app', 'shared'] } } },
-              message:
-                'app layer should not directly depend on business modules',
             },
             {
               from: { file: { categories: 'main' } },
