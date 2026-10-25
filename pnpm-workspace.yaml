@@ -2,5 +2,23 @@ packages:
   - packages/*
   - apps/*
 
+# Single home for overrides: pnpm ignores this block when package.json also
+# declares `pnpm.overrides`, and syncpack only checks this file.
 overrides:
   '@types/node': 26.6.5
+  # nest-commander 3.21 pins 7.0.3, whose peer range stops at NestJS 11; 7.1 adds 12.
+  '@golevelup/nestjs-discovery': ^7.1.0
+  # Security floors for vulnerable transitive versions.
+  js-yaml@>=4.0.0 <4.1.1: '>=4.1.1'
+  qs@<6.14.1: '>=6.14.1'
+  lodash@>=4.0.0 <=4.17.22: '>=4.17.23'
+  diff@<4.0.4: '>=4.0.4'
+  basic-ftp@<5.2.0: '>=5.2.1'
+
+# Fixes for published manifests that under-declare what they import.
+packageExtensions:
+  # Imports rxjs (multer utils) without declaring it; under pnpm's strict
+  # layout the HTTP adapter then fails to load ("No driver (HTTP) has been selected").
+  '@nestjs/platform-express@12':
+    peerDependencies:
+      rxjs: '^7.1.0'

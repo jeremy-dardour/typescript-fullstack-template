@@ -45,17 +45,5 @@
     "node": ">=24.0.0",
     "pnpm": ">=10"
   },
-  "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
-  "pnpm": {
-    "peerDependencyRules": {},
-    "ignoredBuiltDependencies": [],
-    "overrides": {
-      "@types/node": "26.0.0",
-      "js-yaml@>=4.0.0 <4.1.1": ">=4.1.1",
-      "qs@<6.14.1": ">=6.14.1",
-      "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
-      "diff@<4.0.4": ">=4.0.4",
-      "basic-ftp@<5.2.0": ">=5.2.1"
-    }
-  }
+  "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316"
 }
