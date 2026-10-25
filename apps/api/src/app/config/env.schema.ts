@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { z } from 'zod';
 
 import { baseEnvSchema } from '@/shared/types/env.base.schema';
@@ -18,6 +20,14 @@ export const envSchema = baseEnvSchema
       .refine((value) => value > 0 && value < 65_536, {
         message: 'PORT must be between 1-65535',
       }),
+
+    // Absolute path to a built SPA to serve; unset keeps the API JSON-only.
+    SERVE_STATIC_DIR: z
+      .string()
+      .refine((value) => path.isAbsolute(value), {
+        message: 'SERVE_STATIC_DIR must be an absolute path',
+      })
+      .optional(),
 
     // Memory ceilings for the health checks. Size them to the container limit:
     // the TsMorph metadata provider alone keeps the TypeScript compiler loaded.
