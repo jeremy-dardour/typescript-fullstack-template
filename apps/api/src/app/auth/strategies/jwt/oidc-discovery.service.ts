@@ -11,21 +11,27 @@ import type { Env } from '@/app/config/env.schema';
 export class OidcDiscoveryService {
   private issuer: string | null = null;
   private jwksFunction: ReturnType<typeof createRemoteJWKSet> | null = null;
-  private readonly discoveryUrl: URL;
 
-  constructor(private readonly configService: ConfigService<Env, true>) {
-    const discoveryUrl: string = this.configService.get(
-      'AUTH_OIDC_DISCOVERY_URL',
-    );
-    this.discoveryUrl = new URL(discoveryUrl);
-  }
+  constructor(private readonly configService: ConfigService<Env, true>) {}
 
   async init(): Promise<void> {
     try {
-      const clientId: string = this.configService.get('AUTH_CLIENT_ID');
+      // Read here, not in the constructor: with FAKE_AUTH these are unset and
+      // init() is never called.
+      const discoveryUrl = this.configService.get('AUTH_OIDC_DISCOVERY_URL', {
+        infer: true,
+      });
+      const clientId = this.configService.get('AUTH_CLIENT_ID', {
+        infer: true,
+      });
+      if (!discoveryUrl || !clientId) {
+        throw new Error(
+          'AUTH_OIDC_DISCOVERY_URL and AUTH_CLIENT_ID are required',
+        );
+      }
 
       const config = await oidc.discovery(
-        this.discoveryUrl,
+        new URL(discoveryUrl),
         clientId,
         undefined,
         oidc.None(),
