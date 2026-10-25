@@ -7,7 +7,7 @@ import {
 } from '@/app/auth/types/token.types';
 
 /** Bearer token that selects the second identity; any other request gets the default one. */
-export const MOCK_PARTNER_TOKEN = 'mock-partner';
+export const MOCK_SECOND_USER_TOKEN = 'mock-second-user';
 
 const DEFAULT_IDENTITY: AuthenticatedUser = {
   sub: 'mock-user',
@@ -15,10 +15,10 @@ const DEFAULT_IDENTITY: AuthenticatedUser = {
   name: 'MockUser',
 };
 
-const PARTNER_IDENTITY: AuthenticatedUser = {
-  sub: 'mock-partner',
-  email: 'mock-partner@example.com',
-  name: 'MockPartner',
+const SECOND_IDENTITY: AuthenticatedUser = {
+  sub: 'mock-second-user',
+  email: 'mock-second-user@example.com',
+  name: 'MockSecondUser',
 };
 
 @Injectable()
@@ -33,8 +33,8 @@ export class MockAuthStrategy implements AuthStrategy {
 
   authenticate(request: AuthenticatedRequest): Promise<AuthenticatedUser> {
     const identity =
-      request.headers.authorization === `Bearer ${MOCK_PARTNER_TOKEN}`
-        ? PARTNER_IDENTITY
+      request.headers.authorization === `Bearer ${MOCK_SECOND_USER_TOKEN}`
+        ? SECOND_IDENTITY
         : DEFAULT_IDENTITY;
 
     return Promise.resolve({ ...identity });

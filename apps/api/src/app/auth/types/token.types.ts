@@ -10,7 +10,8 @@ export interface VerifiedToken {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user: AuthenticatedUser;
+  /** Set by AuthGuard; absent on @Public() routes. */
+  user?: AuthenticatedUser;
 }
 
 /**

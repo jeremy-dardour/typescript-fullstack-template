@@ -8,7 +8,7 @@ import type { JwtAuthStrategy } from '@/app/auth/strategies/jwt/jwt-auth.strateg
 import type { MockAuthStrategy } from '@/app/auth/strategies/mock-auth.strategy';
 import type {
   AuthenticatedRequest,
-  JwtPayload,
+  AuthenticatedUser,
 } from '@/app/auth/types/token.types';
 import type { Env } from '@/app/config/env.schema';
 import type { ExecutionContext } from '@nestjs/common';
@@ -22,16 +22,10 @@ describe('authGuard', () => {
   let jwtAuthStrategy: JwtAuthStrategy;
   let mockAuthStrategy: MockAuthStrategy;
 
-  const mockPayload: JwtPayload = {
+  const mockPayload: AuthenticatedUser = {
     sub: 'user-123',
     email: 'user@example.com',
     name: 'Test User',
-    preferred_username: 'user@example.com',
-    scp: 'api.read',
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iss: 'https://auth.example.com',
-    aud: 'test-client-id',
   };
 
   beforeEach(() => {

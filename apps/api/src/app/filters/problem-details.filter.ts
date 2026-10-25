@@ -116,6 +116,10 @@ export class ProblemDetailsFilter implements ExceptionFilter {
    * Get error title (RFC 9457 §3.1.2)
    */
   private getTitle(status: number, exception: HttpException): string {
+    if (exception instanceof ProblemDetailsException && exception.title) {
+      return exception.title;
+    }
+
     const titleMap: Record<number, string> = {
       400: 'Bad Request',
       401: 'Unauthorized',
@@ -130,7 +134,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       504: 'Gateway Timeout',
     };
 
-    return titleMap[status] ?? exception.name;
+    return titleMap[status] ?? 'Error';
   }
 
   /**

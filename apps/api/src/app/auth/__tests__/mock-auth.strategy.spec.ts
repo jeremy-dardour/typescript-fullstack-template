@@ -1,5 +1,5 @@
 import {
-  MOCK_PARTNER_TOKEN,
+  MOCK_SECOND_USER_TOKEN,
   MockAuthStrategy,
 } from '@/app/auth/strategies/mock-auth.strategy';
 
@@ -18,9 +18,9 @@ describe('mockAuthStrategy', () => {
     });
   });
 
-  it('selects the second identity with the partner token', async () => {
+  it('selects the second identity with its token', async () => {
     await expect(
-      strategy.authenticate(requestWith(`Bearer ${MOCK_PARTNER_TOKEN}`)),
-    ).resolves.toMatchObject({ sub: 'mock-partner' });
+      strategy.authenticate(requestWith(`Bearer ${MOCK_SECOND_USER_TOKEN}`)),
+    ).resolves.toMatchObject({ sub: 'mock-second-user' });
   });
 });

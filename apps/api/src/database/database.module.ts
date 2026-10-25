@@ -18,15 +18,20 @@ export class DatabaseModule {
   /**
    * Create global database connection using ConfigService
    */
-  static forRoot(): DynamicModule {
+  /**
+   * @param options.allowNoEntities for processes that load no entity-owning
+   * module, such as a CLI whose commands don't touch the database. The HTTP app
+   * keeps MikroORM's fail-fast check for an empty entity set.
+   */
+  static forRoot(options: { allowNoEntities?: boolean } = {}): DynamicModule {
     return {
       module: this,
       global: true,
 
       imports: [
         MikroOrmModule.forRootAsync({
-          // Required by @mikro-orm/nestjs for driver-specific exports such as
-          // SqlEntityManager when the options come from a factory.
+          // With a factory, @mikro-orm/nestjs needs the driver up front to
+          // register its driver-specific providers; without it, it warns at boot.
           driver: PostgreSqlDriver,
           inject: [ConfigService],
           useFactory: (configService: ConfigService<BaseEnv, true>) => {
@@ -47,10 +52,7 @@ export class DatabaseModule {
               }),
 
               autoLoadEntities: true, // prevents needing to register entities manually in mikro orm module
-              // Entities come from forFeature() in the modules that use them. The
-              // CLI process loads only the modules its commands need, which can
-              // be none, so an empty set is valid rather than a misconfiguration.
-              discovery: { warnWhenNoEntities: false },
+              discovery: { warnWhenNoEntities: !options.allowNoEntities },
 
               metadataProvider: TsMorphMetadataProvider,
               // Production runs as an unprivileged user that cannot write the
