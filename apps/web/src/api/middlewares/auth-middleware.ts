@@ -1,6 +1,6 @@
-import type { AuthProvider } from '@/auth/auth-provider.interface';
+import type { AuthSession } from '@/auth/auth.interface';
 
-export function createAuthMiddleware(getAuth: () => AuthProvider | null) {
+export function createAuthMiddleware(getAuth: () => AuthSession | null) {
   return {
     async onRequest({ request }: { request: Request }) {
       const auth = getAuth();
@@ -14,7 +14,7 @@ export function createAuthMiddleware(getAuth: () => AuthProvider | null) {
       }
     },
 
-    async onResponse({ response }: { response: Response }) {
+    onResponse({ response }: { response: Response }) {
       if (response.status !== 401) {
         return;
       }
@@ -24,8 +24,9 @@ export function createAuthMiddleware(getAuth: () => AuthProvider | null) {
         return;
       }
 
-      console.warn('[AuthMiddleware] Received 401 response, logging out');
-      await auth.logout();
+      // Only 401: a 403 is an ordinary permission denial, not a dead session.
+      console.warn('[AuthMiddleware] Received 401 response, signing out');
+      auth.signOut();
     },
   };
 }

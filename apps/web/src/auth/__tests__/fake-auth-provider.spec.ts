@@ -1,72 +1,43 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { FakeAuthProvider } from '@/auth/fake-auth-provider';
 
 describe('fakeAuthProvider', () => {
-  let provider: FakeAuthProvider;
+  it('starts authenticated as the development user', () => {
+    const state = new FakeAuthProvider().getState();
 
-  beforeEach(() => {
-    provider = new FakeAuthProvider();
-  });
-
-  describe('initialize', () => {
-    it('should set authenticated to true', () => {
-      provider.initialize();
-
-      expect(provider.isAuthenticated()).toBe(true);
+    expect(state).toMatchObject({
+      status: 'authenticated',
+      user: { sub: 'mock-user', name: 'DevUser' },
     });
   });
 
-  describe('login', () => {
-    it('should set authenticated to true', () => {
-      provider.login();
+  it('notifies subscribers and becomes anonymous on sign-out', () => {
+    const provider = new FakeAuthProvider();
+    const listener = vi.fn();
+    provider.subscribe(listener);
 
-      expect(provider.isAuthenticated()).toBe(true);
-    });
+    provider.signOut();
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(provider.getState().status).toBe('anonymous');
   });
 
-  describe('logout', () => {
-    it('should set authenticated to false', () => {
-      provider.initialize();
-      expect(provider.isAuthenticated()).toBe(true);
+  it('returns the same state reference until the state changes', () => {
+    const provider = new FakeAuthProvider();
 
-      provider.logout();
-
-      expect(provider.isAuthenticated()).toBe(false);
-    });
+    expect(provider.getState()).toBe(provider.getState());
   });
 
-  describe('getAuthenticatedUser', () => {
-    it('should return null when not authenticated', () => {
-      expect(provider.getAuthenticatedUser()).toBeNull();
-    });
+  it('mints a JWT only while authenticated', async () => {
+    const provider = new FakeAuthProvider();
+    const token = await provider.getAccessToken();
+    expect(token.split('.')).toHaveLength(3);
 
-    it('should return user info when authenticated', () => {
-      provider.initialize();
+    provider.signOut();
 
-      const user = provider.getAuthenticatedUser();
-
-      expect(user).toEqual({
-        username: 'dev.user@example.com',
-        name: 'DevUser',
-      });
-    });
-  });
-
-  describe('getAccessToken', () => {
-    it('should throw error when not authenticated', async () => {
-      await expect(provider.getAccessToken()).rejects.toThrow(
-        '[FakeAuthProvider] User is not authenticated',
-      );
-    });
-
-    it('should return a valid JWT token when authenticated', async () => {
-      provider.initialize();
-
-      const token = await provider.getAccessToken();
-
-      const parts = token.split('.');
-      expect(parts).toHaveLength(3);
-    });
+    await expect(provider.getAccessToken()).rejects.toThrow(
+      '[FakeAuthProvider] User is not authenticated',
+    );
   });
 });

@@ -1,4 +1,9 @@
 {
+  "auth.landing.title": "Iniciar sesión",
+  "auth.landing.status.checking": "Comprobando tu sesión…",
+  "auth.landing.status.signIn": "Inicia sesión para continuar.",
+  "auth.landing.status.error": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+  "auth.landing.action.continueInDevMode": "Continuar como usuario de desarrollo",
   "app.error.render.title": "Se produjo un error al renderizar la aplicación.",
   "app.error.render.message": "Por favor, contacte con el administrador o inténtelo de nuevo más tarde.",
   "app.errorDialog.title": "Se produjo un error",

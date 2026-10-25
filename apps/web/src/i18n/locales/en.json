@@ -1,4 +1,9 @@
 {
+  "auth.landing.title": "Sign in",
+  "auth.landing.status.checking": "Checking your session…",
+  "auth.landing.status.signIn": "Sign in to continue.",
+  "auth.landing.status.error": "Sign-in failed. Please try again.",
+  "auth.landing.action.continueInDevMode": "Continue as the development user",
   "app.error.render.title": "An error occurred while rendering the application.",
   "app.error.render.message": "Please contact the administrator or try again later.",
   "app.errorDialog.title": "An error occurred",
