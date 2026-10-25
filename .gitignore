@@ -90,3 +90,6 @@ playwright/.cache/
 # Claude Code: agent worktrees and per-user permissions
 .claude/worktrees/
 .claude/settings.local.json
+
+# scripts/verify-app.sh state and logs
+.verify-app/
