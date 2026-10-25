@@ -1,6 +1,6 @@
 import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
-import { ModulesContainer, Reflector } from '@nestjs/core';
+import { MetadataScanner, ModulesContainer, Reflector } from '@nestjs/core';
 import request from 'supertest';
 
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
@@ -10,9 +10,13 @@ import { IS_PUBLIC_KEY } from '@/app/auth/decorators';
 import type { INestApplication } from '@nestjs/common';
 
 /**
- * Every route reachable without a token, each with the reason it must be.
- * Making a route @Public() fails this suite until it is added here, so the
- * decision shows up in review.
+ * Every controller route reachable without a token, each with the reason it
+ * must be. Making a route @Public() fails this suite until it is added here,
+ * so the decision shows up in review.
+ *
+ * Out of scope: routes mounted outside controllers (Swagger UI, Scalar,
+ * /openapi.yaml — served only when NODE_ENV is development or test) and
+ * controllers registered only in other environments.
  */
 const PUBLIC_ROUTES: Record<string, string> = {
   'GET /health': 'monitoring probe',
@@ -27,9 +31,13 @@ interface Route {
   isPublic: boolean;
 }
 
-/** Reads every route from controller metadata, the same source Nest routes from. */
+/**
+ * Reads every controller route from metadata, walking the prototype chain the
+ * way Nest does so inherited handlers count too.
+ */
 function listRoutes(app: INestApplication): Route[] {
   const reflector = app.get(Reflector);
+  const scanner = new MetadataScanner();
   const routes: Route[] = [];
 
   for (const module of app.get(ModulesContainer).values()) {
@@ -39,16 +47,24 @@ function listRoutes(app: INestApplication): Route[] {
 
       const basePath = reflector.get<string>(PATH_METADATA, controller) ?? '';
       const prototype = controller.prototype as Record<string, unknown>;
-      for (const key of Object.getOwnPropertyNames(prototype)) {
+      for (const key of scanner.getAllMethodNames(prototype)) {
         const handler = prototype[key];
-        if (key === 'constructor' || typeof handler !== 'function') continue;
+        if (typeof handler !== 'function') continue;
 
-        const path = reflector.get<string | undefined>(PATH_METADATA, handler);
+        const path = reflector.get<string | string[] | undefined>(
+          PATH_METADATA,
+          handler,
+        );
         const method = reflector.get<RequestMethod | undefined>(
           METHOD_METADATA,
           handler,
         );
         if (path === undefined || method === undefined) continue;
+        if (Array.isArray(path) || method === RequestMethod.ALL) {
+          throw new Error(
+            `Unsupported route shape on ${controller.name}.${key}: extend listRoutes()`,
+          );
+        }
 
         const fullPath = `/${basePath}/${path}`
           .replaceAll(/\/+/g, '/')
@@ -74,7 +90,7 @@ function listRoutes(app: INestApplication): Route[] {
 
 function send(app: INestApplication, route: Route) {
   const agent = request(app.getHttpServer() as never);
-  // Guards run before pipes, so any well-formed id reaches the auth check.
+  // Guards run before pipes, so the placeholder only has to match the path.
   const url = route.path.replaceAll(
     /:\w+/g,
     '00000000-0000-4000-8000-000000000000',

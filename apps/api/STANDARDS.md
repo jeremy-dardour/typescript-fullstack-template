@@ -112,12 +112,11 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 
 - `AuthGuard` is global: every route needs a valid token unless the handler or
   controller is `@Public()`.
-- `route-auth-coverage.e2e-spec.ts` reads every route from controller metadata
-  and enforces it: non-public routes answer 401 without a token, and the
-  `@Public()` routes must match a reviewed `PUBLIC_ROUTES` list.
-- Authorization beyond "signed in" (ownership, roles, tenancy) extends the same
-  pattern: a table of routes with the denial each must produce, plus a
-  meta-test that fails when a new route is missing from the table.
+- `route-auth-coverage.e2e-spec.ts` reads every controller route from
+  metadata and enforces it: non-public routes answer 401 without a token, and
+  the `@Public()` routes must match a reviewed `PUBLIC_ROUTES` list. Routes
+  mounted outside controllers (the dev-only API docs) and controllers
+  registered only in other environments are out of its reach.
 
 ## Environment config
 

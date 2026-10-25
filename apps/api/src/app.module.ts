@@ -14,7 +14,6 @@ import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filt
 import { HealthModule } from '@/app/health/health.module';
 import { ContextHeadersInterceptor } from '@/app/interceptors/context-headers.interceptor';
 import { LoggerModule } from '@/app/logger/logger.module';
-import { SwaggerDevController } from '@/app/swagger/swagger-dev.controller';
 import { DatabaseModule } from '@/database/database.module';
 import { ItemModule } from '@/modules/item/item.module';
 
@@ -39,9 +38,6 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     ]),
     HealthModule,
     ItemModule,
-  ],
-  controllers: [
-    ...(process.env.NODE_ENV === 'production' ? [] : [SwaggerDevController]),
   ],
   providers: [
     {
