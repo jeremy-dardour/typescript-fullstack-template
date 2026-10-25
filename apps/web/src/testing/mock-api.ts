@@ -41,7 +41,6 @@ export function problemResponse(
  */
 export function setupItemsApi(initialItems: Item[] = []) {
   let items = [...initialItems];
-  let generatedId = 0;
   let nextError: { status: number; detail: string } | null = null;
 
   const takeError = () => {
@@ -62,7 +61,7 @@ export function setupItemsApi(initialItems: Item[] = []) {
       >;
       const now = new Date().toISOString();
       const created: Item = {
-        id: `item-${++generatedId}`,
+        id: crypto.randomUUID(),
         name: input.name,
         description: input.description ?? null,
         createdAt: now,
@@ -76,16 +75,25 @@ export function setupItemsApi(initialItems: Item[] = []) {
       if (!existing)
         return problemResponse(404, { detail: 'Resource not found' });
 
-      const input = (await request.json()) as Partial<Item>;
-      const updated = {
+      const input = (await request.json()) as Partial<
+        Pick<Item, 'name' | 'description'>
+      >;
+      const updated: Item = {
         ...existing,
-        ...input,
+        name: input.name ?? existing.name,
+        description:
+          input.description === undefined
+            ? existing.description
+            : input.description,
         updatedAt: new Date().toISOString(),
       };
       items = items.map((item) => (item.id === existing.id ? updated : item));
       return HttpResponse.json(updated);
     }),
     http.delete(`${API_BASE}/api/items/:id`, ({ params }) => {
+      if (items.every((item) => item.id !== params.id)) {
+        return problemResponse(404, { detail: 'Resource not found' });
+      }
       items = items.filter((item) => item.id !== params.id);
       return new HttpResponse(null, { status: 204 });
     }),

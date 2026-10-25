@@ -33,8 +33,12 @@ export function UnauthenticatedLanding({
     <main className="flex min-h-screen items-center justify-center bg-muted p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>{t('auth.landing.title')}</CardTitle>
-          <CardDescription>{t(MESSAGE_KEYS[status])}</CardDescription>
+          <CardTitle role="heading" aria-level={1}>
+            {t('auth.landing.title')}
+          </CardTitle>
+          <CardDescription role="status">
+            {t(MESSAGE_KEYS[status])}
+          </CardDescription>
         </CardHeader>
         {status === 'restoring' ? null : (
           <CardContent>

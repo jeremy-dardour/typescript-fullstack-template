@@ -14,11 +14,11 @@ import '@/i18n/i18n';
 
 import './main.css';
 
-const { authSystem } = bootstrap();
+function createApp(): React.ReactNode {
+  try {
+    const { authSystem } = bootstrap();
 
-createRoot(document.querySelector('#root')!).render(
-  <StrictMode>
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    return (
       <AuthContext value={authSystem}>
         <ApiErrorProvider>
           <AppProvider>
@@ -27,6 +27,19 @@ createRoot(document.querySelector('#root')!).render(
           </AppProvider>
         </ApiErrorProvider>
       </AuthContext>
+    );
+  } catch (error) {
+    // Bootstrap runs before React mounts, outside the error boundary: without
+    // this, a misconfiguration (e.g. no auth adapter) is a blank page.
+    console.error(error);
+    return <ErrorFallback />;
+  }
+}
+
+createRoot(document.querySelector('#root')!).render(
+  <StrictMode>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {createApp()}
     </ErrorBoundary>
   </StrictMode>,
 );

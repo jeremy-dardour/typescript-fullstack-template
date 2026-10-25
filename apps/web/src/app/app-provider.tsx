@@ -5,10 +5,12 @@ import {
   MutationCache,
 } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { isLocallyHandledError, queryConfig } from '@/api/react-query';
+import { useAuth } from '@/auth';
 import { env } from '@/config/env';
+import { formatToApiError } from '@/errors/format-error';
 import { useApiError } from '@/errors/use-api-error';
 
 interface AppProviderProperties {
@@ -16,24 +18,43 @@ interface AppProviderProperties {
 }
 
 export const AppProvider = ({ children }: AppProviderProperties) => {
-  const { showError } = useApiError();
+  const { showError, clearError } = useApiError();
+  const auth = useAuth();
 
   const [queryClient] = React.useState(
     () =>
       new QueryClient({
         queryCache: new QueryCache({
           onError: (error, query) => {
-            if (isLocallyHandledError(error, query.meta)) return;
+            if (
+              isSessionEnded(error) ||
+              isLocallyHandledError(error, query.meta)
+            ) {
+              return;
+            }
             showError(error);
           },
         }),
         mutationCache: new MutationCache({
           onError: (error) => {
+            if (isSessionEnded(error)) return;
             showError(error);
           },
         }),
         defaultOptions: queryConfig,
       }),
+  );
+
+  // Cached data belongs to the session that fetched it: drop it, and any open
+  // error, as soon as the session ends so the next user never sees it.
+  useEffect(
+    () =>
+      auth.subscribe(() => {
+        if (auth.getState().status === 'authenticated') return;
+        queryClient.clear();
+        clearError();
+      }),
+    [auth, queryClient, clearError],
   );
 
   return (
@@ -43,3 +64,8 @@ export const AppProvider = ({ children }: AppProviderProperties) => {
     </QueryClientProvider>
   );
 };
+
+/** A 401 ends the session (auth middleware); the sign-in page replaces the error. */
+function isSessionEnded(error: unknown): boolean {
+  return formatToApiError(error)?.status === 401;
+}

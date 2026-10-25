@@ -1,29 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '@/api/errors';
-import { GlobalApiErrorDialog } from '@/app/components/error/global-api-error-dialog';
-import { ApiErrorProvider } from '@/errors/api-error-provider';
 import { useApiError } from '@/errors/use-api-error';
-import { createQueryWrapper } from '@/testing/test-utils';
+import { renderWithApp } from '@/testing/render-with-app';
 
 const ErrorTrigger = ({ error }: { error: Error }) => {
   const { showError } = useApiError();
   return <button onClick={() => showError(error)}>Trigger Error</button>;
 };
 
-const renderWithProviders = (ui: React.ReactElement) => {
-  const QueryWrapper = createQueryWrapper();
-  return render(
-    <QueryWrapper>
-      <ApiErrorProvider>
-        {ui}
-        <GlobalApiErrorDialog />
-      </ApiErrorProvider>
-    </QueryWrapper>,
-  );
-};
+const renderWithProviders = (ui: React.ReactElement) => renderWithApp(ui);
 
 describe('globalApiErrorDialog', () => {
   it('should not render dialog when there is no error', () => {
@@ -39,7 +27,7 @@ describe('globalApiErrorDialog', () => {
 
     await user.click(screen.getByText('Trigger Error'));
 
-    expect(screen.getByText('app.errorDialog.title')).toBeVisible();
+    expect(screen.getByText('An error occurred')).toBeVisible();
   });
 
   it('shows a 4xx problem detail under the translated description', async () => {
@@ -54,7 +42,7 @@ describe('globalApiErrorDialog', () => {
     expect(
       screen.getByText('The item was modified by another request.'),
     ).toBeVisible();
-    expect(screen.getByText('app.errorDialog.description')).toBeVisible();
+    expect(screen.getByText('Please try again later.')).toBeVisible();
   });
 
   it('does not show the detail of a server error', async () => {
@@ -66,7 +54,7 @@ describe('globalApiErrorDialog', () => {
 
     await user.click(screen.getByText('Trigger Error'));
 
-    expect(screen.getByText('app.errorDialog.description')).toBeVisible();
+    expect(screen.getByText('Please try again later.')).toBeVisible();
     expect(
       screen.queryByText('relation "item" does not exist'),
     ).not.toBeInTheDocument();
@@ -79,12 +67,12 @@ describe('globalApiErrorDialog', () => {
     renderWithProviders(<ErrorTrigger error={testError} />);
 
     await user.click(screen.getByText('Trigger Error'));
-    expect(screen.getByText('app.errorDialog.title')).toBeVisible();
+    expect(screen.getByText('An error occurred')).toBeVisible();
 
-    const closeButton = screen.getByText('app.errorDialog.okButton');
+    const closeButton = screen.getByText('Ok');
     await user.click(closeButton);
 
-    expect(screen.queryByText('app.errorDialog.title')).not.toBeInTheDocument();
+    expect(screen.queryByText('An error occurred')).not.toBeInTheDocument();
   });
 
   it('should close dialog when Escape key is pressed', async () => {
@@ -97,7 +85,7 @@ describe('globalApiErrorDialog', () => {
 
     await user.keyboard('{Escape}');
 
-    expect(screen.queryByText('app.errorDialog.title')).not.toBeInTheDocument();
+    expect(screen.queryByText('An error occurred')).not.toBeInTheDocument();
   });
 
   it('should not display dialog for non-API errors', async () => {

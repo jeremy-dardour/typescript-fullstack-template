@@ -8,7 +8,7 @@ describe('fakeAuthProvider', () => {
 
     expect(state).toMatchObject({
       status: 'authenticated',
-      user: { sub: 'mock-user', name: 'DevUser' },
+      user: { sub: 'mock-user', name: 'MockUser' },
     });
   });
 

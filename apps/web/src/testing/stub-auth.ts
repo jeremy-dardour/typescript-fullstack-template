@@ -1,6 +1,8 @@
 import { createElement } from 'react';
 import { vi } from 'vitest';
 
+import { ANONYMOUS } from '@/auth/auth-state';
+
 import type { AuthState } from '@/auth/auth-state';
 import type { AuthSession, AuthSystem } from '@/auth/auth.interface';
 
@@ -21,6 +23,10 @@ export function createStubAuth(initialState?: AuthState): {
     user: STUB_USER,
   };
   const listeners = new Set<() => void>();
+  const setState = (next: AuthState) => {
+    state = next;
+    for (const listener of listeners) listener();
+  };
 
   const auth: AuthSession = {
     getState: () => state,
@@ -28,18 +34,13 @@ export function createStubAuth(initialState?: AuthState): {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    signOut: vi.fn(),
+    signOut: vi.fn(() => setState(ANONYMOUS)),
     getAccessToken: vi.fn().mockResolvedValue('mockAccessToken'),
   };
   const authSystem: AuthSystem = {
     session: auth,
     SignInButton: () =>
       createElement('button', { type: 'button' }, 'stub sign in'),
-  };
-
-  const setState = (next: AuthState) => {
-    state = next;
-    for (const listener of listeners) listener();
   };
 
   return { auth, authSystem, setState };

@@ -11,12 +11,26 @@ vi.mock('@/config/env', () => ({
   },
 }));
 
+// msw's 'error' strategy only rejects the fetch, which the app may turn into
+// an error dialog that the test never looks at; fail the test instead.
+const unhandledRequests: string[] = [];
+
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' });
+  server.listen({
+    onUnhandledRequest: (request) => {
+      unhandledRequests.push(`${request.method} ${request.url}`);
+    },
+  });
 });
 
 afterEach(() => {
   server.resetHandlers();
+  const requests = unhandledRequests.splice(0);
+  if (requests.length > 0) {
+    throw new Error(
+      `Unhandled requests (add an MSW handler):\n${requests.join('\n')}`,
+    );
+  }
 });
 
 afterAll(() => {

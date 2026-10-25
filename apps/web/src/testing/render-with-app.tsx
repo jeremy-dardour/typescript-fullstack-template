@@ -20,7 +20,7 @@ await appI18n.use(initReactI18next).init({
   lng: 'en',
   resources: { en: { translation: en } },
   // Mirrors the app: React already escapes rendered strings, so i18next's own
-  // escaping would double-escape names like "Venue & Catering".
+  // escaping would double-escape names like "Salt & Pepper".
   interpolation: { escapeValue: false },
 });
 

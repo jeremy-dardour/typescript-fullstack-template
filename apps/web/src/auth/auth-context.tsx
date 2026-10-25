@@ -1,4 +1,4 @@
-import { createContext, use, useSyncExternalStore } from 'react';
+import { createContext, use, useCallback, useSyncExternalStore } from 'react';
 
 import type { AuthState } from '@/auth/auth-state';
 import type { AuthSession, AuthSystem } from '@/auth/auth.interface';
@@ -26,9 +26,10 @@ export function useAuth(): AuthSession {
  */
 export function useAuthState(): AuthState {
   const auth = useAuth();
-
-  return useSyncExternalStore(
-    (listener) => auth.subscribe(listener),
-    () => auth.getState(),
+  const subscribe = useCallback(
+    (listener: () => void) => auth.subscribe(listener),
+    [auth],
   );
+
+  return useSyncExternalStore(subscribe, () => auth.getState());
 }
