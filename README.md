@@ -39,7 +39,7 @@ packages/
 pnpm install
 
 # Start the database
-docker compose up -d db
+pnpm db:start
 
 # Run migrations
 pnpm --filter api db:migrate:up
@@ -143,21 +143,46 @@ pnpm generate:api-types
 
 CI checks for contract drift to prevent frontend/backend type mismatches.
 
+## Deployment
+
+`deployment/Dockerfile` builds one image holding the API and the built SPA.
+NestJS serves the SPA (with an `index.html` fallback for client routes) when
+`SERVE_STATIC_DIR` is set, which the image does; API paths (`/api/*`,
+`/health/*`, `/openapi.yaml`) never fall through to it. Unset the variable to
+host the SPA elsewhere and run the image as a JSON API. Rationale and when to
+split: [ADR 0009](./docs/adr/0009-spa-served-by-the-api.md).
+
+The container entrypoint applies pending migrations before starting
+([ADR 0001](./docs/adr/0001-migrations-run-on-container-start.md)) and runs
+as the unprivileged `node` user. It needs `NODE_ENV`, `DATABASE_URL`, and the
+real-auth `AUTH_*` variables (fake auth is refused in production); set
+`DB_SSL=false` for a database without TLS.
+
+```bash
+pnpm build:api:docker   # builds template-app:local
+```
+
+VITE_* values are inlined at build time (`--build-arg VITE_FAKE_AUTH=…`);
+`VITE_API_URL` is left unset so the SPA calls the API on its own origin. The
+template ships no production web auth adapter, so add one before deploying
+([ADR 0008](./docs/adr/0008-web-auth-module-boundaries.md)).
+
 ## CI Pipeline
 
 The template ships with a comprehensive GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs on every PR and push to `main`:
 
-| Job                    | What it checks                                                                                                                                            |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Format Check**       | Prettier formatting compliance                                                                                                                            |
-| **Check Dependencies** | Dependency health                                                                                                                                         |
-| **Check Types**        | TypeScript `--noEmit` across all packages                                                                                                                 |
-| **Lint**               | ESLint (flat config) across all packages                                                                                                                  |
-| **API Contract Check** | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift             |
-| **Unit Tests**         | Vitest for API and Web (parallel matrix), with coverage upload                                                                                            |
-| **API E2E Tests**      | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
-| **Coverage Report**    | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
-| **Web E2E Tests**      | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                                          |
+| Job                       | What it checks                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Format Check**          | Prettier formatting compliance                                                                                                                            |
+| **Check Dependencies**    | Dependency health                                                                                                                                         |
+| **Check Types**           | TypeScript `--noEmit` across all packages                                                                                                                 |
+| **Lint**                  | ESLint (flat config) across all packages                                                                                                                  |
+| **API Contract Check**    | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift             |
+| **Unit Tests**            | Vitest for API and Web (parallel matrix), with coverage upload                                                                                            |
+| **API E2E Tests**         | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
+| **Coverage Report**       | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
+| **Web E2E Tests**         | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                                          |
+| **Production Image Boot** | Builds `deployment/Dockerfile`, boots it with `NODE_ENV=production` against Postgres, and checks migrations, health, SPA routing and API 401/404s         |
 
 All jobs use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
 
