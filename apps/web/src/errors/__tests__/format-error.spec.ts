@@ -42,6 +42,16 @@ describe('formatToApiError', () => {
     expect(formatted?.statusText).toBe('Not Found');
   });
 
+  it('preserves problem details returned as the top-level API error', () => {
+    const formatted = formatToApiError({
+      status: 409,
+      title: 'Conflict',
+      detail: 'The item was modified by another request.',
+    });
+
+    expect(formatted?.detail).toBe('The item was modified by another request.');
+  });
+
   it('should return null for standard Error', () => {
     const error = new Error('Unknown error');
     const formatted = formatToApiError(error);
