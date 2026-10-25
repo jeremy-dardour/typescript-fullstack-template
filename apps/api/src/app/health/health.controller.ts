@@ -1,4 +1,5 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheck,
@@ -10,6 +11,10 @@ import { SkipThrottle } from '@nestjs/throttler';
 
 import { Public } from '@/app/auth';
 import { MikroORMHealthIndicator } from '@/app/health/mikro-orm.health';
+
+import type { Env } from '@/app/config/env.schema';
+
+const MEGABYTE = 1024 * 1024;
 
 /**
  * Health check controller for Kubernetes probes and load balancers
@@ -24,6 +29,7 @@ export class HealthController {
     private readonly mikroORM: MikroORMHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   /**
@@ -69,11 +75,17 @@ export class HealthController {
         // Database health
         () => this.mikroORM.isHealthy(),
 
-        // Heap memory (max 150MB)
-        () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+        () =>
+          this.memory.checkHeap(
+            'memory_heap',
+            this.config.get('HEALTH_MAX_HEAP_MB', { infer: true }) * MEGABYTE,
+          ),
 
-        // RSS memory (max 300MB)
-        () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
+        () =>
+          this.memory.checkRSS(
+            'memory_rss',
+            this.config.get('HEALTH_MAX_RSS_MB', { infer: true }) * MEGABYTE,
+          ),
 
         // Disk usage (max 90%)
         () =>
@@ -137,7 +149,11 @@ export class HealthController {
     try {
       const result = await this.health.check([
         // Only check memory to avoid external dependency restarts
-        () => this.memory.checkHeap('memory_heap', 200 * 1024 * 1024),
+        () =>
+          this.memory.checkHeap(
+            'memory_heap',
+            this.config.get('HEALTH_MAX_HEAP_MB', { infer: true }) * MEGABYTE,
+          ),
       ]);
       return result.details;
     } catch (error) {
