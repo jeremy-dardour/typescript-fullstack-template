@@ -95,8 +95,14 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 - Input DTOs: `class-validator` decorators + `@ApiProperty` for Swagger
 - Output DTOs: `@ApiProperty` only (no validation on responses)
 - Plain classes with `!` non-null assertions, no base class
-- Actor identity comes from the authenticated request. Mutation DTOs never
-  accept an actor, author, or current-user ID when the server can determine it.
+- Actor identity comes from the authenticated request (`@CurrentUser()`).
+  Mutation DTOs never accept an actor, author, or current-user ID when the
+  server can determine it.
+- A field that may be omitted but must not be `null` uses
+  `@IsOptionalNotNull()`: `@IsOptional()` also lets an explicit `null` through,
+  which reaches a non-nullable column as a 500 instead of a 422.
+- A domain error with its own RFC 9457 problem type throws
+  `ProblemDetailsException(status, typeSlug, detail)`.
 - Use one canonical output DTO per entity by default. Aggregate responses
   compose those DTOs rather than introducing near-duplicate projections.
   Create a read-model-specific entity DTO only when its shape is materially

@@ -94,7 +94,13 @@ A pluggable JWT authentication system ready for any OIDC provider:
 - **JWT verification**: JWKS, audience, issuer, and scope validation via `jose`;
   the expected audience is `AUTH_AUDIENCE`, defaulting to `AUTH_CLIENT_ID`
 - **OIDC discovery**: Automatic metadata and JWKS endpoint resolution
-- **Dev mode**: `FAKE_AUTH=true` bypasses auth for local development
+- **Caller identity**: both strategies produce `{ sub, email?, name? }`; read it
+  in a handler with `@CurrentUser()`, or from `GET /api/me`. Key anything you
+  persist about a user on `sub`, the only claim OIDC guarantees to be stable.
+- **Dev mode**: `FAKE_AUTH=true` bypasses auth for local development. It
+  refuses to start unless `NODE_ENV` is explicitly `development` or `test`, and
+  the `AUTH_*` variables are then optional. Every request is the mock user;
+  send `Authorization: Bearer mock-partner` to act as a second user.
 
 Configure your OIDC provider with three env vars:
 
