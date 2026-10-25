@@ -1,20 +1,16 @@
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 
 import { Item } from '@/database/entities/item.entity';
 import { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
 import { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
+import { ItemRepository } from '@/modules/item/repositories/item.repository';
 
 @Injectable()
 export class ItemService {
-  constructor(
-    @InjectRepository(Item)
-    private readonly itemRepository: EntityRepository<Item>,
-  ) {}
+  constructor(private readonly itemRepository: ItemRepository) {}
 
   async findAll(): Promise<Item[]> {
-    return this.itemRepository.findAll({ orderBy: { createdAt: 'DESC' } });
+    return this.itemRepository.findAllNewestFirst();
   }
 
   async findOne(id: string): Promise<Item> {
@@ -22,25 +18,30 @@ export class ItemService {
   }
 
   async create(createItemDto: CreateItemDto): Promise<Item> {
-    const item = this.itemRepository.create(createItemDto);
-    await this.itemRepository.getEntityManager().flush();
+    const item = new Item();
+    item.name = createItemDto.name;
+    item.description = createItemDto.description;
+
+    await this.itemRepository.save(item);
     return item;
   }
 
   async update(id: string, updateItemDto: UpdateItemDto): Promise<Item> {
     const item = await this.itemRepository.findOneOrFail({ id });
-    const data = Object.fromEntries(
-      Object.entries(updateItemDto).filter(([, v]) => v !== undefined),
-    );
-    this.itemRepository.assign(item, data);
-    await this.itemRepository.getEntityManager().flush();
+
+    if (updateItemDto.name !== undefined) {
+      item.name = updateItemDto.name;
+    }
+    if (updateItemDto.description !== undefined) {
+      item.description = updateItemDto.description;
+    }
+
+    await this.itemRepository.save(item);
     return item;
   }
 
   async remove(id: string): Promise<void> {
     const item = await this.itemRepository.findOneOrFail({ id });
-    const em = this.itemRepository.getEntityManager();
-    em.remove(item);
-    await em.flush();
+    await this.itemRepository.delete(item);
   }
 }
