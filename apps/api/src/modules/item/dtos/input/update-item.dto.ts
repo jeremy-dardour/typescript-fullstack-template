@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 
+import { IsOptionalNotNull } from '@/shared/decorators/is-optional-not-null.decorator';
+
 export class UpdateItemDto {
   @ApiProperty({ required: false, maxLength: 255 })
   @IsString()
-  @IsOptional()
+  @IsOptionalNotNull()
   @MaxLength(255)
   name?: string;
 

@@ -127,6 +127,26 @@ describe('Item CRUD E2E Tests', () => {
     });
   });
 
+  describe('PATCH /items/:id with null', () => {
+    it('rejects null for a non-nullable field instead of reaching the database', async () => {
+      await createRequest(app)
+        .patch(`/items/${createdItemId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: null })
+        .expect(422);
+    });
+
+    it('accepts null to clear a nullable field', async () => {
+      const response = await createRequest(app)
+        .patch(`/items/${createdItemId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ description: null })
+        .expect(200);
+
+      expect(response.body).toMatchObject({ description: null });
+    });
+  });
+
   describe('DELETE /items/:id', () => {
     it('should delete an item', async () => {
       await createRequest(app)
