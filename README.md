@@ -159,7 +159,7 @@ real-auth `AUTH_*` variables (fake auth is refused in production); set
 `DB_SSL=false` for a database without TLS.
 
 ```bash
-pnpm build:api:docker   # builds template-app:local
+pnpm build:docker   # builds template-app:local
 ```
 
 VITE_* values are inlined at build time (`--build-arg VITE_FAKE_AUTH=…`);

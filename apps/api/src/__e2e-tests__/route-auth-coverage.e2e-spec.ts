@@ -15,8 +15,9 @@ import type { INestApplication } from '@nestjs/common';
  * so the decision shows up in review.
  *
  * Out of scope: routes mounted outside controllers (Swagger UI, Scalar,
- * /openapi.yaml — served only when NODE_ENV is development or test) and
- * controllers registered only in other environments.
+ * /openapi.yaml — served only when NODE_ENV is development or test — and the
+ * SPA's static files and index.html fallback when SERVE_STATIC_DIR is set)
+ * and controllers registered only in other environments.
  */
 const PUBLIC_ROUTES: Record<string, string> = {
   'GET /health': 'monitoring probe',

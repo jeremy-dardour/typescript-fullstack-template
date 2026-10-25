@@ -467,7 +467,7 @@ jobs:
       - name: Check routing
         run: |
           expect_status() {
-            actual="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$2")"
+            actual="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$2" || true)"
             if [ "$actual" != "$1" ]; then
               echo "GET $2: expected $1, got $actual"
               exit 1
@@ -479,8 +479,11 @@ jobs:
           expect_status 401 /api/items
           expect_status 404 /api/does-not-exist
           expect_status 404 /openapi.yaml
+          expect_status 404 /assets/missing-chunk.js
           curl -sf http://localhost:3000/some/client/route | grep -q '<div id="root">'
-          if docker logs app 2>&1 | grep -q '"level":50'; then
+          # Via a file: grep -q exiting early would SIGPIPE docker logs under pipefail.
+          docker logs app > app.log 2>&1
+          if grep -qE '"level":(50|60)' app.log; then
             echo "Errors were logged"
             exit 1
           fi
