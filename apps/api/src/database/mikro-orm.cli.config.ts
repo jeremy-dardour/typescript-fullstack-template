@@ -16,7 +16,9 @@ export default defineConfig({
 
   // SSL: node-postgres ignores sslmode in URL query params,
   // so we must pass ssl config explicitly for managed PostgreSQL services
-  ...(process.env.NODE_ENV === 'production' && {
+  ...((process.env.DB_SSL === undefined
+    ? process.env.NODE_ENV === 'production'
+    : process.env.DB_SSL === 'true') && {
     driverOptions: {
       ssl: { rejectUnauthorized: false },
     },

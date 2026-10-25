@@ -13,6 +13,13 @@ export const baseEnvSchema = z.object({
   // Database connection
   DATABASE_URL: z.url(),
 
+  // TLS to Postgres; defaults to on in production. Set false for a local
+  // database without TLS (e.g. booting the production image against docker).
+  DB_SSL: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+
   // Database pool config
   DB_POOL_MAX: z
     .string()

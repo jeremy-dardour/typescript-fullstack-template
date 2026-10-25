@@ -45,7 +45,8 @@ export class DatabaseModule {
 
               // SSL: node-postgres ignores sslmode in URL query params,
               // so we must pass ssl config explicitly for managed PostgreSQL services
-              ...(isProduction && {
+              ...((configService.get('DB_SSL', { infer: true }) ??
+                isProduction) && {
                 driverOptions: {
                   ssl: { rejectUnauthorized: false },
                 },
