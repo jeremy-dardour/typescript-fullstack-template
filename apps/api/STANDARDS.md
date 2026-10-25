@@ -108,6 +108,17 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
   Create a read-model-specific entity DTO only when its shape is materially
   different, not merely a subset or a few additional derived fields.
 
+## Route authentication
+
+- `AuthGuard` is global: every route needs a valid token unless the handler or
+  controller is `@Public()`.
+- `route-auth-coverage.e2e-spec.ts` reads every route from controller metadata
+  and enforces it: non-public routes answer 401 without a token, and the
+  `@Public()` routes must match a reviewed `PUBLIC_ROUTES` list.
+- Authorization beyond "signed in" (ownership, roles, tenancy) extends the same
+  pattern: a table of routes with the denial each must produce, plus a
+  meta-test that fails when a new route is missing from the table.
+
 ## Environment config
 
 - Zod schemas for env validation (not class-validator) — the split is
