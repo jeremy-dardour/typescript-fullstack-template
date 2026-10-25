@@ -117,6 +117,13 @@ The token's `aud` claim must equal `AUTH_CLIENT_ID`, or `AUTH_AUDIENCE` when set
 > your provider issues that audience, set `AUTH_AUDIENCE=api://<client-id>`, or
 > every request will be rejected with 401.
 
+On the web side, auth is an `AuthSession` (observable state, bearer token,
+sign-out) plus a `SignInButton` component, so redirect, popup, and
+provider-rendered buttons all fit the same interface. The template ships only
+the development adapter (`VITE_FAKE_AUTH=true`); with it off, the app refuses
+to start until you add an adapter for your provider —
+see [ADR 0008](./docs/adr/0008-web-auth-module-boundaries.md).
+
 ### CLI Commands
 
 A `nest-commander` CLI shell for background jobs, data migrations, or one-off scripts:
@@ -181,7 +188,7 @@ For coding conventions, architecture patterns, and entity definitions, see the s
 
 1. **Fork or clone** this repository
 2. **Replace the Item example** with your own domain entities and features
-3. **Configure auth** by setting the three `AUTH_*` env vars to your OIDC provider
+3. **Configure auth**: set the `AUTH_*` env vars for your OIDC provider on the API, and add a web `AuthSession` adapter for it ([ADR 0008](./docs/adr/0008-web-auth-module-boundaries.md))
 4. **Generate a fresh migration** after modifying entities: `pnpm --filter api mikro-orm migration:create --name=initial`
 5. **Regenerate API contracts** after changing endpoints: `pnpm generate:api-types`
 
