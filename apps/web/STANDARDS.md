@@ -54,9 +54,13 @@ src/
 
 ## Auth
 
-- Strategy interface: `AuthProvider` with `initialize`, `login`, `logout`, `getAccessToken`
-- React context (`AuthContext`) + `useAuth()` hook
-- Factory selects `FakeAuthProvider` (dev) vs real OIDC based on config
+- `AuthSystem` = `AuthSession` (state, token, sign-out) + `SignInButton`;
+  module boundaries and how to add a provider:
+  [ADR 0008](../../docs/adr/0008-web-auth-module-boundaries.md)
+- `useAuth()` for session actions, `useAuthState()` for state,
+  `<SignInButton />` to start a sign-in
+- `createAuthSystem()` binds the fake adapter when `VITE_FAKE_AUTH=true` and
+  throws otherwise
 
 ## i18n
 
@@ -66,6 +70,17 @@ src/
 
 ## Testing
 
-- Unit: `@testing-library/react` + vitest, colocated `*.spec.tsx`
-- E2E: Playwright in `e2e/`, custom fixtures with `ApiMock` for deterministic API interception
-- Mocks for `@/components` or design-system components go in `@/testing/mocks/components.tsx` so they can be reused across specs
+- **Integration** (main layer): `renderWithApp` with the real providers and
+  HTTP mocked by MSW. Do not mock hooks, the query layer, or internal
+  components. See `src/testing/render-with-app.tsx` and
+  `src/testing/mock-api.ts`; `features/items/__tests__/items-page.spec.tsx` is
+  the reference.
+- **Unit** (`*.spec.tsx`, colocated): pure functions and components with
+  branching logic. Skip structural components — integration tests cover them.
+- MSW responses must match the real API contract, including RFC 9457 Problem
+  Details fields (`problemResponse()`). Unhandled requests fail the test.
+- For journeys across several requests and server-side state changes, use a
+  stateful adapter (`setupItemsApi()`) instead of repeating raw handlers.
+- **E2E**: Playwright in `e2e/` against the production build with the API
+  mocked. To check behavior against the real running app, use the probe
+  runner (`pnpm probe`, see the `verify-app` skill).

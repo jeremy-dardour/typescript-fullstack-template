@@ -2,6 +2,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { $api } from '@/api/api-client';
 
+import type { components } from '@/types/openapi';
+
+export type Item = components['schemas']['ItemDto'];
+
 export function useGetItems() {
   return $api.useQuery('get', '/api/items');
 }
