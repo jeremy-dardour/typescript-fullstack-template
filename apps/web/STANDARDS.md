@@ -51,6 +51,13 @@ src/
 - Store selected entity IDs, then derive the selected entity from query data;
   do not keep a copied response object that can become stale.
 - Mutations invalidate or patch only the queries whose response can change.
+- Query and mutation errors open the global error dialog, except a 401 (the
+  session ends and the sign-in page replaces the screen) and query statuses
+  listed in `meta.localErrorStatuses`, which the screen renders itself.
+  Mutations have no such opt-out: handle an expected mutation error in the
+  `mutate(…, { onError })` callback and let the dialog cover the rest.
+- The query cache is cleared when the session ends, so cached data never
+  outlives the user who fetched it.
 
 ## Auth
 

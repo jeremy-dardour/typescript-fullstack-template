@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
 import { describe, expect, it } from 'vitest';
@@ -75,5 +75,20 @@ describe('itemsPage', () => {
     expect(
       screen.queryByText('relation "item" does not exist'),
     ).not.toBeInTheDocument();
+  });
+
+  it('ends the session on a 401 without an error dialog on top', async () => {
+    server.use(
+      http.get(`${API_BASE}/api/items`, () =>
+        problemResponse(401, {
+          title: 'Unauthorized',
+          detail: 'Token expired',
+        }),
+      ),
+    );
+    const { auth } = renderWithApp(<ItemsPage />);
+
+    await waitFor(() => expect(auth.signOut).toHaveBeenCalledOnce());
+    expect(screen.queryByText('An error occurred')).not.toBeInTheDocument();
   });
 });

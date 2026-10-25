@@ -5,10 +5,11 @@ import type { AuthState } from '@/auth/auth-state';
 import type { AuthChangeListener, AuthSession } from '@/auth/auth.interface';
 import type { AuthenticatedUser } from '@/auth/types';
 
+// The same identity the API's MockAuthStrategy reports under FAKE_AUTH.
 const DEV_USER: AuthenticatedUser = {
   sub: 'mock-user',
-  email: 'dev.user@example.com',
-  name: 'DevUser',
+  email: 'mock@example.com',
+  name: 'MockUser',
 };
 
 /**

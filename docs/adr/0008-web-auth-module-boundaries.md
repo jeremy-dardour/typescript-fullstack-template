@@ -28,6 +28,8 @@ interface AuthSystem {
   failing provider cannot cause a redirect loop.
 - Only a `401` from the API ends the session. A `403` is an ordinary
   permission denial.
+- When the session ends, the query cache and any open error are cleared, so
+  the next user of the tab never sees the previous user's data.
 - `createAuthSystem()` returns the fake adapter when `VITE_FAKE_AUTH=true` and
   throws otherwise: the template ships no real adapter, and failing loudly
   beats sending fake tokens to an API that rejects them.
