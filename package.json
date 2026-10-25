@@ -28,17 +28,17 @@
     "generate:api-types": "API_PORT=${PORT:-$(sed -n 's/^PORT=//p' apps/api/.env 2>/dev/null)}; openapi-typescript http://localhost:${API_PORT:-3000}/openapi.yaml -o ./packages/api-contracts/src/openapi.d.ts && pnpm format --filter @workspace/api-contracts"
   },
   "devDependencies": {
-    "@types/node": "26.0.0",
-    "eslint": "^10.5.0",
-    "globals": "17.7.0",
+    "@types/node": "26.6.5",
+    "eslint": "^10.13.0",
+    "globals": "17.13.0",
     "husky": "^9.1.7",
     "jiti": "2.7.0",
     "openapi-typescript": "^7.13.0",
-    "prettier": "^3.8.4",
-    "prettier-plugin-embed": "^0.5.1",
+    "prettier": "^3.9.10",
+    "prettier-plugin-embed": "^0.8.1",
     "prettier-plugin-sql": "^0.20.0",
-    "syncpack": "15.3.2",
-    "turbo": "^2.9.18",
+    "syncpack": "15.3.3",
+    "turbo": "^2.11.10",
     "typescript": "^6.0.3"
   },
   "engines": {
