@@ -16,10 +16,8 @@ export class MockAuthStrategy implements AuthStrategy {
     );
   }
 
-  async authenticate(
-    _request: AuthenticatedRequest,
-  ): Promise<AuthenticatedUser> {
-    return await Promise.resolve(this.createMockJwtPayload());
+  authenticate(_request: AuthenticatedRequest): Promise<AuthenticatedUser> {
+    return Promise.resolve(this.createMockJwtPayload());
   }
 
   private createMockJwtPayload(): AuthenticatedUser {

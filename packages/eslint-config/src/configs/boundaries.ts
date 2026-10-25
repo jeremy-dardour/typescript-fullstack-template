@@ -27,22 +27,17 @@ export const boundariesModules: Linter.Config[] = defineConfig([
           type: 'module',
           pattern: 'src/modules/*/**',
           capture: ['moduleName'],
-          mode: 'folder',
         },
+        { type: 'shared', pattern: 'src/shared/**' },
+        { type: 'app', pattern: 'src/app/**' },
+      ],
+      // Element patterns only match folders, so the root-level entry files are
+      // classified as a file category. File patterns match the whole path
+      // relative to the cwd, hence the leading `**/`.
+      'boundaries/files': [
         {
-          type: 'shared',
-          pattern: 'src/shared/**',
-          mode: 'folder',
-        },
-        {
-          type: 'app',
-          pattern: 'src/app/**',
-          mode: 'folder',
-        },
-        {
-          type: 'main',
-          pattern: ['src/main.ts', 'src/*.module.ts', 'src/*.d.ts'],
-          mode: 'file',
+          category: 'main',
+          pattern: ['**/src/main.ts', '**/src/*.module.ts', '**/src/*.d.ts'],
         },
       ],
       'boundaries/dependency-nodes': ['import', 'dynamic-import'],
@@ -56,49 +51,56 @@ export const boundariesModules: Linter.Config[] = defineConfig([
       },
     },
     rules: {
-      'boundaries/element-types': [
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
-          rules: [
+          policies: [
             {
-              from: ['module'],
+              from: { element: { type: 'module' } },
               allow: [
-                // Same-module imports (matched via the moduleName capture group)
-                ['module', { moduleName: '${moduleName}' }],
-                'shared',
-                'app',
-                'main',
+                {
+                  to: {
+                    element: {
+                      type: 'module',
+                      captured: {
+                        moduleName: '{{ from.element.captured.moduleName }}',
+                      },
+                    },
+                  },
+                },
+                { to: { element: { type: ['shared', 'app'] } } },
+                { to: { file: { categories: 'main' } } },
               ],
               message:
                 'Modules cannot import each other. Use shared for shared code or decouple via events',
             },
             {
-              from: ['shared'],
-              allow: ['shared'],
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { type: 'shared' } } },
               message: 'shared cannot import other modules',
             },
             {
-              from: ['app'],
-              allow: ['app', 'shared'],
+              from: { element: { type: 'app' } },
+              allow: { to: { element: { type: ['app', 'shared'] } } },
               message:
                 'app layer should not directly depend on business modules',
             },
             {
-              from: ['main'],
-              allow: ['module', 'shared', 'app', 'main'],
+              from: { file: { categories: 'main' } },
+              allow: [
+                { to: { element: { type: ['module', 'shared', 'app'] } } },
+                { to: { file: { categories: 'main' } } },
+              ],
             },
           ],
         },
       ],
 
-      // Prevent external modules from importing private elements
-      'boundaries/no-private': 'error',
-
       // Disabled: .d.ts and config files may not match element definitions
       'boundaries/no-unknown-files': 'off',
       // Disabled: external dependencies (node_modules) trigger false positives
-      'boundaries/no-unknown': 'off',
+      'boundaries/no-unknown-dependencies': 'off',
     },
   },
 ]);

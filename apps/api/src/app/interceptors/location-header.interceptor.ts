@@ -21,18 +21,7 @@ export class LocationHeaderInterceptor implements NestInterceptor {
         const httpContext = context.switchToHttp();
         const response = httpContext.getResponse<Response>();
 
-        // Only handle 201 Created responses
-        if (response.statusCode !== 201) {
-          return;
-        }
-
-        // Check if response has id field
-        if (
-          !data ||
-          typeof data !== 'object' ||
-          !('id' in data) ||
-          typeof data.id !== 'string'
-        ) {
+        if (response.statusCode !== 201 || !hasStringId(data)) {
           return;
         }
 
@@ -52,4 +41,13 @@ export class LocationHeaderInterceptor implements NestInterceptor {
     const cleanPath = requestPath.replace(/\/$/, '');
     return `${cleanPath}/${resourceId}`;
   }
+}
+
+function hasStringId(data: unknown): data is { id: string } {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'id' in data &&
+    typeof data.id === 'string'
+  );
 }

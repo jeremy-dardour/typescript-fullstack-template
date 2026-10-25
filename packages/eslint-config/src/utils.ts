@@ -33,8 +33,7 @@ function isInGitHooksOrLintStaged(): boolean {
  * - Vim / Neovim
  */
 export function isInEditorEnv(): boolean {
-  if (process.env['CI']) return false;
-  if (isInGitHooksOrLintStaged()) return false;
+  if (process.env['CI'] || isInGitHooksOrLintStaged()) return false;
   return !!(
     process.env['VSCODE_PID'] ??
     process.env['VSCODE_CWD'] ??

@@ -31,12 +31,13 @@ export class LinkHeaderInterceptor implements NestInterceptor {
           response.setHeader('Link', links.join(', '));
         }
 
-        // Add total count header for offset pagination
-        if (this.isOffsetListResponse(data)) {
-          response.setHeader('X-Total-Count', String(data.total));
-          const totalPages = Math.ceil(data.total / data.page_size);
-          response.setHeader('X-Page-Count', String(totalPages));
+        if (!this.isOffsetListResponse(data)) {
+          return;
         }
+
+        response.setHeader('X-Total-Count', String(data.total));
+        const totalPages = Math.ceil(data.total / data.page_size);
+        response.setHeader('X-Page-Count', String(totalPages));
       }),
     );
   }
