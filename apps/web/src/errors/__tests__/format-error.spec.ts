@@ -52,6 +52,16 @@ describe('formatToApiError', () => {
     expect(formatted?.detail).toBe('The item was modified by another request.');
   });
 
+  it('prefers title over an empty statusText', () => {
+    const formatted = formatToApiError({
+      status: 409,
+      statusText: '',
+      title: 'Conflict',
+    });
+
+    expect(formatted?.statusText).toBe('Conflict');
+  });
+
   it('should return null for standard Error', () => {
     const error = new Error('Unknown error');
     const formatted = formatToApiError(error);

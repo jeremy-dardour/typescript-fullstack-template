@@ -47,10 +47,6 @@
     "dev": {
       "persistent": true,
       "cache": false
-    },
-    "start": {
-      "persistent": true,
-      "cache": false
     }
   }
 }

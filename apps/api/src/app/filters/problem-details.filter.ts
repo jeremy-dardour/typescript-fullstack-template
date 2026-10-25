@@ -64,7 +64,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
     const logMessage = `${request.method} ${request.url} ${status}`;
     if (status >= 500) {
-      this.logger.error(logMessage, exception.stack);
+      const origin =
+        exception.cause instanceof Error ? exception.cause : exception;
+      this.logger.error(logMessage, origin.stack);
     } else {
       this.logger.warn(logMessage);
     }

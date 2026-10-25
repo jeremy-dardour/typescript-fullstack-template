@@ -19,7 +19,8 @@ describe('Item CRUD E2E Tests', () => {
   let token: string;
 
   beforeAll(async () => {
-    const audience = process.env.AUTH_AUDIENCE ?? process.env.AUTH_CLIENT_ID!;
+    // AUTH_CLIENT_ID in .env.e2e: the default expected audience.
+    const audience = 'e2e-test-client-id';
     const acceptedScope = process.env.AUTH_ACCEPTED_SCOPES!;
 
     await mockOidc.setup();
@@ -95,10 +96,18 @@ describe('Item CRUD E2E Tests', () => {
     });
 
     it('should return 404 for non-existent item', async () => {
-      await createRequest(app)
+      const response = await createRequest(app)
         .get('/items/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${token}`)
-        .expect(404);
+        .expect(404)
+        .expect('Content-Type', /application\/problem\+json/);
+
+      // The ORM's message embeds the query filter; it must not reach clients.
+      expect(response.body).toMatchObject({
+        status: 404,
+        title: 'Not Found',
+        detail: 'Resource not found',
+      });
     });
   });
 

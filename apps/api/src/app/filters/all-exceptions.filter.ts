@@ -2,120 +2,57 @@ import { NotFoundError } from '@mikro-orm/core';
 import {
   Catch,
   HttpException,
-  HttpStatus,
-  Logger,
+  InternalServerErrorException,
   NotFoundException,
   Optional,
   Inject,
 } from '@nestjs/common';
-import { ClsService } from 'nestjs-cls';
 
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
 
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 
 /**
- * Global exception filter - catches all unhandled exceptions
- * Delegates HTTP exceptions to ProblemDetailsFilter (RFC 9457)
+ * Global exception filter: maps every error to an HttpException and delegates
+ * to ProblemDetailsFilter, so all responses are RFC 9457.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
   constructor(
-    @Optional() private readonly cls?: ClsService,
     @Optional()
     @Inject(ProblemDetailsFilter)
     private readonly problemDetailsFilter?: ProblemDetailsFilter,
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
-    const context = host.switchToHttp();
-    const response = context.getResponse<Response>();
+    const httpException = this.toHttpException(exception);
 
-    // Convert MikroORM NotFoundError to 404
-    if (exception instanceof NotFoundError) {
-      const httpException = new NotFoundException(exception.message);
-      if (this.problemDetailsFilter) {
-        return this.problemDetailsFilter.catch(httpException, host);
-      }
-      response
-        .status(404)
-        .json({ statusCode: 404, message: exception.message });
-      return;
+    if (this.problemDetailsFilter) {
+      return this.problemDetailsFilter.catch(httpException, host);
     }
 
-    // Delegate HTTP exceptions to ProblemDetailsFilter
-    if (exception instanceof HttpException && this.problemDetailsFilter) {
-      return this.problemDetailsFilter.catch(exception, host);
-    }
-
-    const request = context.getRequest<Request>();
-    // Handle non-HTTP exceptions (system errors)
-    const status = HttpStatus.INTERNAL_SERVER_ERROR;
-
-    const message: string | string[] =
-      exception instanceof Error ? exception.message : 'Internal server error';
-
-    const requestId = this.cls?.getId();
-    const correlationId = this.cls?.get<string>('correlationId');
-    const traceId = this.cls?.get<string>('traceId');
-
-    const errorResponse = {
-      success: false,
-      statusCode: status,
-      message: Array.isArray(message) ? message : [message],
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      ...(requestId && { request_id: requestId }),
-      ...(correlationId && { correlation_id: correlationId }),
-      ...(traceId && { trace_id: traceId }),
-      // Hide stack trace in production
-      ...(process.env.NODE_ENV !== 'production' &&
-        exception instanceof Error && {
-          stack: exception.stack,
-        }),
-    };
-
-    const tracePrefix = this.buildTracePrefix(
-      requestId,
-      correlationId,
-      traceId,
-    );
-
-    const logMessage = `${tracePrefix}${request.method} ${request.url} ${status}`;
-    if (exception instanceof Error) {
-      this.logger.error(logMessage, exception.stack);
-    } else {
-      this.logger.error(logMessage, JSON.stringify(exception));
-    }
-
-    response.setHeader('Cache-Control', 'no-store');
-    response.status(status).json(errorResponse);
+    const status = httpException.getStatus();
+    host
+      .switchToHttp()
+      .getResponse<Response>()
+      .status(status)
+      .json({ status, title: httpException.message });
   }
 
   /**
-   * Build trace ID prefix for logging
+   * Non-HTTP errors get a generic detail so internals (ORM filters, driver
+   * messages) never reach the client; the original is kept as `cause` for logs.
    */
-  private buildTracePrefix(
-    requestId?: string,
-    correlationId?: string,
-    traceId?: string,
-  ): string {
-    const parts: string[] = [];
-
-    if (requestId) {
-      parts.push(`req:${requestId}`);
+  private toHttpException(exception: unknown): HttpException {
+    if (exception instanceof HttpException) {
+      return exception;
     }
-    if (correlationId) {
-      parts.push(`corr:${correlationId}`);
+    if (exception instanceof NotFoundError) {
+      return new NotFoundException('Resource not found', { cause: exception });
     }
-    if (traceId) {
-      parts.push(`trace:${traceId}`);
-    }
-
-    return parts.length > 0 ? `[${parts.join('|')}] ` : '';
+    return new InternalServerErrorException('Internal server error', {
+      cause: exception,
+    });
   }
 }

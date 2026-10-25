@@ -104,6 +104,13 @@ AUTH_CLIENT_ID=your-client-id
 AUTH_ACCEPTED_SCOPES=your.scope
 ```
 
+The token's `aud` claim must equal `AUTH_CLIENT_ID`, or `AUTH_AUDIENCE` when set.
+
+> **Upgrading from an earlier version of this template:** the expected audience
+> used to be hardcoded to `api://<AUTH_CLIENT_ID>` (the Entra ID convention). If
+> your provider issues that audience, set `AUTH_AUDIENCE=api://<client-id>`, or
+> every request will be rejected with 401.
+
 ### CLI Commands
 
 A `nest-commander` CLI shell for background jobs, data migrations, or one-off scripts:

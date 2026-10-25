@@ -42,7 +42,7 @@ describe('globalApiErrorDialog', () => {
     expect(screen.getByText('app.errorDialog.title')).toBeVisible();
   });
 
-  it('shows the problem detail instead of the generic description', async () => {
+  it('shows a 4xx problem detail under the translated description', async () => {
     const user = userEvent.setup();
     const testError = new ApiError('Conflict', 409, 'Conflict', {
       detail: 'The item was modified by another request.',
@@ -54,8 +54,21 @@ describe('globalApiErrorDialog', () => {
     expect(
       screen.getByText('The item was modified by another request.'),
     ).toBeVisible();
+    expect(screen.getByText('app.errorDialog.description')).toBeVisible();
+  });
+
+  it('does not show the detail of a server error', async () => {
+    const user = userEvent.setup();
+    const testError = new ApiError('Internal', 500, 'Internal Server Error', {
+      detail: 'relation "item" does not exist',
+    });
+    renderWithProviders(<ErrorTrigger error={testError} />);
+
+    await user.click(screen.getByText('Trigger Error'));
+
+    expect(screen.getByText('app.errorDialog.description')).toBeVisible();
     expect(
-      screen.queryByText('app.errorDialog.description'),
+      screen.queryByText('relation "item" does not exist'),
     ).not.toBeInTheDocument();
   });
 

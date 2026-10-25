@@ -89,18 +89,13 @@ order!: Order;
 ```
 
 Use a lazy callback `() => ClassName` with a value import when there is no
-circular dependency. For circular cases see below.
+circular dependency.
 
 ### OneToMany (inverse side)
 
-```typescript
-import { Collection } from '@mikro-orm/core';
-import { OneToMany } from '@mikro-orm/decorators/legacy';
-import { OrderLine } from '@/database/entities/order-line.entity';
-
-@OneToMany(() => OrderLine, (line) => line.order)
-lines = new Collection<OrderLine>(this);
-```
+A OneToMany always pairs with a ManyToOne pointing back, so the two entity
+files import each other: the inverse side always uses the circular-reference
+form below (type-only import + string entity name).
 
 ### Circular references
 

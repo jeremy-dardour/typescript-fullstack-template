@@ -49,13 +49,16 @@ export function isNonNullObject(
   return typeof value === 'object' && value !== null;
 }
 
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed === '' ? undefined : trimmed;
+}
+
 export function toApiErrorFromApiLike(error: ApiLikeError): ApiError {
   const statusText =
-    error.statusText?.trim() ?? error.title?.trim() ?? 'API Error';
-  return new ApiError(
-    statusText,
-    error.status,
-    statusText,
-    error.data ?? error,
-  );
+    nonEmpty(error.statusText) ?? nonEmpty(error.title) ?? 'API Error';
+  // A Problem Details body (title, no statusText) is its own payload.
+  const data = error.statusText === undefined ? error : error.data;
+
+  return new ApiError(statusText, error.status, statusText, data);
 }
