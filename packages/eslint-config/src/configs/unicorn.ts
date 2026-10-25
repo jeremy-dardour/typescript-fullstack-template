@@ -25,8 +25,8 @@ export const unicorn: Linter.Config[] = defineConfig({
     'unicorn/single-line-block-comment-style': 'off',
     // Rewrites readable multi-line branches into nested ternaries
     'unicorn/prefer-ternary': 'off',
-    // Flags NestJS metadata-key constants such as IS_PUBLIC_KEY
-    'unicorn/consistent-boolean-name': 'off',
+    // NestJS metadata keys such as IS_PUBLIC_KEY are strings, not booleans
+    'unicorn/consistent-boolean-name': ['error', { ignore: ['_KEY$'] }],
     'unicorn/filename-case': [
       'error',
       { case: 'kebabCase', ignore: [/^__[\w-]+__$/.source] },

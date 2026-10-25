@@ -6,7 +6,7 @@
  *   pnpm probe --goto /                  open a page and print its accessibility snapshot
  *   pnpm probe path/to/scenario.ts       run a scenario (see scenarios/items-crud.ts)
  */
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -15,6 +15,7 @@ import { expect } from '@playwright/test';
 import { chromium } from 'playwright';
 
 import type { ProbeScenario } from '@/testing/probe.types';
+import type { Browser } from 'playwright';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '../..');
 const OUT_DIR = path.resolve(WEB_ROOT, '../../.verify-app/probe');
@@ -67,15 +68,30 @@ function printSection(title: string, lines: string[]): void {
   }
 }
 
-async function main(): Promise<boolean> {
+async function isProbePassing(): Promise<boolean> {
   const baseURL = webBaseUrl();
   const allowed = options['allow-console'].map(
     (pattern) => new RegExp(pattern),
   );
+  // Stale screenshots from an earlier run would read as this run's result.
+  rmSync(OUT_DIR, { recursive: true, force: true });
   mkdirSync(OUT_DIR, { recursive: true });
 
   const scenario = await loadScenario();
   const browser = await chromium.launch({ headless: !options.headed });
+  try {
+    return await isScenarioPassing(browser, scenario, baseURL, allowed);
+  } finally {
+    await browser.close();
+  }
+}
+
+async function isScenarioPassing(
+  browser: Browser,
+  scenario: ProbeScenario,
+  baseURL: string,
+  allowed: RegExp[],
+): Promise<boolean> {
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
 
@@ -104,12 +120,13 @@ async function main(): Promise<boolean> {
   });
 
   let hasFailedStep = false;
+  let isReported = false;
   const step = async (name: string, action: () => Promise<unknown>) => {
     try {
       await action();
       console.log(`✓ ${name}`);
     } catch (error) {
-      hasFailedStep = true;
+      isReported = true;
       console.log(`✗ ${name}\n  ${String(error)}`);
       await page.screenshot({ path: path.join(OUT_DIR, 'failed-step.png') });
       throw error;
@@ -120,8 +137,11 @@ async function main(): Promise<boolean> {
   try {
     await scenario({ page, baseURL, expect, step });
     await page.waitForLoadState('networkidle');
-  } catch {
-    // Already reported by the failing step.
+  } catch (error) {
+    hasFailedStep = true;
+    if (!isReported) {
+      console.log(`✗ scenario failed outside a step\n  ${String(error)}`);
+    }
   }
 
   console.log(`\nPage ${page.url()}:`);
@@ -131,7 +151,6 @@ async function main(): Promise<boolean> {
   printSection('Uncaught page errors', pageErrors);
   printSection('HTTP errors', httpErrors);
   console.log(`\nScreenshots in ${OUT_DIR}`);
-  await browser.close();
 
   return (
     !hasFailedStep &&
@@ -142,7 +161,7 @@ async function main(): Promise<boolean> {
 }
 
 try {
-  const isOk = await main();
+  const isOk = await isProbePassing();
   console.log(isOk ? '\nprobe: OK' : '\nprobe: FAIL');
   process.exitCode = isOk ? 0 : 1;
 } catch (error) {
