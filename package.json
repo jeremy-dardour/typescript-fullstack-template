@@ -9,6 +9,7 @@
     "db:stop": "docker compose -p \"$(basename \"$PWD\")\" down",
     "db:migrate:up": "pnpm --filter api db:migrate:up",
     "fix:all": "pnpm lint:fix && pnpm format && pnpm format:top",
+    "start": "pnpm db:start && turbo run start",
     "dev": "pnpm db:start && turbo run dev",
     "build": "turbo run build",
     "build:api:docker": "DOCKER_BUILDKIT=1 docker build -f apps/api/deployment/Dockerfile -t template-api:local .",
@@ -25,7 +26,7 @@
     "test:cov": "turbo run test:cov",
     "test:e2e": "turbo run test:e2e",
     "prepare": "node -e \"if (process.env.CI !== 'true' && process.env.HUSKY !== '0') require('child_process').execSync('husky')\"",
-    "generate:api-types": "openapi-typescript http://localhost:3000/openapi.yaml -o ./packages/api-contracts/src/openapi.d.ts && pnpm format --filter @workspace/api-contracts"
+    "generate:api-types": "set -a; [ -f apps/api/.env ] && . apps/api/.env; set +a; openapi-typescript http://localhost:${PORT:-3000}/openapi.yaml -o ./packages/api-contracts/src/openapi.d.ts && pnpm format --filter @workspace/api-contracts"
   },
   "devDependencies": {
     "@types/node": "26.0.0",
