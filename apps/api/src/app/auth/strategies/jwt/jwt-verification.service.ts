@@ -27,7 +27,9 @@ export class JwtVerificationService {
     private readonly oidcService: OidcDiscoveryService,
     private readonly configService: ConfigService<Env, true>,
   ) {
-    this.audience = `api://${this.configService.get('AUTH_CLIENT_ID')}`;
+    this.audience =
+      this.configService.get('AUTH_AUDIENCE', { infer: true }) ??
+      this.configService.get('AUTH_CLIENT_ID', { infer: true });
     this.acceptedScopes = this.configService.get('AUTH_ACCEPTED_SCOPES');
   }
 

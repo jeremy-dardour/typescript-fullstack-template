@@ -13,6 +13,9 @@ export const envSchema = baseEnvSchema.extend({
     }),
 
   AUTH_CLIENT_ID: z.string(),
+  // Expected `aud` claim; defaults to AUTH_CLIENT_ID. Entra ID access tokens
+  // use `api://<client-id>`.
+  AUTH_AUDIENCE: z.string().optional(),
   AUTH_OIDC_DISCOVERY_URL: z.url(),
   AUTH_ACCEPTED_SCOPES: z
     .string()
