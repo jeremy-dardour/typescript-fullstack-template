@@ -42,6 +42,23 @@ describe('globalApiErrorDialog', () => {
     expect(screen.getByText('app.errorDialog.title')).toBeVisible();
   });
 
+  it('shows the problem detail instead of the generic description', async () => {
+    const user = userEvent.setup();
+    const testError = new ApiError('Conflict', 409, 'Conflict', {
+      detail: 'The item was modified by another request.',
+    });
+    renderWithProviders(<ErrorTrigger error={testError} />);
+
+    await user.click(screen.getByText('Trigger Error'));
+
+    expect(
+      screen.getByText('The item was modified by another request.'),
+    ).toBeVisible();
+    expect(
+      screen.queryByText('app.errorDialog.description'),
+    ).not.toBeInTheDocument();
+  });
+
   it('should close dialog when close button is clicked', async () => {
     const user = userEvent.setup();
     const testError = new ApiError('Test error', 500, 'Server Error');

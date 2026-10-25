@@ -6,8 +6,15 @@ Inherits: [Global standards](../../STANDARDS.md)
 
 ```
 src/
-  features/       → Feature folders by domain (flat, no nesting)
-    <feature>/    → Page component + sub-components
+  features/       → Feature folders by domain
+    <feature>/    → Page component + components, one file each, flat —
+                    except that a composite component and its subcomponents
+                    share one folder named after the composite, and a
+                    reusable subsystem the feature hosts (components plus
+                    their derivations) shares one folder named after the
+                    subsystem. A component used by several parents is
+                    shared, not a subcomponent: it stays at the feature
+                    root. No barrel/index files.
   components/ui/  → shadcn/ui primitives
   app/components/ → App-level components (layout, error boundaries)
   api/            → API client and hooks
@@ -20,12 +27,30 @@ src/
 - Function components with named exports
 - UI primitives in `src/components/ui/` (shadcn/ui)
 - App-level components in `src/app/components/`
+- `react-refresh/only-export-components` forbids non-component exports from
+  component files — hooks, predicates, and constants shared with a component
+  get their own module rather than an eslint-disable
 
 ## API layer
 
 - `openapi-react-query` wraps `openapi-fetch` for typed hooks from OpenAPI spec
 - Query hooks: thin wrappers in `src/api/hooks/` around `$api.useQuery`/`$api.useMutation`
 - Auth middleware in `src/api/middlewares/` injects bearer token
+- Access generated schemas with indexed types such as
+  `components['schemas']['ItemDto']`. Do not use dotted access through a type
+  alias; it can silently resolve to `any`.
+- **API types stay in the API layer.** Feature components never import from
+  `@/types/openapi` directly. Each hook file re-exports named type aliases
+  (e.g. `Item`) from the generated DTOs. Components and tests import those
+  aliases. If the API contract changes, only the hook file adjusts the
+  mapping.
+- **One derived lookup, passed down.** When a query returns a flat list that
+  multiple children look up by ID (e.g. `usersById`), compute the `Map` once
+  in the nearest common parent and pass it as a prop — do not recompute in
+  each child.
+- Store selected entity IDs, then derive the selected entity from query data;
+  do not keep a copied response object that can become stale.
+- Mutations invalidate or patch only the queries whose response can change.
 
 ## Auth
 
