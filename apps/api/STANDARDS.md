@@ -12,6 +12,9 @@ src/
       <feature>.module.ts
       <feature>.controller.ts
       <feature>.service.ts
+      repositories/
+        <concern>.repository.ts → Persistence operations for an entity,
+                                  aggregate, or read model
       dtos/
         input/    → Create/Update DTOs (class-validator + @ApiProperty)
         output/   → Response DTOs (@ApiProperty only)
@@ -28,68 +31,53 @@ ESLint `boundaries` plugin enforces module isolation:
 - Only `shared/` and `app/` are allowed for cross-imports
 - `app/` layer cannot import business modules
 
+## Persistence seam
+
+Repositories encapsulate persistence. The dependency flow is:
+
+```text
+Controller → Service → Repository → EntityManager
+```
+
+- Only repository implementations may inject an `EntityManager` or
+  `EntityRepository`; services and controllers never use MikroORM APIs,
+  including `find`, `populate`, `flush`, `assign`, query builders, or
+  transactions. Entity definitions, migrations, seeders, database
+  configuration, and database-backed tests are the expected exceptions.
+- Repositories accept and return entities, IDs, query criteria, or
+  query-specific entity graphs—never input or output DTOs. Repository `save`
+  methods call `persist(entity)` followed by `flush()`.
+- Operations that create or update rows identified by a unique key must use an
+  atomic database operation (`upsert`, conflict handling, or an appropriate
+  lock). Do not implement them as find-then-insert when concurrent requests are
+  possible.
+- A read model (a dashboard, an aggregate view) gets a query-focused
+  repository rather than being forced through an entity CRUD repository.
+- Services instantiate and mutate entities from input DTOs; services or
+  controllers map entities to output DTOs. Entity methods expose neutral
+  collection accessors so DTO mapping never calls MikroORM `Collection` APIs.
+- Extend `EntityRepository<T>` for entity-scoped repositories to inherit
+  standard CRUD methods (`findOne`, `findOneOrFail`, `find`, `findAll`,
+  etc.). Only add domain-specific methods on top. Query-focused repositories
+  that span multiple entities inject `SqlEntityManager` directly instead.
+- Use one concrete `<concern>.repository.ts` class while MikroORM is the only
+  persistence adapter. Do not add a parallel abstract repository plus a
+  `MikroOrm*Repository` implementation or generic base repository until a
+  second real adapter requires that seam.
+- A query shared by multiple repositories, or one that must join a caller's
+  transaction (run on the forked `em` of `em.transactional`), lives as an
+  `em`-parameterized function in `repositories/<concern>.query.ts`. Only
+  repository implementations may call it — it is inside the persistence seam,
+  not a service-facing interface
+  ([ADR 0007](../../docs/adr/0007-shared-queries-as-em-parameterized-functions.md)).
+- The persistence seam is framework-free: repository-layer code (including
+  `.query.ts` helpers) signals a vanished row with MikroORM's `NotFoundError`
+  — which the exception filter maps to 404 — never with a NestJS HTTP
+  exception.
+
 ## Entity definitions (MikroORM 7)
 
-This project uses `TsMorphMetadataProvider` — TypeScript types are the single source of truth for entity metadata. Never duplicate in decorators what TsMorph can infer from the TS type.
-
-### Decorator imports
-
-```typescript
-import { Entity, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
-import type { Opt } from '@mikro-orm/core';
-```
-
-Legacy decorator mode is required by NestJS. Decorators come from `@mikro-orm/decorators/legacy`, types from `@mikro-orm/core`.
-
-### Nullability
-
-Let TypeScript drive nullable inference. Do NOT add `nullable: true` in decorators.
-
-```typescript
-@Property({ type: 'text' })
-description?: Opt<string | null>;
-```
-
-- `?` — property omittable in `em.create()`
-- `| null` — database column is nullable
-- `Opt<T>` — property has a default or is optional in create operations
-
-### Explicit vs inferred decorator options
-
-| Scenario               | Explicit?             | Why                                       |
-| ---------------------- | --------------------- | ----------------------------------------- | ----- |
-| `string` property      | No                    | Maps to `varchar(255)` by default         |
-| `string` → `text`      | `type: 'text'`        | TsMorph can't distinguish varchar vs text |
-| UUID primary key       | `type: 'uuid'`        | TS type is `string`, can't infer UUID     |
-| `Date` → `timestamptz` | `type: 'timestamptz'` | Explicit DB type for schema stability     |
-| Nullable               | No                    | TsMorph infers from `?` / `               | null` |
-| `length: 255`          | No                    | Default for varchar                       |
-| `defaultRaw`           | Always                | Database-level default, not type info     |
-
-### Example entity
-
-```typescript
-import { Entity, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
-import type { Opt } from '@mikro-orm/core';
-
-@Entity()
-export class Item {
-  @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
-  id!: Opt<string>;
-
-  @Property()
-  name!: string;
-
-  @Property({ type: 'text' })
-  description?: Opt<string | null>;
-
-  @Property({ type: 'timestamptz', defaultRaw: 'now()' })
-  createdAt!: Opt<Date>;
-
-  @Property({ type: 'timestamptz', defaultRaw: 'now()' })
-  updatedAt!: Opt<Date>;
-}
-```
+See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 
 ### Migrations
 
@@ -104,6 +92,12 @@ export class Item {
 - Input DTOs: `class-validator` decorators + `@ApiProperty` for Swagger
 - Output DTOs: `@ApiProperty` only (no validation on responses)
 - Plain classes with `!` non-null assertions, no base class
+- Actor identity comes from the authenticated request. Mutation DTOs never
+  accept an actor, author, or current-user ID when the server can determine it.
+- Use one canonical output DTO per entity by default. Aggregate responses
+  compose those DTOs rather than introducing near-duplicate projections.
+  Create a read-model-specific entity DTO only when its shape is materially
+  different, not merely a subset or a few additional derived fields.
 
 ## Environment config
 
@@ -122,3 +116,6 @@ export class Item {
 
 - E2E tests: `src/__e2e-tests__/`, named `*.e2e-spec.ts`, serial execution, real PostgreSQL
 - Vitest configs: `vitest.config.mts` (unit) and `vitest.e2e.config.mts` (e2e)
+- The serial e2e suite can flake under heavy machine load: rotating single
+  failures with boot-time 401/404s in unrelated specs. Re-run on an idle
+  machine before diagnosing a "failure" that moves between specs.

@@ -4,6 +4,13 @@ Production-ready fullstack monorepo template: NestJS API + React SPA + shared to
 
 See [README.md](./README.md) for project overview, setup, and CI pipeline.
 
+## Visibility
+
+**This repository is public.** Never commit personal information, secrets, or
+private plans — in files, docs, code comments, examples, or commit messages.
+Use generic placeholders instead. A project created from this template should
+replace this note with its own visibility posture.
+
 ## Documentation map
 
 Project knowledge — one home per fact. Read these to get oriented (rationale in
@@ -23,6 +30,7 @@ Project knowledge — one home per fact. Read these to get oriented (rationale i
 @docs/project-purpose.md
 @CONTEXT.md
 @docs/current-state.md
+@STANDARDS.md
 
 Documentation conventions:
 
@@ -31,10 +39,10 @@ Documentation conventions:
 - **Single home per fact.** Live status lives only in `current-state.md`; domain
   decisions only in `docs/domain-decisions.md`; session files record what
   happened + learnings and link out rather than restating current truth.
-- **Session summaries.** When logging or closing a session, add a summary in
-  `docs/sessions/` using the template and instructions there
-  ([docs/sessions/README.md](./docs/sessions/README.md)). Update
-  `current-state.md` at session end.
+- **Session summaries.** When logging or closing a session, use the
+  `close-session` skill: it writes the summary in `docs/sessions/` from the
+  template there ([docs/sessions/README.md](./docs/sessions/README.md)) and
+  updates `current-state.md`.
 
 ## Monorepo structure
 
@@ -61,9 +69,18 @@ pnpm --filter web test:e2e      # Web E2E tests
 pnpm generate:api-types         # Regenerate OpenAPI types from running API
 ```
 
+## Ports
+
+**Never assume the default ports (5432 / 3000 / 5173)** — this checkout may be a
+parallel workspace with randomized ports. Read the value from the right file
+before curling, screenshotting, or connecting: [PORTS.md](./PORTS.md).
+
 ## Standards
 
-See [Global standards](./STANDARDS.md) — TypeScript, imports, naming, testing basics
+[Global standards](./STANDARDS.md) — TypeScript, code style, comments — is
+imported above, so it is always in context. The app-specific ones below are
+loaded on demand by the path-scoped rules in `.claude/rules/`:
+
 See [API standards](./apps/api/STANDARDS.md) — entities, modules, DTOs, architecture boundaries
 See [Web standards](./apps/web/STANDARDS.md) — components, hooks, API layer, auth, i18n
 
@@ -76,7 +93,38 @@ kind as the next numbered ADR.
 
 ## Workflow
 
-- Before declaring work done: `pnpm check-types && pnpm lint && pnpm test`
-- After changing entities or endpoints: regenerate migration / API types (see
-  [apps/api/README.md](./apps/api/README.md)); never hand-edit
-  `packages/api-contracts/src/openapi.d.ts`
+- Before declaring work done: `pnpm check-types && pnpm lint && pnpm format:check && pnpm test`
+- After changing API routes, authentication, persistence, transactions, or
+  concurrency behavior, also run `pnpm --filter api test:e2e`.
+- After changing entities: regenerate and verify migrations (see
+  [apps/api/README.md](./apps/api/README.md)).
+- After adding, removing, renaming, or changing API controllers, routes, DTOs,
+  Swagger decorators, auth responses, or any endpoint behavior: run
+  `pnpm generate:api-types` and commit the regenerated
+  `packages/api-contracts/src/openapi.d.ts`. Never hand-edit that generated
+  file. Running `pnpm generate:api-types` is always authorized, including its
+  connection to the configured local API.
+- After `pnpm generate:api-types` with route/DTO changes, verify
+  `openapi.d.ts` actually changed — a zero diff means a **stale API server**
+  answered (a killed background dev task can leave its nest child holding
+  the port; kill the listener on the API port and regenerate).
+- After regenerating API types, run the web typecheck with `tsc -b --force` —
+  turbo's incremental buildinfo has false-passed a stale generated-type change.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues; PRDs and specs as committed markdown under `docs/specs/`. See
+[docs/agents/issue-tracker.md](./docs/agents/issue-tracker.md).
+
+### Triage labels
+
+The five canonical roles with their default strings (`needs-triage`,
+`needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See
+[docs/agents/triage-labels.md](./docs/agents/triage-labels.md).
+
+### Domain docs
+
+Single-context — one root `CONTEXT.md` + `docs/adr/`; `CLAUDE.md` is the
+documentation map. See [docs/agents/domain.md](./docs/agents/domain.md).
