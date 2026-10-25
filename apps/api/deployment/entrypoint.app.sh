@@ -16,7 +16,7 @@ done
 # 2. Run database migrations (idempotent)
 #######################################
 echo "Running MikroORM migrations..."
-cd /app/apps/api && MIKRO_ORM_CLI_PREFER_TS=false pnpm mikro-orm migration:up \
+cd /app/apps/api && MIKRO_ORM_CLI_PREFER_TS=false ./node_modules/.bin/mikro-orm migration:up \
   --config dist/src/database/mikro-orm.cli.config.js || {
   echo "Migration failed"
   exit 1

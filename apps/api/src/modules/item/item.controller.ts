@@ -14,7 +14,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
 import { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
-import { ItemDto } from '@/modules/item/dtos/output/item.dto';
+import { ItemDto, toItemDto } from '@/modules/item/dtos/output/item.dto';
 import { ItemService } from '@/modules/item/item.service';
 
 @ApiTags('Items')
@@ -26,21 +26,22 @@ export class ItemController {
   @ApiOperation({ summary: 'List all items' })
   @ApiResponse({ status: 200, type: [ItemDto] })
   async findAll(): Promise<ItemDto[]> {
-    return this.itemService.findAll();
+    const items = await this.itemService.findAll();
+    return items.map((item) => toItemDto(item));
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get an item by ID' })
   @ApiResponse({ status: 200, type: ItemDto })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ItemDto> {
-    return this.itemService.findOne(id);
+    return toItemDto(await this.itemService.findOne(id));
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new item' })
   @ApiResponse({ status: 201, type: ItemDto })
   async create(@Body() createItemDto: CreateItemDto): Promise<ItemDto> {
-    return this.itemService.create(createItemDto);
+    return toItemDto(await this.itemService.create(createItemDto));
   }
 
   @Patch(':id')
@@ -50,7 +51,7 @@ export class ItemController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateItemDto: UpdateItemDto,
   ): Promise<ItemDto> {
-    return this.itemService.update(id, updateItemDto);
+    return toItemDto(await this.itemService.update(id, updateItemDto));
   }
 
   @Delete(':id')

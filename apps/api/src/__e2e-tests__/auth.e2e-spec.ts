@@ -20,7 +20,8 @@ describe('Auth E2E Tests', () => {
   let tokenFactory: MockTokenFactory;
 
   beforeAll(async () => {
-    const audience = process.env.AUTH_AUDIENCE ?? process.env.AUTH_CLIENT_ID!;
+    // AUTH_CLIENT_ID in .env.e2e: the default expected audience.
+    const audience = 'e2e-test-client-id';
     const acceptedScope = process.env.AUTH_ACCEPTED_SCOPES!;
 
     await mockOidc.setup();

@@ -87,5 +87,6 @@ playwright/.cache/
 
 .npmrc
 
-# Claude Code agent worktrees
+# Claude Code: agent worktrees and per-user permissions
 .claude/worktrees/
+.claude/settings.local.json

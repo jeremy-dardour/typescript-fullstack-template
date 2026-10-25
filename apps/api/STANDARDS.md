@@ -40,10 +40,13 @@ Controller → Service → Repository → EntityManager
 ```
 
 - Only repository implementations may inject an `EntityManager` or
-  `EntityRepository`; services and controllers never use MikroORM APIs,
-  including `find`, `populate`, `flush`, `assign`, query builders, or
-  transactions. Entity definitions, migrations, seeders, database
-  configuration, and database-backed tests are the expected exceptions.
+  `EntityRepository`. Services call their injected repositories — including
+  the finders a repository inherits from `EntityRepository` (`findOne`,
+  `findOneOrFail`, `find`) with plain criteria — but never touch the
+  `EntityManager` or use `populate`, `flush`, `persist`, `assign`, query
+  builders, or transactions. Entity definitions, migrations, seeders,
+  database configuration, and database-backed tests are the expected
+  exceptions.
 - Repositories accept and return entities, IDs, query criteria, or
   query-specific entity graphs—never input or output DTOs. Repository `save`
   methods call `persist(entity)` followed by `flush()`.

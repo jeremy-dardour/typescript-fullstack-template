@@ -7,7 +7,6 @@ interface ValidationError {
 
 // RFC 7807 error response (frontend fields only)
 interface ProblemDetails {
-  type?: string;
   detail?: string;
   errors?: ValidationError[];
   request_id?: string;
@@ -15,7 +14,6 @@ interface ProblemDetails {
 }
 
 export class ApiError extends Error {
-  public problemType?: string;
   public detail?: string;
   public errors?: ValidationError[];
   public requestId?: string;
@@ -31,7 +29,6 @@ export class ApiError extends Error {
 
     // Extract RFC 7807 fields
     const problem = data as ProblemDetails;
-    this.problemType = problem?.type;
     this.detail = problem?.detail;
     this.errors = problem?.errors;
     this.requestId = problem?.request_id ?? problem?.correlation_id;
