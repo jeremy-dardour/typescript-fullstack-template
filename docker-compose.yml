@@ -1,6 +1,6 @@
 services:
   api:
-    image: template-api:local
+    image: template-app:local
     container_name: api
     env_file:
       - apps/api/.env.docker.local
