@@ -25,6 +25,9 @@ export class DatabaseModule {
 
       imports: [
         MikroOrmModule.forRootAsync({
+          // Required by @mikro-orm/nestjs for driver-specific exports such as
+          // SqlEntityManager when the options come from a factory.
+          driver: PostgreSqlDriver,
           inject: [ConfigService],
           useFactory: (configService: ConfigService<BaseEnv, true>) => {
             const isProduction =
@@ -44,6 +47,10 @@ export class DatabaseModule {
               }),
 
               autoLoadEntities: true, // prevents needing to register entities manually in mikro orm module
+              // Entities come from forFeature() in the modules that use them. The
+              // CLI process loads only the modules its commands need, which can
+              // be none, so an empty set is valid rather than a misconfiguration.
+              discovery: { warnWhenNoEntities: false },
 
               metadataProvider: TsMorphMetadataProvider,
               // Production runs as an unprivileged user that cannot write the
