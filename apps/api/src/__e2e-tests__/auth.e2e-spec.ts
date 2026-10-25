@@ -50,6 +50,21 @@ describe('Auth E2E Tests', () => {
         .expect(200);
     });
 
+    it('exposes the normalized token identity on GET /me', async () => {
+      const token = await tokenFactory.validToken();
+
+      const response = await createRequest(app)
+        .get('/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body).toEqual({
+        sub: 'e2e-user-123',
+        email: 'e2e@example.com',
+        name: 'E2E Test User',
+      });
+    });
+
     it('should return 401 when no authorization header is provided', async () => {
       await createRequest(app).get(PROTECTED_ENDPOINT).expect(401);
     });

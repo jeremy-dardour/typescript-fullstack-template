@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+  '/api/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The authenticated caller, as the API sees them */
+    get: operations['MeController_me'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/health': {
     parameters: {
       query?: never;
@@ -105,23 +122,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    ItemDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      description?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CreateItemDto: {
-      name: string;
-      description?: string | null;
-    };
-    UpdateItemDto: {
+    CurrentUserDto: {
+      /** @description Stable subject identifier from the identity provider */
+      sub: string;
+      email?: string;
       name?: string;
-      description?: string | null;
     };
     ProblemDetailsDto: {
       /**
@@ -183,6 +188,24 @@ export interface components {
        */
       errors?: Record<string, never>[];
     };
+    ItemDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      description?: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateItemDto: {
+      name: string;
+      description?: string | null;
+    };
+    UpdateItemDto: {
+      name?: string;
+      description?: string | null;
+    };
   };
   responses: never;
   parameters: never;
@@ -192,6 +215,43 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  MeController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CurrentUserDto'];
+        };
+      };
+      /** @description Authentication failed */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProblemDetailsDto'];
+        };
+      };
+      /** @description Error response (400/401/403/404/422/429/500 etc.) */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetailsDto'];
+        };
+      };
+    };
+  };
   HealthController_check: {
     parameters: {
       query?: never;

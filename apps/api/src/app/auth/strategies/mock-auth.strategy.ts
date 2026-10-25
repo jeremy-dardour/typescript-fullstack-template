@@ -6,6 +6,21 @@ import {
   AuthenticatedUser,
 } from '@/app/auth/types/token.types';
 
+/** Bearer token that selects the second identity; any other request gets the default one. */
+export const MOCK_PARTNER_TOKEN = 'mock-partner';
+
+const DEFAULT_IDENTITY: AuthenticatedUser = {
+  sub: 'mock-user',
+  email: 'mock@example.com',
+  name: 'MockUser',
+};
+
+const PARTNER_IDENTITY: AuthenticatedUser = {
+  sub: 'mock-partner',
+  email: 'mock-partner@example.com',
+  name: 'MockPartner',
+};
+
 @Injectable()
 export class MockAuthStrategy implements AuthStrategy {
   private readonly logger = new Logger(MockAuthStrategy.name);
@@ -16,16 +31,12 @@ export class MockAuthStrategy implements AuthStrategy {
     );
   }
 
-  authenticate(_request: AuthenticatedRequest): Promise<AuthenticatedUser> {
-    return Promise.resolve(this.createMockJwtPayload());
-  }
+  authenticate(request: AuthenticatedRequest): Promise<AuthenticatedUser> {
+    const identity =
+      request.headers.authorization === `Bearer ${MOCK_PARTNER_TOKEN}`
+        ? PARTNER_IDENTITY
+        : DEFAULT_IDENTITY;
 
-  private createMockJwtPayload(): AuthenticatedUser {
-    return {
-      email: 'mock@example.com',
-      name: 'MockUser',
-      preferred_username: 'mock@example.com',
-      roles: ['user'],
-    };
+    return Promise.resolve({ ...identity });
   }
 }

@@ -20,7 +20,7 @@ import type { Env } from '@/app/config/env.schema';
 
 @Injectable()
 export class JwtVerificationService {
-  private readonly audience: string;
+  private readonly audience: string | undefined;
   private readonly acceptedScopes: string[];
 
   constructor(
@@ -30,10 +30,19 @@ export class JwtVerificationService {
     this.audience =
       this.configService.get('AUTH_AUDIENCE', { infer: true }) ??
       this.configService.get('AUTH_CLIENT_ID', { infer: true });
-    this.acceptedScopes = this.configService.get('AUTH_ACCEPTED_SCOPES');
+    this.acceptedScopes =
+      this.configService.get('AUTH_ACCEPTED_SCOPES', { infer: true }) ?? [];
   }
 
   async verify(token: string): Promise<VerifiedToken> {
+    // Env validation requires it outside fake auth; without it jose would skip
+    // the audience check entirely.
+    if (!this.audience) {
+      throw new OidcServiceUnavailableException(
+        'No expected audience configured',
+      );
+    }
+
     try {
       const jwks = this.oidcService.getJWKSet();
       const issuer = this.oidcService.getIssuer();
