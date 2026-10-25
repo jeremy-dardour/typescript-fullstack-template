@@ -86,3 +86,6 @@ playwright/.cache/
 
 
 .npmrc
+
+# Claude Code agent worktrees
+.claude/worktrees/

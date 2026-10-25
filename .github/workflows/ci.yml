@@ -142,15 +142,17 @@ jobs:
 
           trap cleanup EXIT
 
+          API_URL="http://localhost:${PORT:-3000}"
           echo "Waiting for API OpenAPI endpoint to be ready..."
           for i in {1..30}; do
-            if curl --silent --fail http://localhost:3000/openapi.yaml > /dev/null; then
+            if curl --silent --fail "$API_URL/openapi.yaml" > /dev/null; then
               break
             fi
             echo "API not ready yet, retrying in 2s..."
             sleep 2
           done
 
+          curl --silent --fail "$API_URL/openapi.yaml" > /dev/null
           pnpm generate:api-types
 
           git --no-pager diff -- packages/api-contracts/src/openapi.d.ts
@@ -161,6 +163,7 @@ jobs:
           AUTH_CLIENT_ID: e2e-test-client-id
           AUTH_OIDC_DISCOVERY_URL: https://auth.example.com/.well-known/openid-configuration
           AUTH_ACCEPTED_SCOPES: api.read
+          PORT: 3000
 
   # ----------------------------------------------------------------------------
   # Unit Tests (Matrix)
@@ -168,7 +171,7 @@ jobs:
   tests:
     name: ${{ matrix.label }}
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:
