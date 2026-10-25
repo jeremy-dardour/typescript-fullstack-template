@@ -21,13 +21,17 @@ export const envSchema = baseEnvSchema
         message: 'PORT must be between 1-65535',
       }),
 
-    // Absolute path to a built SPA to serve; unset keeps the API JSON-only.
-    SERVE_STATIC_DIR: z
-      .string()
-      .refine((value) => path.isAbsolute(value), {
-        message: 'SERVE_STATIC_DIR must be an absolute path',
-      })
-      .optional(),
+    // Absolute path to a built SPA to serve. Empty or unset keeps the API
+    // JSON-only; empty matters because a container cannot unset an image ENV.
+    SERVE_STATIC_DIR: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .refine((value) => path.isAbsolute(value), {
+          message: 'SERVE_STATIC_DIR must be an absolute path',
+        })
+        .optional(),
+    ),
 
     // Memory ceilings for the health checks. Size them to the container limit:
     // the TsMorph metadata provider alone keeps the TypeScript compiler loaded.

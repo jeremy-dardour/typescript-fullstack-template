@@ -84,12 +84,19 @@ describe('spa fallback routing', () => {
     },
   );
 
-  it('serves static assets', async () => {
+  it('serves hashed assets with a long-lived cache', async () => {
     const response = await request(app.getHttpServer() as never)
       .get('/assets/app.js')
       .expect(200);
 
     expect(response.text).toBe('export {};');
+    expect(response.headers['cache-control']).toContain('immutable');
+  });
+
+  it('makes index.html revalidate so a deploy is picked up', async () => {
+    const response = await request(app.getHttpServer() as never).get('/');
+
+    expect(response.headers['cache-control']).toBe('no-cache');
   });
 
   it('leaves API routes to their controllers', async () => {
@@ -102,7 +109,7 @@ describe('spa fallback routing', () => {
     expect(health.body).toEqual({ status: 'ok' });
   });
 
-  it.each(['/api/unknown', '/health/unknown'])(
+  it.each(['/api/unknown', '/health/unknown', '/assets/old-build-hash.js'])(
     'keeps %s a 404 instead of the SPA shell',
     async (path) => {
       const response = await request(app.getHttpServer() as never).get(path);

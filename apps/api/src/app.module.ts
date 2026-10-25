@@ -39,8 +39,9 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     ]),
     HealthModule,
     ItemModule,
-    // Read from the process environment: module metadata is evaluated before
-    // ConfigModule loads .env. env.schema.ts still validates it at boot.
+    // Evaluated when this module is defined. ConfigModule.forRoot above has
+    // already loaded .env into process.env synchronously by then (an
+    // implementation detail of @nestjs/config); a real env var always works.
     ...createStaticAssetsImports(process.env.SERVE_STATIC_DIR),
   ],
   providers: [

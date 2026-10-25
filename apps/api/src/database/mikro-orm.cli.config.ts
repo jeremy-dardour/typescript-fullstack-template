@@ -5,6 +5,16 @@ import { defineConfig } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import { SeedManager } from '@mikro-orm/seeder';
 
+/** Mirrors DB_SSL in env.base.schema.ts, which the CLI does not load. */
+function isSslEnabled(): boolean {
+  const value = process.env.DB_SSL;
+  if (value === undefined) return process.env.NODE_ENV === 'production';
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(`DB_SSL must be 'true' or 'false', got '${value}'`);
+  }
+  return value === 'true';
+}
+
 /**
  * MikroORM CLI configuration
  *
@@ -16,9 +26,7 @@ export default defineConfig({
 
   // SSL: node-postgres ignores sslmode in URL query params,
   // so we must pass ssl config explicitly for managed PostgreSQL services
-  ...((process.env.DB_SSL === undefined
-    ? process.env.NODE_ENV === 'production'
-    : process.env.DB_SSL === 'true') && {
+  ...(isSslEnabled() && {
     driverOptions: {
       ssl: { rejectUnauthorized: false },
     },
