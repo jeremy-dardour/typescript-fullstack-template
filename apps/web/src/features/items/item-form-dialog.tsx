@@ -28,7 +28,7 @@ export function ItemFormDialog({
   onSubmit,
   title,
   defaultValues,
-  isLoading,
+  isLoading = false,
 }: ItemFormDialogProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(defaultValues?.name ?? '');
@@ -74,10 +74,7 @@ export function ItemFormDialog({
             >
               {t('items.form.cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={(isLoading ?? false) || !name.trim()}
-            >
+            <Button type="submit" disabled={isLoading || !name.trim()}>
               {t('items.form.submit')}
             </Button>
           </DialogFooter>

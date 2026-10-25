@@ -119,7 +119,7 @@ describe('Auth E2E Tests', () => {
       beforeAll(async () => {
         app = await createTestApp({
           oidcOverride: {
-            init: async () => await Promise.resolve(),
+            init: () => Promise.resolve(),
             getJWKSet: () => {
               throw new OidcServiceUnavailableException(
                 'OIDC service not initialized',
@@ -155,7 +155,7 @@ describe('Auth E2E Tests', () => {
       beforeAll(async () => {
         app = await createTestApp({
           oidcOverride: {
-            init: async () => await Promise.resolve(),
+            init: () => Promise.resolve(),
             getJWKSet: () =>
               (() => {
                 throw new JOSEError('Failed to fetch remote JWKS');

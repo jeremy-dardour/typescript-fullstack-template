@@ -22,8 +22,8 @@ export class MockOidcService {
     jwk.alg = 'RS256';
     jwk.use = 'sig';
 
-    this.jwksFunction = (async () =>
-      await Promise.resolve(this.publicKey)) as unknown as JWKSetFunction;
+    this.jwksFunction = (() =>
+      Promise.resolve(this.publicKey)) as unknown as JWKSetFunction;
   }
 
   getPrivateKey(): GenerateKeyPairResult['privateKey'] {
@@ -46,7 +46,7 @@ export class MockOidcService {
     return true;
   }
 
-  async init(): Promise<void> {
-    return await Promise.resolve();
+  init(): Promise<void> {
+    return Promise.resolve();
   }
 }

@@ -38,7 +38,7 @@ export class JwtAuthStrategy implements AuthStrategy {
       throw new AuthenticationException('Missing authorization headers');
     }
 
-    const [type, token] = authHeader.split(' ');
+    const [type, token] = authHeader.split(' ', 2);
 
     if (type !== 'Bearer' || !token) {
       throw new AuthenticationException('Missing authorization token');

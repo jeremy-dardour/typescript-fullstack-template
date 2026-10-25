@@ -20,6 +20,13 @@ export const unicorn: Linter.Config[] = defineConfig({
     'unicorn/no-top-level-side-effects': 'off',
     'unicorn/consistent-class-member-order': 'off',
     'unicorn/no-array-sort': 'off',
+    // Both reject the conventional `/** … */` JSDoc layout
+    'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
+    'unicorn/single-line-block-comment-style': 'off',
+    // Rewrites readable multi-line branches into nested ternaries
+    'unicorn/prefer-ternary': 'off',
+    // Flags NestJS metadata-key constants such as IS_PUBLIC_KEY
+    'unicorn/consistent-boolean-name': 'off',
     'unicorn/filename-case': [
       'error',
       { case: 'kebabCase', ignore: [/^__[\w-]+__$/.source] },

@@ -160,7 +160,7 @@ export class HealthController {
 
     const details: string[] = [];
     for (const [key, value] of Object.entries(errors)) {
-      if (!(typeof value === 'object' && value !== null)) {
+      if (typeof value !== 'object' || value === null) {
         continue;
       }
 
