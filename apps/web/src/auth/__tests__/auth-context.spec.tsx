@@ -1,92 +1,32 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
-import { AuthContext, useAuth } from '@/auth/auth-context';
+import { AuthContext, useAuthState } from '@/auth/auth-context';
+import { createStubAuth } from '@/testing/stub-auth';
 
-import type { AuthProvider } from '@/auth/auth-provider.interface';
-
-function PersonalComponent() {
-  const auth = useAuth();
-  const account = auth.getAuthenticatedUser();
-  return <div data-testid="username">{account?.username}</div>;
+function StatusProbe() {
+  const state = useAuthState();
+  return <div data-testid="status">{state.status}</div>;
 }
 
-function LoginButton() {
-  const auth = useAuth();
-  return (
-    <button onClick={() => auth.login()} type="button">
-      Login
-    </button>
-  );
-}
+describe('useAuthState', () => {
+  it('re-renders when the session state changes', () => {
+    const { authSystem, setState } = createStubAuth();
+    render(
+      <AuthContext value={authSystem}>
+        <StatusProbe />
+      </AuthContext>,
+    );
+    expect(screen.getByTestId('status')).toHaveTextContent('authenticated');
 
-describe('authContext', () => {
-  const mockAuthProvider: AuthProvider = {
-    initialize: vi.fn(),
-    login: vi.fn(),
-    isAuthenticated: vi.fn().mockReturnValue(true),
-    getAuthenticatedUser: vi.fn().mockReturnValue({
-      username: 'test@example.com',
-      name: 'TestUser',
-      localAccountId: 'testId',
-    }),
-    logout: vi.fn(),
-    getAccessToken: vi.fn().mockResolvedValue('mockAccessToken'),
-  };
+    act(() => setState({ status: 'anonymous' }));
 
-  describe('useAuth', () => {
-    it('should return auth provider when used within AuthContext', () => {
-      render(
-        <AuthContext value={mockAuthProvider}>
-          <TestComponent />
-        </AuthContext>,
-      );
+    expect(screen.getByTestId('status')).toHaveTextContent('anonymous');
+  });
 
-      expect(screen.getByText('Authenticated')).toBeInTheDocument();
-    });
-
-    it('should throw error when used outside AuthContext', () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {
-        return;
-      });
-
-      expect(() => {
-        render(<TestComponent />);
-      }).toThrow('useAuth must be used within AuthContext.Provider');
-
-      consoleError.mockRestore();
-    });
-
-    it('should return the correct auth provider instance', () => {
-      render(
-        <AuthContext value={mockAuthProvider}>
-          <PersonalComponent />
-        </AuthContext>,
-      );
-
-      expect(screen.getByTestId('username')).toHaveTextContent(
-        'test@example.com',
-      );
-    });
-
-    it('should allow calling auth provider methods', () => {
-      render(
-        <AuthContext value={mockAuthProvider}>
-          <LoginButton />
-        </AuthContext>,
-      );
-
-      const button = screen.getByRole('button', { name: 'Login' });
-      button.click();
-
-      expect(mockAuthProvider.login).toHaveBeenCalledOnce();
-    });
+  it('throws outside AuthContext', () => {
+    expect(() => render(<StatusProbe />)).toThrow(
+      'useAuthSystem must be used within AuthContext',
+    );
   });
 });
-
-const TestComponent = () => {
-  const auth = useAuth();
-  return (
-    <div>{auth.isAuthenticated() ? 'Authenticated' : 'Not authenticated'}</div>
-  );
-};

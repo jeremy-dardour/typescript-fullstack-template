@@ -14,12 +14,12 @@ import '@/i18n/i18n';
 
 import './main.css';
 
-const { authProvider } = bootstrap();
+const { authSystem } = bootstrap();
 
 createRoot(document.querySelector('#root')!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <AuthContext value={authProvider}>
+      <AuthContext value={authSystem}>
         <ApiErrorProvider>
           <AppProvider>
             <GlobalApiErrorDialog />

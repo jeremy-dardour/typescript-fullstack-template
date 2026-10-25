@@ -1,4 +1,9 @@
 {
+  "auth.landing.title": "Connexion",
+  "auth.landing.status.checking": "Vérification de votre session…",
+  "auth.landing.status.signIn": "Connectez-vous pour continuer.",
+  "auth.landing.status.error": "La connexion a échoué. Veuillez réessayer.",
+  "auth.landing.action.continueInDevMode": "Continuer avec l'utilisateur de développement",
   "app.error.render.title": "Une erreur est survenue lors du rendu de l'application.",
   "app.error.render.message": "Veuillez contacter l'administrateur ou réessayer plus tard.",
   "app.errorDialog.title": "Une erreur est survenue",

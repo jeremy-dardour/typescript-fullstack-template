@@ -1,4 +1,9 @@
 export interface Translations {
+  'auth.landing.title': string;
+  'auth.landing.status.checking': string;
+  'auth.landing.status.signIn': string;
+  'auth.landing.status.error': string;
+  'auth.landing.action.continueInDevMode': string;
   'app.error.render.title': string;
   'app.error.render.message': string;
   'app.errorDialog.title': string;

@@ -4,24 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LayoutHeader } from '@/app/components/layout/layout-header';
 import { AuthContext } from '@/auth';
+import { createStubAuth } from '@/testing/stub-auth';
 
-import type { AuthProvider } from '@/auth';
-
-const mockAuthProvider: AuthProvider = {
-  initialize: vi.fn(),
-  login: vi.fn(),
-  isAuthenticated: vi.fn().mockReturnValue(true),
-  getAuthenticatedUser: vi.fn().mockReturnValue({
-    username: 'jane.doe@example.com',
-    name: 'Jane Doe',
-  }),
-  logout: vi.fn(),
-  getAccessToken: vi.fn().mockResolvedValue('mockAccessToken'),
-};
+const { auth, authSystem } = createStubAuth();
 
 const setup = () => {
   render(
-    <AuthContext value={mockAuthProvider}>
+    <AuthContext value={authSystem}>
       <LayoutHeader />
     </AuthContext>,
   );
@@ -51,15 +40,13 @@ describe('layoutHeader', () => {
   });
 
   it('should call logout when logout button is clicked', async () => {
-    const mockLogout = vi.fn();
-    mockAuthProvider.logout = mockLogout;
     const button = screen.getByText('Jane Doe');
     await userEvent.click(button);
 
     const logoutButton = screen.getByText('app.userMenu.logout');
     await userEvent.click(logoutButton);
 
-    expect(mockLogout).toHaveBeenCalledOnce();
+    expect(auth.signOut).toHaveBeenCalledOnce();
   });
 
   it('should navigate to home page when title is clicked', async () => {

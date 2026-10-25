@@ -1,14 +1,6 @@
+/** Mirrors the API's normalized caller identity (`GET /api/me`). */
 export interface AuthenticatedUser {
-  username: string;
+  sub: string;
+  email?: string;
   name?: string;
-}
-
-export enum AuthEvent {
-  LOGIN_SUCCESS = 'auth:login-success',
-  LOGOUT_SUCCESS = 'auth:logout-success',
-}
-
-export interface AuthMessage {
-  type: AuthEvent;
-  timestamp: number;
 }

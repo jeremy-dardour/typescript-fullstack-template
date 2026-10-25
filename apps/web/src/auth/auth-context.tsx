@@ -1,15 +1,34 @@
-import { createContext, use } from 'react';
+import { createContext, use, useSyncExternalStore } from 'react';
 
-import type { AuthProvider } from '@/auth';
+import type { AuthState } from '@/auth/auth-state';
+import type { AuthSession, AuthSystem } from '@/auth/auth.interface';
 
-export const AuthContext = createContext<AuthProvider | null>(null);
+export const AuthContext = createContext<AuthSystem | null>(null);
 
-export function useAuth(): AuthProvider {
-  const context = use(AuthContext);
+export function useAuthSystem(): AuthSystem {
+  const authSystem = use(AuthContext);
 
-  if (!context) {
-    throw new Error('useAuth must be used within AuthContext.Provider');
+  if (!authSystem) {
+    throw new Error('useAuthSystem must be used within AuthContext');
   }
 
-  return context;
+  return authSystem;
+}
+
+export function useAuth(): AuthSession {
+  return useAuthSystem().session;
+}
+
+/**
+ * Subscribes through useSyncExternalStore rather than a changing context
+ * value, so the context stays stable and `useAuth()` is safe in dependency
+ * arrays.
+ */
+export function useAuthState(): AuthState {
+  const auth = useAuth();
+
+  return useSyncExternalStore(
+    (listener) => auth.subscribe(listener),
+    () => auth.getState(),
+  );
 }

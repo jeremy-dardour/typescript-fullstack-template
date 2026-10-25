@@ -1,4 +1,11 @@
-export { AuthContext, useAuth } from './auth-context';
-export { createAuthProvider } from './create-auth-provider';
+export {
+  AuthContext,
+  useAuth,
+  useAuthState,
+  useAuthSystem,
+} from './auth-context';
+export { createAuthSystem } from './create-auth-system';
+export { SignInButton } from './sign-in-button';
+export type { AuthState } from './auth-state';
 export type { AuthenticatedUser } from './types';
-export type { AuthProvider } from './auth-provider.interface';
+export type { AuthSession, AuthSystem } from './auth.interface';

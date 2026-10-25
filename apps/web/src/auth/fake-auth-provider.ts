@@ -1,49 +1,59 @@
+import { ANONYMOUS } from '@/auth/auth-state';
 import { generateFakeJwt } from '@/auth/utils/generate-fake-jwt';
 
-import type { AuthenticatedUser } from './types';
-import type { AuthProvider } from '@/auth/auth-provider.interface';
+import type { AuthState } from '@/auth/auth-state';
+import type { AuthChangeListener, AuthSession } from '@/auth/auth.interface';
+import type { AuthenticatedUser } from '@/auth/types';
 
-// provider for local developments
-export class FakeAuthProvider implements AuthProvider {
-  private authenticated = false;
-  private authenticatedUser: AuthenticatedUser = this.mockAuthenticateUser();
+const DEV_USER: AuthenticatedUser = {
+  sub: 'mock-user',
+  email: 'dev.user@example.com',
+  name: 'DevUser',
+};
 
-  initialize(): void {
-    this.authenticated = true;
+/**
+ * Development and e2e session: starts signed in as a fixed user and mints a
+ * local JWT, which the API accepts under FAKE_AUTH. It makes no network call,
+ * so web e2e can run with the API mocked.
+ */
+export class FakeAuthProvider implements AuthSession {
+  private state: AuthState = { status: 'authenticated', user: DEV_USER };
+  private readonly listeners = new Set<AuthChangeListener>();
+
+  getState(): AuthState {
+    return this.state;
   }
 
-  login(): void {
-    this.authenticated = true;
+  subscribe(listener: AuthChangeListener): () => void {
+    this.listeners.add(listener);
+
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
-  logout(): void {
-    this.authenticated = false;
+  authenticate(): void {
+    this.setState({ status: 'authenticated', user: DEV_USER });
   }
 
-  isAuthenticated(): boolean {
-    return this.authenticated;
-  }
-
-  getAuthenticatedUser(): AuthenticatedUser | null {
-    return this.authenticated ? this.authenticatedUser : null;
+  signOut(): void {
+    this.setState(ANONYMOUS);
   }
 
   getAccessToken(): Promise<string> {
-    if (!this.authenticated) {
+    if (this.state.status !== 'authenticated') {
       return Promise.reject(
         new Error('[FakeAuthProvider] User is not authenticated'),
       );
     }
 
-    const { username } = this.mockAuthenticateUser();
-
-    return Promise.resolve(generateFakeJwt(username, username));
+    return Promise.resolve(generateFakeJwt(DEV_USER.sub, DEV_USER.email ?? ''));
   }
 
-  private mockAuthenticateUser() {
-    return {
-      username: 'dev.user@example.com',
-      name: 'DevUser',
-    };
+  private setState(next: AuthState): void {
+    this.state = next;
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 }
