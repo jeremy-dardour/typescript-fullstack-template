@@ -94,6 +94,9 @@ kind as the next numbered ADR.
 ## Workflow
 
 - Before declaring work done: `pnpm check-types && pnpm lint && pnpm format:check && pnpm test`
+- Before declaring a code change done, verify it in the running app with the
+  `verify-app` skill (boot via `scripts/verify-app.sh`, then exercise the
+  changed flow in a browser). Passing tests do not prove the app starts.
 - After changing API routes, authentication, persistence, transactions, or
   concurrency behavior, also run `pnpm --filter api test:e2e`.
 - After changing entities: regenerate and verify migrations (see
