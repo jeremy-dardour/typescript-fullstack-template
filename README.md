@@ -100,7 +100,7 @@ A pluggable JWT authentication system ready for any OIDC provider:
 - **Dev mode**: `FAKE_AUTH=true` bypasses auth for local development. It
   refuses to start unless `NODE_ENV` is explicitly `development` or `test`, and
   the `AUTH_*` variables are then optional. Every request is the mock user;
-  send `Authorization: Bearer mock-partner` to act as a second user.
+  send `Authorization: Bearer mock-second-user` to act as a second user.
 
 Configure your OIDC provider with three env vars:
 

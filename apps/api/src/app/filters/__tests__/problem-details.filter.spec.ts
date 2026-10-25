@@ -45,4 +45,18 @@ describe('problemDetailsFilter type URI', () => {
       detail: 'The item is locked',
     });
   });
+
+  it('uses the exception title for statuses without a standard one', () => {
+    const body = respond(
+      new ProblemDetailsException(410, 'item-archived', 'Archived', 'Gone'),
+    );
+
+    expect(body.title).toBe('Gone');
+  });
+
+  it('rejects a slug that would make an invalid type URI', () => {
+    expect(
+      () => new ProblemDetailsException(409, 'Item Locked', 'Locked'),
+    ).toThrow(/kebab-case/);
+  });
 });

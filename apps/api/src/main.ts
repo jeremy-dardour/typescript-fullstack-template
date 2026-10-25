@@ -6,7 +6,7 @@ import { Logger } from 'nestjs-pino';
 
 import { AuthInitializerService } from '@/app/auth';
 import { corsConfig } from '@/app/config/security.config';
-import { setupSwagger } from '@/app/config/swagger.config';
+import { areApiDocsEnabled, setupSwagger } from '@/app/config/swagger.config';
 import { createValidationPipe } from '@/app/config/validation.config';
 import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
@@ -82,19 +82,18 @@ async function bootstrap() {
   app.useGlobalPipes(createValidationPipe());
 
   // Swagger docs
-  setupSwagger(app, env);
+  setupSwagger(app);
 
   const port: Env['PORT'] = configService.get('PORT');
   await app.listen(port);
 
   const nodeVersion = process.version;
   const baseUrl = `http://localhost:${port}`;
-  const documentationEndpoints =
-    env === 'production'
-      ? '|  - API docs:   disabled in production              |'
-      : `|  - Docs:       ${`${baseUrl}/api/docs`.padEnd(35)}  |
+  const documentationEndpoints = areApiDocsEnabled()
+    ? `|  - Docs:       ${`${baseUrl}/api/docs`.padEnd(35)}  |
 |  - Swagger:    ${`${baseUrl}/api/swagger`.padEnd(35)}  |
-|  - YAML:       ${`${baseUrl}/openapi.yaml`.padEnd(35)}  |`;
+|  - YAML:       ${`${baseUrl}/openapi.yaml`.padEnd(35)}  |`
+    : `|  - API docs:   ${'disabled (NODE_ENV)'.padEnd(35)}  |`;
 
   const startupMessage = `
 +-----------------------------------------------------+

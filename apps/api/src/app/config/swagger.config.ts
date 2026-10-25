@@ -3,7 +3,6 @@ import { apiReference } from '@scalar/nestjs-api-reference';
 
 import { ProblemDetailsDto } from '@/shared/dtos/problem-details.dto';
 
-import type { Env } from '@/app/config/env.schema';
 import type { INestApplication } from '@nestjs/common';
 import type { OpenAPIObject, SwaggerCustomOptions } from '@nestjs/swagger';
 
@@ -77,15 +76,23 @@ function addDefaultErrorResponses(document: OpenAPIObject): void {
 }
 
 /**
- * Setup API documentation outside production
+ * API docs are served only when NODE_ENV is explicitly development or test.
+ * Read raw: the validated env defaults NODE_ENV to development, and a
+ * deployment that forgot to set it must not expose its docs.
+ */
+export function areApiDocsEnabled(): boolean {
+  return (
+    process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+  );
+}
+
+/**
+ * Setup API documentation
  * - /docs - Scalar API docs (default)
  * - /swagger - Swagger UI (fallback)
  */
-export function setupSwagger(
-  app: INestApplication,
-  env: Env['NODE_ENV'],
-): void {
-  if (env === 'production') return;
+export function setupSwagger(app: INestApplication): void {
+  if (!areApiDocsEnabled()) return;
 
   const config = new DocumentBuilder()
     .setTitle(swaggerConfig.title)

@@ -148,12 +148,9 @@ export class HealthController {
   async live() {
     try {
       const result = await this.health.check([
-        // Only check memory to avoid external dependency restarts
-        () =>
-          this.memory.checkHeap(
-            'memory_heap',
-            this.config.get('HEALTH_MAX_HEAP_MB', { infer: true }) * MEGABYTE,
-          ),
+        // No checks: answering at all proves the process is alive. Memory
+        // pressure belongs to readiness (stop routing) and the OOM killer;
+        // failing liveness on it restarts pods that are merely busy.
       ]);
       return result.details;
     } catch (error) {

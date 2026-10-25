@@ -15,21 +15,21 @@ export class OidcDiscoveryService {
   constructor(private readonly configService: ConfigService<Env, true>) {}
 
   async init(): Promise<void> {
-    try {
-      // Read here, not in the constructor: with FAKE_AUTH these are unset and
-      // init() is never called.
-      const discoveryUrl = this.configService.get('AUTH_OIDC_DISCOVERY_URL', {
-        infer: true,
-      });
-      const clientId = this.configService.get('AUTH_CLIENT_ID', {
-        infer: true,
-      });
-      if (!discoveryUrl || !clientId) {
-        throw new Error(
-          'AUTH_OIDC_DISCOVERY_URL and AUTH_CLIENT_ID are required',
-        );
-      }
+    // Read here, not in the constructor: with FAKE_AUTH these are unset and
+    // init() is never called.
+    const discoveryUrl = this.configService.get('AUTH_OIDC_DISCOVERY_URL', {
+      infer: true,
+    });
+    const clientId = this.configService.get('AUTH_CLIENT_ID', {
+      infer: true,
+    });
+    if (!discoveryUrl || !clientId) {
+      throw new Error(
+        'AUTH_OIDC_DISCOVERY_URL and AUTH_CLIENT_ID are required',
+      );
+    }
 
+    try {
       const config = await oidc.discovery(
         new URL(discoveryUrl),
         clientId,

@@ -61,20 +61,10 @@ describe('Health E2E Tests', () => {
   });
 
   describe('GET /health/live', () => {
-    it('should return 200 when memory is within limits', async () => {
+    it('answers 200 without checking dependencies or memory', async () => {
       const response = await createRequest(app).get('/health/live').expect(200);
 
-      const health = response.body as HealthResponse;
-      expect(health).toBeDefined();
-    });
-
-    it('should include memory_heap status in response', async () => {
-      const response = await createRequest(app).get('/health/live').expect(200);
-
-      const health = response.body as HealthResponse;
-
-      expect(health.memory_heap).toBeDefined();
-      expect(health.memory_heap?.status).toBe('up');
+      expect(response.body).toEqual({});
     });
   });
 });

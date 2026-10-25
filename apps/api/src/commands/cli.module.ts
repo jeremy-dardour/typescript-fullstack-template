@@ -23,7 +23,7 @@ import type { Env } from '@/commands/env.schema';
         pinoHttp: createCliLogger(config),
       }),
     }),
-    DatabaseModule.forRoot(),
+    DatabaseModule.forRoot({ allowNoEntities: true }),
     ExampleModule,
   ],
 })
