@@ -93,24 +93,24 @@ kind as the next numbered ADR.
 
 ## Workflow
 
-- Before declaring work done: `pnpm check-types && pnpm lint && pnpm format:check && pnpm test`
-- Before declaring a code change done, verify it in the running app with the
-  `verify-app` skill (boot via `scripts/verify-app.sh`, then exercise the
-  changed flow in a browser). Passing tests do not prove the app starts.
-- After changing API routes, authentication, persistence, transactions, or
-  concurrency behavior, also run `pnpm --filter api test:e2e`.
+- Before declaring implementation work done, use the `finish-work` skill:
+  select and explain checks for the affected behavior and its dependencies,
+  verify changed runtime flows with `verify-app`, and review the intended diff
+  and evidence. Full CI is the safety net; `pnpm dod` is an optional local
+  convenience for running broad checks. Passing tests do not prove the app starts.
 - After changing entities: regenerate and verify migrations (see
   [apps/api/README.md](./apps/api/README.md)).
 - After adding, removing, renaming, or changing API controllers, routes, DTOs,
   Swagger decorators, auth responses, or any endpoint behavior: run
-  `pnpm generate:api-types` and commit the regenerated
-  `packages/api-contracts/src/openapi.d.ts`. Never hand-edit that generated
-  file. Running `pnpm generate:api-types` is always authorized, including its
+  `pnpm generate:api-types` and include any regenerated
+  `packages/api-contracts/src/openapi.d.ts` changes in the intended diff.
+  Never hand-edit that generated file. Running `pnpm generate:api-types` is always authorized, including its
   connection to the configured local API.
-- After `pnpm generate:api-types` with route/DTO changes, verify
-  `openapi.d.ts` actually changed — a zero diff means a **stale API server**
-  answered (a killed background dev task can leave its nest child holding
-  the port; kill the listener on the API port and regenerate).
+- After `pnpm generate:api-types`, review whether the generated diff matches
+  the expected schema change. A zero diff can be valid for behavior-only
+  changes or an already-current contract. If a schema change is expected,
+  inspect the served OpenAPI spec and confirm the listener belongs to this
+  checkout before restarting a stale API server and regenerating.
 - After regenerating API types, run the web typecheck with `tsc -b --force` —
   turbo's incremental buildinfo has false-passed a stale generated-type change.
 
