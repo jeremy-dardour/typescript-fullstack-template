@@ -8,15 +8,15 @@ import {
   JOSEError,
 } from 'jose/errors';
 
-import { ExpiredTokenException } from '@/app/auth/exceptions/expired-token.exception';
-import { InsufficientScopesException } from '@/app/auth/exceptions/insufficient-scopes.exception';
-import { InvalidTokenException } from '@/app/auth/exceptions/invalid-token.exception';
-import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.exception';
-import { jwtPayloadSchema } from '@/app/auth/schemas/jwt-payload.schemas';
+import { ExpiredTokenException } from '@/app/auth/exceptions/expired-token.errors';
+import { InsufficientScopesException } from '@/app/auth/exceptions/insufficient-scopes.errors';
+import { InvalidTokenException } from '@/app/auth/exceptions/invalid-token.errors';
+import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.errors';
+import { jwtPayloadSchema } from '@/app/auth/schemas/jwt-payload.schema';
 import { OidcDiscoveryService } from '@/app/auth/strategies/jwt/oidc-discovery.service';
 import { JwtPayload, VerifiedToken } from '@/app/auth/types/token.types';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 
 @Injectable()
 export class JwtVerificationService {

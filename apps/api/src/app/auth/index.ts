@@ -1,9 +1,6 @@
-export { AuthModule } from './auth.module';
-export { AuthGuard } from './auth.guard';
-export { AuthInitializerService } from './auth-initializer.service';
-export { CurrentUser, Public } from './decorators';
-export type { JwtPayload, VerifiedToken } from './types/token.types';
-export type {
-  AuthenticatedRequest,
-  AuthenticatedUser,
-} from './types/token.types';
+export * from './auth-initializer.service';
+export * from './auth.guard';
+export * from './auth.module';
+export * from './decorators/current-user.decorator';
+export * from './decorators/public.decorator';
+export type * from './types/token.types';

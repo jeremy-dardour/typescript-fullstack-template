@@ -1,4 +1,4 @@
-import type { jwtPayloadSchema } from '@/app/auth/schemas/jwt-payload.schemas';
+import type { jwtPayloadSchema } from '@/app/auth/schemas/jwt-payload.schema';
 import type { Request } from 'express';
 import type z from 'zod';
 

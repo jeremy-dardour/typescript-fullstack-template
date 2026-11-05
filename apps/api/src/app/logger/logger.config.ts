@@ -2,7 +2,7 @@ import { RequestMethod } from '@nestjs/common';
 
 import { redactCensor, redactPaths } from './redaction.config';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 import type { ConfigService } from '@nestjs/config';
 import type { Params } from 'nestjs-pino';
 import type { IncomingMessage, ServerResponse } from 'node:http';

@@ -10,9 +10,9 @@ import {
 import { SkipThrottle } from '@nestjs/throttler';
 
 import { Public } from '@/app/auth';
-import { MikroORMHealthIndicator } from '@/app/health/mikro-orm.health';
+import { MikroORMHealthIndicator } from '@/app/health/mikro-orm-health.service';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 
 const MEGABYTE = 1024 * 1024;
 

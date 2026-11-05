@@ -3,7 +3,7 @@ import path from 'node:path';
 import { z } from 'zod';
 
 import { baseEnvSchema } from '@/shared/types/env.base.schema';
-import { validateEnvSchema } from '@/shared/utils/env.validator';
+import { validateEnvSchema } from '@/shared/utils/env-validator.util';
 
 const REAL_AUTH_VARIABLES = [
   'AUTH_CLIENT_ID',

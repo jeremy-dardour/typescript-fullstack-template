@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AuthStrategy } from '@/app/auth/strategies/auth-strategy.interface';
+import { AuthStrategy } from '@/app/auth/strategies/auth-strategy.types';
 import {
   AuthenticatedRequest,
   AuthenticatedUser,
@@ -22,12 +22,12 @@ const SECOND_IDENTITY: AuthenticatedUser = {
 };
 
 @Injectable()
-export class MockAuthStrategy implements AuthStrategy {
-  private readonly logger = new Logger(MockAuthStrategy.name);
+export class MockAuthService implements AuthStrategy {
+  private readonly logger = new Logger(MockAuthService.name);
 
   constructor() {
     this.logger.warn(
-      '⚠️  MockAuthStrategy initialized - using fake authentication',
+      '⚠️  MockAuthService initialized - using fake authentication',
     );
   }
 

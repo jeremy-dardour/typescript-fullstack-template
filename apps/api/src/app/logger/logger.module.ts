@@ -4,7 +4,7 @@ import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 
 import { createLoggerConfig } from './logger.config';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 
 /**
  * Logger module - high-performance structured logging with Pino

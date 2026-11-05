@@ -1,5 +1,5 @@
 import { baseEnvSchema } from '@/shared/types/env.base.schema';
-import { validateEnvSchema } from '@/shared/utils/env.validator';
+import { validateEnvSchema } from '@/shared/utils/env-validator.util';
 
 import type { z } from 'zod';
 

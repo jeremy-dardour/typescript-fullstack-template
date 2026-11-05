@@ -4,7 +4,7 @@ import request from 'supertest';
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
-import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.exception';
+import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.errors';
 
 import type { OidcDiscoveryService } from '@/app/auth/strategies/jwt/oidc-discovery.service';
 import type { INestApplication } from '@nestjs/common';

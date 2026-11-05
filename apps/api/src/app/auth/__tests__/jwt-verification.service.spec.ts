@@ -1,6 +1,6 @@
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
-import { InvalidTokenException } from '@/app/auth/exceptions/invalid-token.exception';
+import { InvalidTokenException } from '@/app/auth/exceptions/invalid-token.errors';
 import { JwtVerificationService } from '@/app/auth/strategies/jwt/jwt-verification.service';
 import { envSchema } from '@/app/config/env.schema';
 
