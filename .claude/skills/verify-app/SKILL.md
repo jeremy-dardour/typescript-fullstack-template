@@ -1,6 +1,6 @@
 ---
 name: verify-app
-description: Verify a code change in the running app — boot the full dev stack, check the API answers, then drive the web UI in a browser through the changed flow. Use before declaring any code change done, after dependency upgrades, or when asked to run, start, smoke-test, or screenshot the app.
+description: Verify a code change in the running app — boot the full dev stack, check the API answers, then drive the web UI in a browser through the changed flow. Use for changed runtime behavior, dependency upgrades that affect startup or execution, or when asked to run, start, smoke-test, or screenshot the app.
 ---
 
 # Verify the app
@@ -10,35 +10,49 @@ from the real server (a package that under-declares a dependency can pass every
 test and still crash `nest start`). This skill checks the app the way a user
 meets it.
 
-1. **Gate first.** Run the workflow gate from [CLAUDE.md](../../../CLAUDE.md)
-   (check-types, lint, format, unit, and API e2e when the change calls for it).
-   Don't boot the app to debug something the gate already reports.
+1. **Scope.** Identify the affected user flows and dependencies from the task
+   and diff. Select relevant native real-stack tests and the acceptance
+   criteria that need exploration. Use `finish-work` for completion checks;
+   starting or inspecting the app alone does not require a completion pass.
 
 2. **Boot.** Run `scripts/verify-app.sh`. It starts Postgres, applies
    migrations, starts API and web with the ports from the `.env` files, waits
    for them, and checks `/health/live`, `/health/ready`, `/openapi.yaml`, and
    that no `ERROR` was logged during boot. It must print `verify-app: OK`.
    On failure read `.verify-app/dev.log`. If it warns that migrating rewrote
-   files under `migrations/`, the local database holds another branch's
-   schema: restore those files and don't commit them.
+   files under `migrations/`, the local database may hold another branch's
+   schema. Review the changes against the pre-boot diff and preserve any
+   intentional migration work. Keep incidental rewrites out of the intended diff.
 
 3. **Contract.** If routes, DTOs, or Swagger decorators changed, run
    `pnpm generate:api-types` against the running API and review the diff to
-   `packages/api-contracts/src/openapi.d.ts` (a zero diff after a contract
-   change means a stale server answered).
+   `packages/api-contracts/src/openapi.d.ts`. Follow the diagnostic rules in
+   [CLAUDE.md](../../../CLAUDE.md#workflow) when an expected schema diff is missing.
+   After generation run `pnpm --filter web exec tsc -b --force`; incremental
+   build state can otherwise hide errors in changed generated types.
 
-4. **Browser.** Drive the changed flow with the probe runner (Playwright):
-   - `pnpm probe --goto <path>` opens a page and prints its accessibility
+4. **Browser.** Run relevant native Playwright tests against the running stack
+   with `pnpm --filter web test:e2e:real [test-file...]` (configuration:
+   `apps/web/playwright.real.config.ts`). These permanent regression tests
+   also run in CI. Add coverage under `apps/web/e2e/real/` using native
+   assertions, fixtures, and reporting. Failure screenshots and traces go to
+   `apps/web/test-results/real/`; the HTML report is in
+   `apps/web/playwright-report/real/`. The separate `test:e2e` suite uses a
+   mocked API.
+
+   Explore acceptance criteria the retained tests do not cover with the probe:
+   - `pnpm probe --goto <path>` opens a page and prints a concise accessibility
      snapshot, console errors, uncaught page errors, and HTTP errors.
-   - For behavior, write a scenario that default-exports
-     `async ({ page, step, expect }) => {}` (full Playwright `page` API, each
-     user action wrapped in `step()`), save it under `.verify-app/` (ignored)
-     or next to `apps/web/e2e/probe/scenarios/items-crud.ts` if it is worth
-     keeping, and run `pnpm probe <file>` from the repo root (paths resolve from there).
-   - It exits non-zero on a failed step, a console or page error, or a 5xx,
+   - For behavior, write a temporary scenario under `.verify-app/` (ignored)
+     that default-exports `async ({ page, step, expect }) => {}`. Use the full
+     Playwright `page` API and wrap user actions in `step()`. Run
+     `pnpm probe <file>` from the repository root; paths resolve from there.
+   - The probe exits non-zero on a failed step, console or page error, or 5xx,
      and saves screenshots to `.verify-app/probe/`. Chrome logs every 4xx as a
-     console error: when the flow expects one, pass
+     console error: for an expected response, pass
      `--allow-console 'status of 404'`.
+   - Promote reusable exploratory flows to native real-stack Playwright tests
+     rather than retaining custom probe scenarios as the regression suite.
    - First run on a machine: `pnpm --filter web exec playwright install chromium`.
 
 5. **Stop.** Run `scripts/verify-app.sh stop`, even after a failure. It stops

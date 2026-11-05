@@ -88,6 +88,13 @@ src/
   Details fields (`problemResponse()`). Unhandled requests fail the test.
 - For journeys across several requests and server-side state changes, use a
   stateful adapter (`setupItemsApi()`) instead of repeating raw handlers.
-- **E2E**: Playwright in `e2e/` against the production build with the API
-  mocked. To check behavior against the real running app, use the probe
-  runner (`pnpm probe`, see the `verify-app` skill).
+- **Browser regression**: `pnpm --filter web test:e2e` uses Playwright with a
+  mocked API. `pnpm --filter web test:e2e:real` uses native Playwright tests
+  against the running API and database (`playwright.real.config.ts`). Both
+  suites run in CI; choose coverage according to the behavior under test.
+- **Exploration**: `pnpm probe` gives agents concise accessibility snapshots,
+  errors, screenshots, and temporary scenarios against the running app (see
+  `verify-app`). Promote reusable exploratory flows to native real-stack tests.
+- Select verification by affected behavior and dependencies, including shared
+  providers, API contracts, configuration, and consumers outside the edited
+  component. Explain the selected checks and report gaps in the task or PR.

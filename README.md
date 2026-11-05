@@ -162,7 +162,7 @@ real-auth `AUTH_*` variables (fake auth is refused in production); set
 pnpm build:docker   # builds template-app:local
 ```
 
-VITE_* values are inlined at build time (`--build-arg VITE_FAKE_AUTH=…`);
+VITE\_\* values are inlined at build time (`--build-arg VITE_FAKE_AUTH=…`);
 `VITE_API_URL` is left unset so the SPA calls the API on its own origin. The
 template ships no production web auth adapter, so add one before deploying
 ([ADR 0008](./docs/adr/0008-web-auth-module-boundaries.md)).
@@ -182,9 +182,41 @@ The template ships with a comprehensive GitHub Actions CI workflow (`.github/wor
 | **API E2E Tests**         | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
 | **Coverage Report**       | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
 | **Web E2E Tests**         | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                                          |
+| **Real-stack Web E2E**    | Native Playwright regression tests against the running API and PostgreSQL                                                                                 |
 | **Production Image Boot** | Builds `deployment/Dockerfile`, boots it with `NODE_ENV=production` against Postgres, and checks migrations, health, SPA routing and API 401/404s         |
 
 All jobs use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
+
+## Completing Implementation Work
+
+Use the `finish-work` skill to select and explain verification for the affected
+behavior and its dependencies, check acceptance criteria, and review the diff.
+Scope checks by impact: shared code, contracts, configuration, and dependency
+changes can affect consumers beyond the edited component. Report the checks,
+results, and gaps in the task or PR. Full CI supplies the broad safety net;
+`pnpm dod` optionally runs broad local checks. Start PostgreSQL with
+`pnpm db:start` first when those checks need it. Migration verification uses a
+disposable database on the configured E2E server and needs database creation
+privileges.
+
+For changed runtime flows, use the `verify-app` skill:
+
+```bash
+scripts/verify-app.sh
+pnpm --filter web test:e2e:real           # Native real-stack Playwright tests
+pnpm --filter web test:e2e:real items-crud # Select tests by file while iterating
+pnpm probe --goto /                       # Explore the running app
+scripts/verify-app.sh stop
+```
+
+The web has three complementary test layers: Vitest integration tests use real
+providers with MSW; `test:e2e` exercises browser behavior with a mocked API;
+`test:e2e:real` uses native Playwright tests against the running API and database.
+CI runs both browser suites. The probe produces concise accessibility snapshots,
+errors, and screenshots for agent exploration and accepts temporary scenarios;
+promote reusable exploratory flows to native real-stack regression tests.
+Stop the verification stack after use, including on failure. Committing remains
+subject to the user's authorization.
 
 ## Scripts
 
