@@ -15,6 +15,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE_DIR="$REPO_ROOT/.verify-app"
 LOG="$STATE_DIR/dev.log"
 PID_FILE="$STATE_DIR/dev.pid"
+OWNER_FILE="$STATE_DIR/dev.started"
 TIMEOUT_SECONDS="${VERIFY_APP_TIMEOUT:-120}"
 
 read_env() {
@@ -40,14 +41,15 @@ stop_stack() {
   # Only touch processes this script started: another project may be serving
   # on the same ports.
   [ -f "$PID_FILE" ] || return 0
-  kill -- "-$(cat "$PID_FILE")" 2>/dev/null || true
-  rm -f "$PID_FILE"
-  # `nest start --watch` can leave its child holding the port.
-  local pids
-  pids="$(listeners)"
-  if [ -n "$pids" ]; then
-    kill $pids 2>/dev/null || true
+  local pid started
+  pid="$(cat "$PID_FILE")"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 0
+  started="$(ps -p "$pid" -o lstart= 2>/dev/null || true)"
+  # A stale PID may now belong to another program. Never kill by port.
+  if [ -f "$OWNER_FILE" ] && [ -n "$started" ] && [ "$started" = "$(cat "$OWNER_FILE")" ]; then
+    kill -- "-$pid" 2>/dev/null || true
   fi
+  rm -f "$PID_FILE" "$OWNER_FILE"
 }
 
 # pino and nest colorize their output, which hides words from grep patterns.
@@ -96,6 +98,7 @@ echo "verify-app: starting API ($API_URL) and web ($WEB_URL)"
 set -m
 pnpm exec turbo run dev --ui=stream >> "$LOG" 2>&1 &
 echo $! > "$PID_FILE"
+ps -p "$(cat "$PID_FILE")" -o lstart= > "$OWNER_FILE"
 set +m
 
 for _ in $(seq 1 "$TIMEOUT_SECONDS"); do

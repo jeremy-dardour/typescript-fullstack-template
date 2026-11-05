@@ -4,7 +4,7 @@
  * Start the stack first (scripts/verify-app.sh).
  *
  *   pnpm probe --goto /                  open a page and print its accessibility snapshot
- *   pnpm probe path/to/scenario.ts       run a scenario (see scenarios/items-crud.ts)
+ *   pnpm probe path/to/scenario.ts       run a temporary scenario exporting ProbeScenario
  */
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -18,18 +18,24 @@ import type { ProbeScenario } from '@/testing/probe.types';
 import type { Browser } from 'playwright';
 
 const WEB_ROOT = path.resolve(import.meta.dirname, '../..');
-const OUT_DIR = path.resolve(WEB_ROOT, '../../.verify-app/probe');
 
 const { values: options, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     goto: { type: 'string' },
+    'out-dir': { type: 'string' },
     headed: { type: 'boolean', default: false },
     'allow-console': { type: 'string', multiple: true, default: [] },
   },
 });
 
+const OUT_DIR = path.resolve(
+  options['out-dir'] ?? path.join(WEB_ROOT, '../../.verify-app/probe'),
+);
+
 function webBaseUrl(): string {
+  if (process.env.PLAYWRIGHT_APP_BASE_URL)
+    return process.env.PLAYWRIGHT_APP_BASE_URL;
   let port = '5173';
   try {
     const env = readFileSync(path.join(WEB_ROOT, '.env'), 'utf8');
@@ -74,8 +80,10 @@ async function isProbePassing(): Promise<boolean> {
     (pattern) => new RegExp(pattern),
   );
   // Stale screenshots from an earlier run would read as this run's result.
-  rmSync(OUT_DIR, { recursive: true, force: true });
   mkdirSync(OUT_DIR, { recursive: true });
+  for (const artifact of ['failed-step.png', 'final.png']) {
+    rmSync(path.join(OUT_DIR, artifact), { force: true });
+  }
 
   const scenario = await loadScenario();
   const browser = await chromium.launch({ headless: !options.headed });
@@ -92,8 +100,10 @@ async function isScenarioPassing(
   baseURL: string,
   allowed: RegExp[],
 ): Promise<boolean> {
-  const context = await browser.newContext({ baseURL });
+  const context = await browser.newContext({ baseURL, locale: 'en-US' });
   const page = await context.newPage();
+  page.setDefaultTimeout(10_000);
+  page.setDefaultNavigationTimeout(15_000);
 
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
@@ -134,14 +144,25 @@ async function isScenarioPassing(
   };
 
   console.log(`probe against ${baseURL}`);
+  let scenarioTimer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await scenario({ page, baseURL, expect, step });
+    await Promise.race([
+      scenario({ page, baseURL, expect, step }),
+      new Promise<never>((_, reject) => {
+        scenarioTimer = setTimeout(
+          () => reject(new Error('Scenario exceeded 30 seconds')),
+          30_000,
+        );
+      }),
+    ]);
     await page.waitForLoadState('networkidle');
   } catch (error) {
     hasFailedStep = true;
     if (!isReported) {
       console.log(`✗ scenario failed outside a step\n  ${String(error)}`);
     }
+  } finally {
+    clearTimeout(scenarioTimer);
   }
 
   console.log(`\nPage ${page.url()}:`);
