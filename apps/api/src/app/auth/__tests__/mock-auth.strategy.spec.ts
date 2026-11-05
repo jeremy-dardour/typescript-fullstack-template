@@ -1,7 +1,7 @@
 import {
   MOCK_SECOND_USER_TOKEN,
-  MockAuthStrategy,
-} from '@/app/auth/strategies/mock-auth.strategy';
+  MockAuthService,
+} from '@/app/auth/strategies/mock-auth.service';
 
 import type { AuthenticatedRequest } from '@/app/auth/types/token.types';
 
@@ -10,7 +10,7 @@ function requestWith(authorization?: string): AuthenticatedRequest {
 }
 
 describe('mockAuthStrategy', () => {
-  const strategy = new MockAuthStrategy();
+  const strategy = new MockAuthService();
 
   it('authenticates any request as the default identity', async () => {
     await expect(strategy.authenticate(requestWith())).resolves.toMatchObject({

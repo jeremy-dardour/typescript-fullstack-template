@@ -48,21 +48,23 @@ export default [
 
 ## Primitives
 
-| Export                | Concern                                                |
-| --------------------- | ------------------------------------------------------ |
-| `ignores`             | Default ignore patterns + the package's `.gitignore`   |
-| `typescript(rootDir)` | Type-checked TypeScript rules (typescript-eslint)      |
-| `imports`             | Import ordering/resolution (import-x, TS resolver)     |
-| `noRelativeImports`   | Bans `../` imports in favor of the `@/` alias          |
-| `stylistic`           | Code style rules (@stylistic)                          |
-| `unicorn`             | Unicorn best practices                                 |
-| `depend`              | Flags replaceable/heavyweight dependencies             |
-| `packageJson`         | package.json consistency rules                         |
-| `react`               | @eslint-react, hooks, react-refresh, TanStack Query    |
-| `a11y`                | Accessibility rules (jsx-a11y)                         |
-| `vitest`              | Vitest test rules (`.only`/`.skip` error in CI)        |
-| `boundariesModules`   | VSA/DDD module boundaries (`src/modules/*` isolation)  |
-| `prettier`            | Disables rules that conflict with Prettier — keep last |
+| Export                | Concern                                                   |
+| --------------------- | --------------------------------------------------------- |
+| `ignores`             | Default ignore patterns + the package's `.gitignore`      |
+| `typescript(rootDir)` | Type-checked TypeScript rules (typescript-eslint)         |
+| `imports`             | Import ordering/resolution (import-x, TS resolver)        |
+| `noRelativeImports`   | Bans `../` imports in favor of the `@/` alias             |
+| `stylistic`           | Code style rules (@stylistic)                             |
+| `unicorn`             | Unicorn best practices                                    |
+| `depend`              | Flags replaceable/heavyweight dependencies                |
+| `packageJson`         | package.json consistency rules                            |
+| `react`               | @eslint-react, hooks, react-refresh, TanStack Query       |
+| `a11y`                | Accessibility rules (jsx-a11y)                            |
+| `vitest`              | Vitest test rules (`.only`/`.skip` error in CI)           |
+| `boundariesModules`   | API module isolation and public app interfaces            |
+| `featureInterfaces`   | Named feature exports and repository-only store consumers |
+| `apiFileRoles`        | Closed API source filename roles                          |
+| `prettier`            | Disables rules that conflict with Prettier — keep last    |
 
 A package with a shape the presets don't cover composes primitives directly:
 
@@ -114,7 +116,7 @@ configured in exactly one place (`prettier.config.mjs`).
 
 ## Scripts
 
-- `pnpm lint` — Run ESLint on this package
+- `pnpm lint` — Run ESLint and architecture rule regression checks
 - `pnpm lint:fix` — Run ESLint with auto-fix
 - `pnpm format` — Alias for `lint:fix`
 - `pnpm check-types` — Run TypeScript type checking

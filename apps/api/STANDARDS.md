@@ -7,7 +7,7 @@ Inherits: [Global standards](../../STANDARDS.md)
 ```
 src/
   app/            → Infrastructure (auth, config, filters, interceptors, health, logger)
-  modules/        → Feature modules (one per domain entity)
+  modules/        → Feature modules (one per domain capability)
     <feature>/
       <feature>.module.ts
       <feature>.controller.ts
@@ -23,13 +23,50 @@ src/
   commands/       → CLI commands (nest-commander)
 ```
 
+## File roles and ownership
+
+Each `app/` area exposes its public interface through `index.ts`. Keep
+framework wiring and shared capabilities without feature HTTP endpoints in
+`app/`; feature endpoints belong in `modules/` (health is infrastructure).
+Keep single-feature capabilities with their feature. `shared/` holds generic
+code without injectable services; area-specific helpers stay with their owner.
+
+Source filenames use a role from this closed list:
+
+| Role         | Suffixes                                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nest classes | `.module`, `.controller`, `.service`, `.repository`, `.store`, `.guard`, `.middleware`, `.interceptor`, `.filter`, `.decorator`, `.command` |
+| Plain code   | `.util`, `.mail`, `.policy`, `.types`, `.errors`, `.constants`, `.config`, `.schema`                                                        |
+| Specialized  | `.dto`, `.entity`                                                                                                                           |
+
+Entrypoints, `index.ts`, generated declarations, migrations, seeders, factories,
+and test files follow their own conventions. ESLint enforces the source roles.
+By default, extract on the second consumer.
+
 ## Architecture boundaries
 
-ESLint `boundaries` plugin enforces module isolation:
+- Consumers outside an `app/` area import its public `index.ts`; imports
+  within that area can use its internal files.
+- Features keep their ordinary repositories and implementation details private.
+  Another feature may import the owner's Nest module to wire its exported store,
+  and repositories may consume that store through the owner's public interface.
+- Feature public indexes use explicit named exports of their own `.module`,
+  `.store`, and `.types` files. Import public types with `import type`; store
+  re-exports belong only in the owning module or app-area root index. The owning Nest
+  module may import its store to register the provider.
+- `app/` cannot depend on feature modules. CLI commands use public interfaces
+  rather than deep imports into application capabilities.
+- Stores may belong to an `app/` capability or a feature module. A store
+  exposes its owner's persistence operations when another module needs
+  to include them in its own transaction. Introduce it only when that cross-module
+  consumer exists. Only repositories call stores; the caller supplies the
+  transaction's `EntityManager`. The owner implements its persistence rules.
+- Services depend on their own repositories. Operations that don't need a
+  shared transaction use an appropriate public application capability rather
+  than exposing persistence internals.
 
-- Feature modules (`src/modules/*`) cannot import each other
-- Only `shared/` and `app/` are allowed for cross-imports
-- `app/` layer cannot import business modules
+See [ADR 0010](../../docs/adr/0010-public-interfaces-and-file-roles.md) for the
+architecture decision.
 
 ## Persistence seam
 
@@ -67,14 +104,9 @@ Controller → Service → Repository → EntityManager
   persistence adapter. Do not add a parallel abstract repository plus a
   `MikroOrm*Repository` implementation or generic base repository until a
   second real adapter requires that seam.
-- A query shared by multiple repositories, or one that must join a caller's
-  transaction (run on the forked `em` of `em.transactional`), lives as an
-  `em`-parameterized function in `repositories/<concern>.query.ts`. Only
-  repository implementations may call it — it is inside the persistence seam,
-  not a service-facing interface
-  ([ADR 0007](../../docs/adr/0007-shared-queries-as-em-parameterized-functions.md)).
-- The persistence seam is framework-free: repository-layer code (including
-  `.query.ts` helpers) signals a vanished row with MikroORM's `NotFoundError`
+- Internal queries remain repository methods or private functions. Cross-module
+  atomic operations use the owner's store; `.query.ts` is not a file role.
+- The persistence seam is framework-free: repository-layer code (including stores) signals a vanished row with MikroORM's `NotFoundError`
   — which the exception filter maps to 404 — never with a NestJS HTTP
   exception.
 

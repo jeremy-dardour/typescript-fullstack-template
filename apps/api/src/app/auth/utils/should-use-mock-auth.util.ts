@@ -1,4 +1,4 @@
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 import type { ConfigService } from '@nestjs/config';
 
 export function shouldUseMockAuth(

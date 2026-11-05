@@ -10,10 +10,10 @@ import {
   Min,
 } from 'class-validator';
 
-import { PageSizeValues } from '@/shared/constants/pagination-page';
-import { SortOptionValues } from '@/shared/types/sort-option';
+import { PageSizeValues } from '@/shared/constants/pagination-page.constants';
+import { SortOptionValues } from '@/shared/types/sort-option.types';
 
-import type { SortOption } from '@/shared/types/sort-option';
+import type { SortOption } from '@/shared/types/sort-option.types';
 
 export class SearchPaginationRequestDto<T> {
   @ApiProperty({

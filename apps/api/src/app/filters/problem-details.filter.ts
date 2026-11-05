@@ -1,13 +1,13 @@
 import { Catch, HttpException, Logger } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 
-import { ProblemDetailsException } from '@/shared/exceptions/problem-details.exception';
+import { ProblemDetailsException } from '@/shared/exceptions/problem-details.errors';
 
 import type {
   ProblemDetailsDto,
   FieldError,
 } from '@/shared/dtos/problem-details.dto';
-import type { ValidationErrorItem } from '@/shared/types/validation-error';
+import type { ValidationErrorItem } from '@/shared/types/validation-error.types';
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import type { Request, Response } from 'express';
 

@@ -1,7 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 
-import { AuthenticationException } from '@/app/auth/exceptions/authentication.exception';
-import { AuthStrategy } from '@/app/auth/strategies/auth-strategy.interface';
+import { AuthenticationException } from '@/app/auth/exceptions/authentication.errors';
+import { AuthStrategy } from '@/app/auth/strategies/auth-strategy.types';
 import { JwtVerificationService } from '@/app/auth/strategies/jwt/jwt-verification.service';
 import {
   AuthenticatedRequest,
@@ -9,7 +9,7 @@ import {
 } from '@/app/auth/types/token.types';
 
 @Injectable()
-export class JwtAuthStrategy implements AuthStrategy {
+export class JwtAuthService implements AuthStrategy {
   constructor(private readonly jwtService: JwtVerificationService) {}
 
   async authenticate(

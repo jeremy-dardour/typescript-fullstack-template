@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { vi } from 'vitest';
 
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
-import { ProblemDetailsException } from '@/shared/exceptions/problem-details.exception';
+import { ProblemDetailsException } from '@/shared/exceptions/problem-details.errors';
 
 import type { ArgumentsHost, HttpException } from '@nestjs/common';
 import type { ClsService } from 'nestjs-cls';

@@ -5,17 +5,22 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 
 import { AuthModule, AuthGuard } from '@/app/auth';
-import { createClsConfig } from '@/app/config/cls.config';
-import { validateEnv } from '@/app/config/env.schema';
-import { throttlerConfig } from '@/app/config/security.config';
-import { createStaticAssetsImports } from '@/app/config/static-assets.config';
-import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
-import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
-import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filter';
-import { HealthModule } from '@/app/health/health.module';
-import { ContextHeadersInterceptor } from '@/app/interceptors/context-headers.interceptor';
-import { LoggerModule } from '@/app/logger/logger.module';
+import {
+  createClsConfig,
+  validateEnv,
+  throttlerConfig,
+  createStaticAssetsImports,
+} from '@/app/config';
+import {
+  AllExceptionsFilter,
+  ProblemDetailsFilter,
+  ThrottlerExceptionFilter,
+} from '@/app/filters';
+import { HealthModule } from '@/app/health';
+import { ContextHeadersInterceptor } from '@/app/interceptors';
+import { LoggerModule } from '@/app/logger';
 import { DatabaseModule } from '@/database/database.module';
+import { AuthFeatureModule } from '@/modules/auth/auth.module';
 import { ItemModule } from '@/modules/item/item.module';
 
 import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
@@ -30,6 +35,7 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     ClsModule.forRoot(createClsConfig()),
     LoggerModule,
     AuthModule,
+    AuthFeatureModule,
     DatabaseModule.forRoot(),
     ThrottlerModule.forRoot([
       {

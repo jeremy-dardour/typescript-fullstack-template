@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthGuard } from '@/app/auth/auth.guard';
 import { IS_PUBLIC_KEY } from '@/app/auth/decorators';
-import { AuthenticationException } from '@/app/auth/exceptions/authentication.exception';
+import { AuthenticationException } from '@/app/auth/exceptions/authentication.errors';
 
-import type { JwtAuthStrategy } from '@/app/auth/strategies/jwt/jwt-auth.strategy';
-import type { MockAuthStrategy } from '@/app/auth/strategies/mock-auth.strategy';
+import type { JwtAuthService } from '@/app/auth/strategies/jwt/jwt-auth.service';
+import type { MockAuthService } from '@/app/auth/strategies/mock-auth.service';
 import type {
   AuthenticatedRequest,
   AuthenticatedUser,
@@ -19,8 +19,8 @@ describe('authGuard', () => {
   let guard: AuthGuard;
   let configService: ConfigService<Env, true>;
   let reflector: Reflector;
-  let jwtAuthStrategy: JwtAuthStrategy;
-  let mockAuthStrategy: MockAuthStrategy;
+  let jwtAuthStrategy: JwtAuthService;
+  let mockAuthStrategy: MockAuthService;
 
   const mockPayload: AuthenticatedUser = {
     sub: 'user-123',
@@ -37,11 +37,11 @@ describe('authGuard', () => {
 
     jwtAuthStrategy = {
       authenticate: vi.fn().mockResolvedValue(mockPayload),
-    } as unknown as JwtAuthStrategy;
+    } as unknown as JwtAuthService;
 
     mockAuthStrategy = {
       authenticate: vi.fn().mockResolvedValue(mockPayload),
-    } as unknown as MockAuthStrategy;
+    } as unknown as MockAuthService;
   });
 
   describe('strategy selection', () => {

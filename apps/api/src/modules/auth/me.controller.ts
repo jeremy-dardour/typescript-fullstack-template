@@ -6,11 +6,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '@/app/auth/decorators';
-import { CurrentUserDto } from '@/app/auth/me/current-user.dto';
-import { ApiUnauthorizedResponse } from '@/app/decorators/api-problem-responses.decorator';
+import { CurrentUser } from '@/app/auth';
+import { ApiUnauthorizedResponse } from '@/app/decorators';
+import { CurrentUserDto } from '@/modules/auth/dtos/current-user.dto';
 
-import type { AuthenticatedUser } from '@/app/auth/types/token.types';
+import type { AuthenticatedUser } from '@/app/auth';
 
 @ApiTags('Auth')
 @ApiBearerAuth()

@@ -1,9 +1,29 @@
-import { boundariesModules, node } from '@workspace/eslint-config';
+import {
+  apiFileRoles,
+  boundariesModules,
+  featureInterfaces,
+  node,
+} from '@workspace/eslint-config';
 
 export default [
   ...node(import.meta.dirname),
   // Module boundary checks for VSA/DDD
   ...boundariesModules,
+  ...apiFileRoles,
+  ...featureInterfaces,
+  {
+    files: ['src/shared/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Decorator[expression.callee.name=Injectable]',
+          message:
+            'shared/ contains pure code; injectable services belong in app/ or modules/.',
+        },
+      ],
+    },
+  },
   {
     files: ['**/package.json'],
     rules: {

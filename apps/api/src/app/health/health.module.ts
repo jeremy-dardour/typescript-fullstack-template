@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 
 import { HealthController } from '@/app/health/health.controller';
-import { MikroORMHealthIndicator } from '@/app/health/mikro-orm.health';
+import { MikroORMHealthIndicator } from '@/app/health/mikro-orm-health.service';
 
 /**
  * Health check module - database, memory, and disk checks

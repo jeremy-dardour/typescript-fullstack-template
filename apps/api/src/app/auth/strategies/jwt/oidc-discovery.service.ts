@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet } from 'jose';
 import * as oidc from 'openid-client';
 
-import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.exception';
+import { OidcServiceUnavailableException } from '@/app/auth/exceptions/oidc-service-unavailable.errors';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 
 @Injectable()
 export class OidcDiscoveryService {

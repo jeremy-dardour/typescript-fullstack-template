@@ -3,16 +3,23 @@ import boundariesPlugin from 'eslint-plugin-boundaries';
 
 import type { Linter } from 'eslint';
 
+const AREA_INTERFACE_SUFFIXES =
+  'module,service,store,guard,decorator,types,config,schema,filter,interceptor';
+
 /**
  * VSA/DDD module boundaries for the API layout:
  *
- * - `module`  (src/modules/*)  may import: itself, shared, app, main
- * - `shared`  (src/shared)     may import: shared only
- * - `app`     (src/app)        may import: app, shared
- * - `main`    (src/main.ts, src/*.module.ts) may import anything
+ * - `module`   (src/modules/*)  may import: itself, public feature interfaces, shared, app
+ * - `commands` (src/commands)   may import: itself, shared, app
+ * - `shared`   (src/shared)     may import: shared only
+ * - `app`      (src/app/<area>) may import: app, shared
+ * - `main`     (src/main.ts, src/*.module.ts) may import anything
  *
- * Business modules cannot import each other — share code via `shared`
- * or decouple via events.
+ * `database/` is not an element, so every element may import it.
+ *
+ * `app-interface/dependencies` adds the public-interface rules: a module, the
+ * CLI and every other `app/` area import an `app/` area only through its
+ * `index.ts`, and that `index.ts` re-exports only its own area's public roles.
  */
 export const boundariesModules: Linter.Config[] = defineConfig([
   {
@@ -20,16 +27,22 @@ export const boundariesModules: Linter.Config[] = defineConfig([
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: {
       boundaries: boundariesPlugin,
+      // Same plugin under a second name, so the interface rules are their own
+      // rule id: an app config can switch them off for one file without
+      // losing that file's module-isolation check.
+      'app-interface': boundariesPlugin,
     },
     settings: {
       'boundaries/elements': [
         {
           type: 'module',
-          pattern: 'src/modules/*/**',
+          pattern: 'src/modules/*',
           capture: ['moduleName'],
         },
+        { type: 'commands', pattern: 'src/commands' },
         { type: 'shared', pattern: 'src/shared/**' },
-        { type: 'app', pattern: 'src/app/**' },
+        // One element per area, so `fileInternalPath` is relative to the area.
+        { type: 'app', pattern: 'src/app/*', capture: ['area'] },
       ],
       // Element patterns only match folders, so the root-level entry files are
       // classified as a file category. File patterns match the whole path
@@ -39,11 +52,21 @@ export const boundariesModules: Linter.Config[] = defineConfig([
           category: 'main',
           pattern: ['**/src/main.ts', '**/src/*.module.ts', '**/src/*.d.ts'],
         },
+        {
+          category: 'feature-interface',
+          pattern: '**/src/modules/*/index.ts',
+        },
+        {
+          category: 'feature-export',
+          pattern: '**/src/modules/**/*.{store,module,types}.ts',
+        },
+        {
+          category: 'area-interface',
+          pattern: `**/src/app/**/*.{${AREA_INTERFACE_SUFFIXES}}.ts`,
+        },
       ],
-      'boundaries/dependency-nodes': ['import', 'dynamic-import'],
-      // Ignore test files
+      'boundaries/dependency-nodes': ['import', 'dynamic-import', 'export'],
       'boundaries/ignore': ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
-      // Configure TypeScript path resolver
       'import/resolver': {
         typescript: {
           alwaysTryTypes: true,
@@ -74,6 +97,21 @@ export const boundariesModules: Linter.Config[] = defineConfig([
               ],
             },
             {
+              from: { element: { type: 'module' } },
+              allow: {
+                to: {
+                  element: { type: 'module' },
+                  file: { categories: 'feature-interface' },
+                },
+              },
+            },
+            {
+              from: { element: { type: 'commands' } },
+              allow: {
+                to: { element: { type: ['commands', 'shared', 'app'] } },
+              },
+            },
+            {
               from: { element: { type: 'shared' } },
               allow: { to: { element: { type: 'shared' } } },
             },
@@ -91,8 +129,84 @@ export const boundariesModules: Linter.Config[] = defineConfig([
           ],
         },
       ],
+      'app-interface/dependencies': [
+        'error',
+        {
+          default: 'allow',
+          // An area's index.ts re-exports files of its own area, which the
+          // plugin skips as internal unless told otherwise.
+          checkInternals: true,
+          checkUnknownLocals: true,
+          policies: [
+            {
+              from: {
+                element: { type: 'module', fileInternalPath: 'index.ts' },
+              },
+              disallow: {
+                to: [
+                  { file: { isUnknown: true } },
+                  {
+                    file: { categories: { noneOf: ['feature-export'] } },
+                  },
+                  {
+                    element: {
+                      type: 'module',
+                      captured: {
+                        moduleName: '!{{ from.element.captured.moduleName }}',
+                      },
+                    },
+                  },
+                ],
+              },
+              message:
+                'Feature public indexes export only their own .module.ts, .store.ts and .types.ts interfaces.',
+            },
+            {
+              from: { element: { type: ['module', 'commands'] } },
+              disallow: {
+                to: { element: { type: 'app', fileInternalPath: '!index.ts' } },
+              },
+              message:
+                'A feature or the CLI imports an app/ area only through its index.ts.',
+            },
+            {
+              from: { element: { type: 'app' } },
+              disallow: {
+                to: {
+                  element: {
+                    type: 'app',
+                    captured: { area: '!{{ from.element.captured.area }}' },
+                    fileInternalPath: '!index.ts',
+                  },
+                },
+              },
+              message:
+                'An app/ area imports another area only through its index.ts.',
+            },
+            {
+              from: { element: { type: 'app', fileInternalPath: 'index.ts' } },
+              disallow: {
+                // Both selectors: an uncategorized file is unknown, and noneOf
+                // matches only categorized files.
+                to: [
+                  { file: { isUnknown: true } },
+                  { file: { categories: { noneOf: ['area-interface'] } } },
+                  {
+                    element: {
+                      type: 'app',
+                      captured: { area: '!{{ from.element.captured.area }}' },
+                    },
+                  },
+                  { element: { type: 'shared' } },
+                ],
+              },
+              message: `An app/ area's index.ts re-exports only its own area's .{${AREA_INTERFACE_SUFFIXES}} files.`,
+            },
+          ],
+        },
+      ],
 
-      // Disabled: .d.ts and config files may not match element definitions
+      // Off: file names are checked by apiFileRoles.
       'boundaries/no-unknown-files': 'off',
       // Disabled: external dependencies (node_modules) trigger false positives
       'boundaries/no-unknown-dependencies': 'off',

@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { OidcDiscoveryService } from '@/app/auth/strategies/jwt/oidc-discovery.service';
 import { shouldUseMockAuth } from '@/app/auth/utils/should-use-mock-auth.util';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 
 @Injectable()
 export class AuthInitializerService {

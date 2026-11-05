@@ -5,20 +5,27 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AuthInitializerService } from '@/app/auth';
-import { corsConfig } from '@/app/config/security.config';
-import { areApiDocsEnabled, setupSwagger } from '@/app/config/swagger.config';
-import { createValidationPipe } from '@/app/config/validation.config';
-import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
-import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
-import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filter';
-import { ContextHeadersInterceptor } from '@/app/interceptors/context-headers.interceptor';
-import { LinkHeaderInterceptor } from '@/app/interceptors/link-header.interceptor';
-import { LocationHeaderInterceptor } from '@/app/interceptors/location-header.interceptor';
-import { TimeoutInterceptor } from '@/app/interceptors/timeout.interceptor';
+import {
+  corsConfig,
+  areApiDocsEnabled,
+  setupSwagger,
+  createValidationPipe,
+} from '@/app/config';
+import {
+  AllExceptionsFilter,
+  ProblemDetailsFilter,
+  ThrottlerExceptionFilter,
+} from '@/app/filters';
+import {
+  ContextHeadersInterceptor,
+  LinkHeaderInterceptor,
+  LocationHeaderInterceptor,
+  TimeoutInterceptor,
+} from '@/app/interceptors';
 
 import { AppModule } from './app.module';
 
-import type { Env } from '@/app/config/env.schema';
+import type { Env } from '@/app/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
