@@ -1,3 +1,9 @@
+/**
+ * Enforce which symbols consumers may import through public module interfaces.
+ * The boundaries plugin checks file dependencies; this rule reads explicit named
+ * re-exports to distinguish module wiring, repository-only stores, and types.
+ * It also blocks store access through secondary barrels or dynamic imports.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
 
