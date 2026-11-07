@@ -5,6 +5,13 @@ description: Check implementation work against its acceptance criteria, run comp
 
 # Finish work
 
+The agent responsible for delivery owns this pass: the orchestrator when work
+is delegated, or the implementer when working alone. Implementers run scoped
+checks before handoff and provide commands, results, and gaps. The owner reviews
+that evidence against the final diff and runs remaining integration checks;
+rerun checks when changes or uncertainty invalidate the evidence. This workflow
+does not require a dedicated subagent.
+
 1. **Acceptance.** Recover the requested behavior and acceptance criteria
    from the task or originating spec. Map each criterion to a check or an
    explicit gap. Resolve failures within scope before claiming completion.
