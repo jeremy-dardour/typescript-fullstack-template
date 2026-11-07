@@ -43,3 +43,12 @@ AI-assisted — which is what this template targets — it pays for itself quick
 The scaffold docs ship with placeholder content that **must be replaced** per
 project (see the "⚠ Replace this" banners); left unfilled, they add noise rather
 than context.
+
+## Amendment — shared agent instructions (2026-11)
+
+`AGENTS.md` now owns the documentation map and explicitly directs agents to
+read startup context and task-specific rules. `CLAUDE.md` imports that shared
+source. Canonical skills and rules remain under `.claude/`; `.agents/skills/`
+links to the same skill directories for Codex discovery. This replaces the
+Claude-specific startup mechanism described above while preserving one home per
+fact. See [README](../../README.md#agent-instructions) for portability details.

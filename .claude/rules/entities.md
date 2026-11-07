@@ -5,4 +5,4 @@ paths:
 
 # Entity definitions
 
-@../../apps/api/ENTITIES_STANDARDS.md
+Read [entity standards](../../apps/api/ENTITIES_STANDARDS.md).

@@ -232,6 +232,16 @@ subject to the user's authorization.
 | `pnpm --filter web test:e2e` | Web E2E tests (Playwright)                |
 | `pnpm generate:api-types`    | Regenerate OpenAPI types from running API |
 
+## Agent Instructions
+
+[AGENTS.md](AGENTS.md) is the shared instruction source for Codex and Claude
+Code. [CLAUDE.md](CLAUDE.md) imports it for Claude Code. Canonical workflows live
+in [.claude/skills/](.claude/skills/) and path rules in
+[.claude/rules/](.claude/rules/); the root instructions tell both agents when to
+read them. Codex discovers the same skills through `.agents/skills/` symlinks,
+so workflow bodies stay in one place. Checkouts need symlink support; on Windows,
+enable Developer Mode or configure Git symlink support before cloning.
+
 ## Coding Standards
 
 For coding conventions, architecture patterns, and entity definitions, see the standards files:

@@ -5,6 +5,6 @@ paths:
 
 # API app context
 
-@../../apps/api/README.md
+Read [API README](../../apps/api/README.md).
 
-@../../apps/api/STANDARDS.md
+Read [API standards](../../apps/api/STANDARDS.md).

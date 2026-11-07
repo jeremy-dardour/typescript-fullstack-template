@@ -5,6 +5,6 @@ paths:
 
 # Web app context
 
-@../../apps/web/README.md
+Read [Web README](../../apps/web/README.md).
 
-@../../apps/web/STANDARDS.md
+Read [Web standards](../../apps/web/STANDARDS.md).

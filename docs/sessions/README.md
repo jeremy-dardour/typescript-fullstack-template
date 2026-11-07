@@ -14,8 +14,7 @@ are structured this way.
 
 ## Template
 
-Copy this into a new `session-NN-YYYY-MM-DD-slug.md` at session start and fill it
-in as you go; finalize it at session end.
+Use this template when logging or closing a session.
 
 ```markdown
 # Session NN — <title> (YYYY-MM-DD)
@@ -35,8 +34,7 @@ in as you go; finalize it at session end.
 
 ## Status at end of session
 
-<one short paragraph: current phase + what's next. Then mirror this into
-../current-state.md, which is the live source of truth for status.>
+<brief historical outcome, linking to ../current-state.md for live status>
 ```
 
 How to fill it: keep bullets terse and factual; **link, don't restate** —

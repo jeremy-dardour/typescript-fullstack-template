@@ -16,13 +16,9 @@ description: Check implementation work against its acceptance criteria, run comp
    the broad safety net. `pnpm dod` is an optional local convenience, not a
    completion prerequisite. Record failures and unavailable checks as gaps.
 
-3. **Real flow.** For changed runtime behavior, use the `verify-app` skill to
-   boot the real stack and exercise the affected acceptance criteria. Select
-   relevant native real-stack Playwright tests and explore uncovered behavior
-   with the probe. Promote reusable exploratory flows to native regression
-   tests. Review generated contracts when API behavior changed, following
-   [CLAUDE.md](../../../CLAUDE.md#workflow). Stop the stack after verification,
-   including on failure.
+3. **Real flow.** For changed runtime behavior, follow
+   [verify-app](../verify-app/SKILL.md). For API changes, follow the
+   [contract rules](../../../.claude/rules/api-contracts.md).
 
 4. **Review.** Inspect the intended diff, including new files, for correctness,
    scope, stale comments, unintended generated or migration changes, and the

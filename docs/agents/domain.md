@@ -4,7 +4,7 @@ How the engineering skills should _consume_ this repo's domain documentation.
 This repo is **single-context** (one root `CONTEXT.md` + one `docs/adr/`).
 
 This file is deliberately **not** an inventory of the docs — that has a single
-home: the **Documentation map** in [CLAUDE.md](../../CLAUDE.md), which is always
+home: the **Documentation map** in [AGENTS.md](../../AGENTS.md), which is always
 loaded. Start there to learn which docs exist and what each holds. Everything
 below is only the consumption rules the map doesn't cover.
 
