@@ -44,6 +44,7 @@ sources for Codex and Claude Code; read their linked references as directed.
 | Changed runtime flows; run, inspect, or screenshot the app                  | [verify-app](.claude/skills/verify-app/SKILL.md)                                                                     |
 | Close or log a session                                                      | [close-session](.claude/skills/close-session/SKILL.md)                                                               |
 | Issues, specs, or triage                                                    | [Issue tracker](docs/agents/issue-tracker.md), [triage labels](docs/agents/triage-labels.md)                         |
+| Architecture decisions (`docs/adr/**`)                                      | [ADR lifecycle](.claude/rules/adr.md)                                                                                |
 | Domain modeling                                                             | [Domain documentation](docs/agents/domain.md)                                                                        |
 
 Before connecting to services or taking screenshots, read [PORTS.md](PORTS.md):
