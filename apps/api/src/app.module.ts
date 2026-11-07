@@ -4,7 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 
-import { AuthModule, AuthGuard } from '@/app/auth';
+import { AuthInfrastructureModule, AuthGuard } from '@/app/auth';
 import {
   createClsConfig,
   validateEnv,
@@ -20,7 +20,7 @@ import { HealthModule } from '@/app/health';
 import { ContextHeadersInterceptor } from '@/app/interceptors';
 import { LoggerModule } from '@/app/logger';
 import { DatabaseModule } from '@/database/database.module';
-import { AuthFeatureModule } from '@/modules/auth/auth.module';
+import { AuthModule } from '@/modules/auth/auth.module';
 import { ItemModule } from '@/modules/item/item.module';
 
 import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
@@ -34,8 +34,8 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     }),
     ClsModule.forRoot(createClsConfig()),
     LoggerModule,
+    AuthInfrastructureModule,
     AuthModule,
-    AuthFeatureModule,
     DatabaseModule.forRoot(),
     ThrottlerModule.forRoot([
       {

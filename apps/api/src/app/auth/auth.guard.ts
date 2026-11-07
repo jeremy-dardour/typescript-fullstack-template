@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 
 import { IS_PUBLIC_KEY } from '@/app/auth/decorators';
-import { JwtAuthService } from '@/app/auth/strategies/jwt/jwt-auth.service';
-import { MockAuthService } from '@/app/auth/strategies/mock-auth.service';
+import { JwtAuthStrategyService } from '@/app/auth/strategies/jwt/jwt-auth-strategy.service';
+import { MockAuthStrategyService } from '@/app/auth/strategies/mock-auth-strategy.service';
 import { AuthenticatedRequest } from '@/app/auth/types/token.types';
 import { shouldUseMockAuth } from '@/app/auth/utils/should-use-mock-auth.util';
 
@@ -19,8 +19,8 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly configService: ConfigService<Env, true>,
     private readonly reflector: Reflector,
-    private readonly jwtAuthStrategy: JwtAuthService,
-    private readonly mockAuthStrategy: MockAuthService,
+    private readonly jwtAuthStrategy: JwtAuthStrategyService,
+    private readonly mockAuthStrategy: MockAuthStrategyService,
   ) {
     this.authStrategy = shouldUseMockAuth(this.configService)
       ? this.mockAuthStrategy
