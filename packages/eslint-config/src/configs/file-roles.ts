@@ -1,3 +1,8 @@
+/**
+ * Enforce the closed API filename-role vocabulary in apps/api/STANDARDS.md.
+ * Folder boundaries cannot catch a misnamed file inside an otherwise valid area;
+ * entrypoints, generated code, and test/data setup files have explicit exemptions.
+ */
 import path from 'node:path';
 
 import type { Linter, Rule } from 'eslint';
@@ -60,12 +65,6 @@ const knownSuffix: Rule.RuleModule = {
   },
 };
 
-/**
- * API file roles: every non-test source file under `src/` ends
- * with a suffix from the closed list in apps/api/STANDARDS.md, or is an
- * `index.ts`, `src/main.ts`, `src/commands/main.ts`, `.dto`, `.entity` or
- * `.d.ts` file. Migrations, seeders and factories are exempt.
- */
 export const apiFileRoles: Linter.Config[] = [
   {
     name: 'file-roles/api',

@@ -1,3 +1,8 @@
+/**
+ * Regression tests for API architecture lint rules, run by this package's lint
+ * command. Temporary modules exercise allowed dependencies and rejected bypasses;
+ * failures exit nonzero so CI catches changes that weaken enforcement.
+ */
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
