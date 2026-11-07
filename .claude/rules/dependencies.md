@@ -18,6 +18,5 @@ paths:
 - After `pnpm install`/`pnpm up`, read the unmet-peer warnings: a new one means
   a package under-declares or caps a peer. Fix it (`packageExtensions`, an
   override, or holding the upgrade) or record why it is harmless.
-- Major upgrades: one commit per ecosystem (e.g. NestJS, Vitest), read the
-  migration guide first, then use [finish-work](../skills/finish-work/SKILL.md)
-  to select checks for the affected ecosystems and runtime dependencies.
+- Major upgrades: one commit per ecosystem (e.g. NestJS, Vitest); read the
+  migration guide first.
