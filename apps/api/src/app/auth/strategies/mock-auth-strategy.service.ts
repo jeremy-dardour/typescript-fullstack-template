@@ -22,12 +22,12 @@ const SECOND_IDENTITY: AuthenticatedUser = {
 };
 
 @Injectable()
-export class MockAuthService implements AuthStrategy {
-  private readonly logger = new Logger(MockAuthService.name);
+export class MockAuthStrategyService implements AuthStrategy {
+  private readonly logger = new Logger(MockAuthStrategyService.name);
 
   constructor() {
     this.logger.warn(
-      '⚠️  MockAuthService initialized - using fake authentication',
+      '⚠️  MockAuthStrategyService initialized - using fake authentication',
     );
   }
 

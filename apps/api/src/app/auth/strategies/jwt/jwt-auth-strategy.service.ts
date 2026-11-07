@@ -9,7 +9,7 @@ import {
 } from '@/app/auth/types/token.types';
 
 @Injectable()
-export class JwtAuthService implements AuthStrategy {
+export class JwtAuthStrategyService implements AuthStrategy {
   constructor(private readonly jwtService: JwtVerificationService) {}
 
   async authenticate(
