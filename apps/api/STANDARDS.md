@@ -33,14 +33,43 @@ code without injectable services; area-specific helpers stay with their owner.
 
 Source filenames use a role from this closed list:
 
-| Role         | Suffixes                                                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nest classes | `.module`, `.controller`, `.service`, `.repository`, `.store`, `.guard`, `.middleware`, `.interceptor`, `.filter`, `.decorator`, `.command` |
-| Plain code   | `.util`, `.mail`, `.policy`, `.types`, `.errors`, `.constants`, `.config`, `.schema`                                                        |
-| Specialized  | `.dto`, `.entity`                                                                                                                           |
+| File role         | Responsibility                                                                                                                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.module.ts`      | Wire a Nest capability's providers, controllers, imports, and public exports.                                                                                                                                                      |
+| `.controller.ts`  | Translate HTTP requests into service calls and map their results to response DTOs.                                                                                                                                                 |
+| `.service.ts`     | Implement an injectable application capability or coordinate business behavior through repositories; a strategy implementation keeps that pattern in its name, such as `JwtAuthStrategyService` in `jwt-auth-strategy.service.ts`. |
+| `.repository.ts`  | Encapsulate its owner's queries, persistence, and transaction orchestration behind a service-facing interface.                                                                                                                     |
+| `.store.ts`       | Expose the owner's persistence operations for another module's repository to execute within the caller's transaction.                                                                                                              |
+| `.guard.ts`       | Decide whether a request may proceed based on authentication or access requirements.                                                                                                                                               |
+| `.middleware.ts`  | Perform request-level processing before Nest route handling.                                                                                                                                                                       |
+| `.interceptor.ts` | Wrap handler execution to apply cross-cutting behavior such as timeouts or response headers.                                                                                                                                       |
+| `.filter.ts`      | Translate exceptions into the application's HTTP error contract.                                                                                                                                                                   |
+| `.decorator.ts`   | Declare reusable metadata or extract request values for framework consumers.                                                                                                                                                       |
+| `.command.ts`     | Expose a CLI operation and delegate its application behavior to the appropriate capability.                                                                                                                                        |
+| `.util.ts`        | Provide a focused plain function without dependency injection or persistence ownership.                                                                                                                                            |
+| `.mail.ts`        | Build one email template's subject and content without sending it.                                                                                                                                                                 |
+| `.policy.ts`      | Evaluate a business rule as a pure function of explicit inputs, including time when relevant.                                                                                                                                      |
+| `.types.ts`       | Declare compile-time types and interfaces without runtime behavior.                                                                                                                                                                |
+| `.errors.ts`      | Define named error classes that describe failures owned by the area.                                                                                                                                                               |
+| `.constants.ts`   | Hold stable named runtime values that have no computation or lifecycle.                                                                                                                                                            |
+| `.config.ts`      | Assemble configuration for a framework, library, or application capability.                                                                                                                                                        |
+| `.schema.ts`      | Define runtime validation and parsing for data outside the HTTP DTO validation layer.                                                                                                                                              |
+| `.dto.ts`         | Describe an HTTP input or output shape, including validation and API documentation where applicable.                                                                                                                               |
+| `.entity.ts`      | Define a persisted domain model, its ORM mapping, and entity-local behavior.                                                                                                                                                       |
 
-Entrypoints, `index.ts`, generated declarations, migrations, seeders, factories,
-and test files follow their own conventions. ESLint enforces the source roles.
+ESLint enforces this closed source-role list. These files follow separate conventions:
+
+| File kind                              | Responsibility                                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `index.ts`                             | Expose the owning area's deliberate public interface.                                           |
+| `main.ts`                              | Bootstrap the application or CLI and its runtime lifecycle.                                     |
+| Migration                              | Apply a versioned database schema change and its supported rollback.                            |
+| Seeder                                 | Populate an environment with intentional initial or development data.                           |
+| Factory                                | Construct test or development entities with reusable defaults.                                  |
+| `.spec.ts`, `.test.ts`, `.e2e-spec.ts` | Verify behavior at the appropriate unit, integration, or end-to-end boundary.                   |
+| `.d.ts`                                | Describe types supplied by generated code, external libraries, or ambient runtime declarations. |
+| Generated source                       | Represent tool-owned output that is regenerated from its authoritative input.                   |
+
 By default, extract on the second consumer.
 
 ## Architecture boundaries
