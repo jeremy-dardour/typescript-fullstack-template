@@ -19,4 +19,5 @@ paths:
   a package under-declares or caps a peer. Fix it (`packageExtensions`, an
   override, or holding the upgrade) or record why it is harmless.
 - Major upgrades: one commit per ecosystem (e.g. NestJS, Vitest); read the
-  migration guide first.
+  dependency maintainer's upgrade guide for the target major version before
+  changing packages or code, and identify applicable breaking changes.
