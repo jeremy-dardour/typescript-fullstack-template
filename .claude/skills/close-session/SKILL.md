@@ -1,6 +1,6 @@
 ---
 name: close-session
-description: Wrap up a working session — write the dated session log, refresh the live current-state doc, propose durable facts to record, then offer to commit. Use when the user says "close the session", "wrap up", "log this session", "end of session", or is stopping work for the day.
+description: Wrap up a working session — write the dated session log, refresh the live current-state doc, record agreed durable facts, then handle an authorized commit. Use when the user says "close the session", "wrap up", "log this session", "end of session", or is stopping work for the day.
 ---
 
 # Close Session
@@ -15,14 +15,14 @@ defines its format and rules — follow those, don't restate them here.
    — the single home for "where we are" (bump its date; revise phase / done /
    open questions / next steps). Don't copy status into the session log; link.
 
-3. **Propose durable facts — ask before persisting.** Review the session for
-   reusable facts _not already written down_: working conventions, project
-   constraints, external references, domain terms, decisions. **Propose them
-   to the user and persist only the ones they approve**, each in its single
-   home per the documentation map in [CLAUDE.md](../../../CLAUDE.md). This
-   project keeps memory **in-repo** — never write to an external memory store.
+3. **Record agreed durable facts.** Review the session for reusable facts not
+   already recorded: conventions, constraints, references, domain terms, and
+   decisions. Record agreed facts in their single home per
+   [AGENTS.md](../../../AGENTS.md). Ask the user only when an actual decision
+   remains unresolved.
 
-4. **Offer to commit.** Show `git status`, then commit the docs if the user wants.
+4. **Commit when authorized.** Show `git status` and review the intended diff.
+   If committing is already authorized, stage only the intended files and
+   commit; otherwise report the changes without committing.
 
-Honor the Visibility rule in [CLAUDE.md](../../../CLAUDE.md) — nothing personal
-or secret goes into the session log.
+Follow the visibility and in-repo memory rules in [AGENTS.md](../../../AGENTS.md).

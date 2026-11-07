@@ -24,12 +24,8 @@ meets it.
    schema. Review the changes against the pre-boot diff and preserve any
    intentional migration work. Keep incidental rewrites out of the intended diff.
 
-3. **Contract.** If routes, DTOs, or Swagger decorators changed, run
-   `pnpm generate:api-types` against the running API and review the diff to
-   `packages/api-contracts/src/openapi.d.ts`. Follow the diagnostic rules in
-   [CLAUDE.md](../../../CLAUDE.md#workflow) when an expected schema diff is missing.
-   After generation run `pnpm --filter web exec tsc -b --force`; incremental
-   build state can otherwise hide errors in changed generated types.
+3. **Contract.** For API changes, follow the
+   [contract rules](../../../.claude/rules/api-contracts.md) against the running API.
 
 4. **Browser.** Run relevant native Playwright tests against the running stack
    with `pnpm --filter web test:e2e:real [test-file...]` (configuration:
