@@ -1,7 +1,6 @@
 # ADR 0007: Shared queries as `em`-parameterized functions inside the persistence seam
 
-**Status:** Superseded by [ADR 0010](0010-public-interfaces-and-file-roles.md).
-The decision below is retained as history; current rules live in API standards.
+**Status:** Accepted — 2026-10
 
 ## Decision
 
