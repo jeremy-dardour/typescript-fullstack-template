@@ -46,6 +46,8 @@ NestJS backend for the fullstack template. Exposes a typed, contract-first REST 
 
 > Always review generated migrations before applying to production.
 
+`pnpm db:migrate:fresh` drops every table and reruns the migrations. Before running it, investigate a schema mismatch against the migrations and the database state, and confirm the target is this checkout's disposable development database (the configured `DATABASE_URL`; parallel checkouts use different ports, see [PORTS.md](../../PORTS.md)).
+
 ## Parallel Workspace Ports
 
 Running multiple workspaces in parallel (e.g. via conductor)? Run
