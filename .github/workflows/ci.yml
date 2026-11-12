@@ -2,6 +2,7 @@ name: CI
 run-name: 'CI - ${{ github.ref_name }}'
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
   push:
@@ -21,6 +22,49 @@ env:
   TURBO_CONFIG: turbo.ci.json
 
 jobs:
+  # ----------------------------------------------------------------------------
+  # Decide whether the test jobs run, or a passing result for identical test
+  # inputs is reused (README: "Reusing passing checks")
+  # ----------------------------------------------------------------------------
+  select-checks:
+    name: Select Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      cache-key: ${{ steps.fingerprint.outputs.cache-key }}
+      run-tests: ${{ steps.selection.outputs.run-tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Test the reuse rules
+        run: node --test scripts/ci/check-reuse.test.mjs
+
+      - name: Fingerprint test inputs
+        id: fingerprint
+        run: |
+          fingerprint="$(node scripts/ci/check-reuse.mjs fingerprint)"
+          echo "cache-key=passing-checks-v1-${{ runner.os }}-${{ runner.arch }}-$fingerprint" >> "$GITHUB_OUTPUT"
+
+      - name: Look for a passing result
+        id: passed
+        uses: actions/cache/restore@v4
+        with:
+          path: .ci-passing-checks
+          key: ${{ steps.fingerprint.outputs.cache-key }}
+
+      - name: Select test jobs
+        id: selection
+        env:
+          CACHE_HIT: ${{ steps.passed.outputs.cache-hit }}
+          PASSED_MARKER: .ci-passing-checks/passed
+        run: node scripts/ci/check-reuse.mjs select
+
   # ----------------------------------------------------------------------------
   # Quality Checks
   # ----------------------------------------------------------------------------
@@ -84,6 +128,8 @@ jobs:
   # 📑 Check that API contract is up to date
   # ----------------------------------------------------------------------------
   api-contract-check:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: 📑 API Contract Check
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -167,6 +213,8 @@ jobs:
   # Unit Tests (Matrix)
   # ----------------------------------------------------------------------------
   tests:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: ${{ matrix.label }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -207,6 +255,8 @@ jobs:
   # API E2E Tests (Postgres)
   # ----------------------------------------------------------------------------
   api-e2e:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: API E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -351,6 +401,8 @@ jobs:
   # Web E2E Tests (Playwright)
   # ----------------------------------------------------------------------------
   web-e2e:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: Web E2E Tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -410,6 +462,8 @@ jobs:
           retention-days: 30
 
   real-stack-e2e:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: Real Stack E2E
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -456,6 +510,8 @@ jobs:
   # Production image: builds, migrates, boots, and routes correctly
   # ----------------------------------------------------------------------------
   image-boot:
+    needs: select-checks
+    if: needs.select-checks.outputs.run-tests == 'true'
     name: Production Image Boot
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -534,3 +590,35 @@ jobs:
       - name: Container logs
         if: always()
         run: docker logs app || true
+
+  # ----------------------------------------------------------------------------
+  # Record that these test inputs passed. Runs only when every job in `needs`
+  # succeeded: add each new check here, or it will not guard the reused result.
+  # ----------------------------------------------------------------------------
+  save-passing-checks:
+    name: Save Passing Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs:
+      - select-checks
+      - format
+      - check-dependencies
+      - check-types
+      - lint
+      - api-contract-check
+      - tests
+      - api-e2e
+      - web-e2e
+      - real-stack-e2e
+      - image-boot
+    steps:
+      - name: Write the result marker
+        run: |
+          mkdir -p .ci-passing-checks
+          echo "commit ${{ github.sha }}, run ${{ github.run_id }}" > .ci-passing-checks/passed
+
+      - name: Save the passing result
+        uses: actions/cache/save@v4
+        with:
+          path: .ci-passing-checks
+          key: ${{ needs.select-checks.outputs.cache-key }}
