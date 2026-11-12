@@ -213,3 +213,56 @@ export const boundariesModules: Linter.Config[] = defineConfig([
     },
   },
 ]);
+
+/**
+ * Web feature isolation: a feature (`src/features/*`) imports its own folder
+ * and the app-wide folders outside `features/`, which are not elements and so
+ * are always allowed. It never imports a sibling feature.
+ */
+export const boundariesFeatures: Linter.Config[] = defineConfig([
+  {
+    name: 'boundaries/features',
+    files: ['**/*.ts', '**/*.tsx'],
+    plugins: {
+      boundaries: boundariesPlugin,
+    },
+    settings: {
+      'boundaries/elements': [
+        { type: 'feature', pattern: 'src/features/*', capture: ['feature'] },
+      ],
+      'boundaries/dependency-nodes': ['import', 'dynamic-import', 'export'],
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+        },
+      },
+    },
+    rules: {
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'allow',
+          message:
+            'A feature never imports another feature; move shared code to an app-wide folder outside features/.',
+          policies: [
+            {
+              from: { element: { type: 'feature' } },
+              disallow: {
+                to: {
+                  element: {
+                    type: 'feature',
+                    captured: {
+                      feature: '!{{ from.element.captured.feature }}',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+      'boundaries/no-unknown-files': 'off',
+      'boundaries/no-unknown-dependencies': 'off',
+    },
+  },
+]);

@@ -25,10 +25,10 @@ linting works identically from the repo root, the app directory, and IDEs.
 ### Usage
 
 ```ts
-// apps/web/eslint.config.mts
-import { web } from '@workspace/eslint-config';
+// apps/web/eslint.config.mts — preset + addon
+import { boundariesFeatures, web } from '@workspace/eslint-config';
 
-export default web(import.meta.dirname);
+export default [...web(import.meta.dirname), ...boundariesFeatures];
 ```
 
 ```ts
@@ -62,6 +62,7 @@ export default [
 | `a11y`                | Accessibility rules (jsx-a11y)                            |
 | `vitest`              | Vitest test rules (`.only`/`.skip` error in CI)           |
 | `boundariesModules`   | API module isolation and public app interfaces            |
+| `boundariesFeatures`  | Web feature folders never import a sibling feature        |
 | `featureInterfaces`   | Named feature exports and repository-only store consumers |
 | `apiFileRoles`        | Closed API source filename roles                          |
 | `prettier`            | Disables rules that conflict with Prettier — keep last    |
