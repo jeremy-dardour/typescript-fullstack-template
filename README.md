@@ -169,7 +169,7 @@ template ships no production web auth adapter, so add one before deploying
 
 ## CI Pipeline
 
-The template ships with a comprehensive GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs on every PR and push to `main`:
+The template ships with a comprehensive GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs on every PR and push to `main` (the test jobs can [reuse a passing result](#reusing-passing-checks)):
 
 | Job                       | What it checks                                                                                                                                            |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -185,7 +185,46 @@ The template ships with a comprehensive GitHub Actions CI workflow (`.github/wor
 | **Real-stack Web E2E**    | Native Playwright regression tests against the running API and PostgreSQL                                                                                 |
 | **Production Image Boot** | Builds `deployment/Dockerfile`, boots it with `NODE_ENV=production` against Postgres, and checks migrations, health, SPA routing and API 401/404s         |
 
-All jobs use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
+Jobs that install dependencies use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
+
+### Reusing passing checks
+
+Commits that only touch documentation or agent instructions do not rerun the
+test jobs ([ADR 0012](docs/adr/0012-ci-reuses-passing-checks.md)).
+
+**Select Checks** hashes every committed file except the paths listed in
+`NON_TEST_INPUTS` in [`scripts/ci/check-reuse.mjs`](scripts/ci/check-reuse.mjs)
+and looks for a passing result saved under that hash. On a hit, API Contract
+Check, Unit Tests, API E2E, Coverage Report, Web E2E, Real-stack Web E2E and
+Production Image Boot are skipped; GitHub treats a skipped job as passing for
+required status checks. Format, dependencies, types and lint run on every
+commit, and they are what covers the excluded paths.
+
+**Save Passing Checks** records the hash once every job has succeeded.
+
+| Situation                                                | Test jobs                |
+| -------------------------------------------------------- | ------------------------ |
+| PR or `ci/**` push, a passing result exists for the hash | Skipped                  |
+| No passing result for the hash                           | Run                      |
+| Push to `main`, manual run (`workflow_dispatch`)         | Always run               |
+| **Re-run all jobs**                                      | Always run               |
+| **Re-run failed jobs**                                   | Keeps the first decision |
+
+The job summary of Select Checks names the commit and run whose result was
+reused. A result is visible to the branch that saved it and to branches based
+on `main` when `main` saved it (GitHub cache scoping), and expires with the
+cache (seven days unused).
+
+When you change the pipeline:
+
+- A new check job goes in the `needs` list of `save-passing-checks`; a job
+  missing from it does not guard the saved result. A new test job also takes
+  the same `needs`/`if` gate as the existing ones.
+- A new kind of file that no test reads goes in `NON_TEST_INPUTS`, with a case
+  in `scripts/ci/check-reuse.test.mjs`. Unlisted paths count as test inputs, so
+  forgetting this costs a test run and never skips one.
+- To drop every saved result, bump the `passing-checks-v1` prefix in the
+  workflow.
 
 ## Completing Implementation Work
 
