@@ -6,8 +6,8 @@ edit past sessions when things later change.
 
 - **Naming:** `session-NN-YYYY-MM-DD-slug.md`
 - **Link, don't restate:** domain decisions live in
-  [../domain-decisions.md](../domain-decisions.md); live status lives in
-  [../current-state.md](../current-state.md).
+  [../domain-decisions.md](../domain-decisions.md); open work lives in the
+  [issue tracker](../agents/issue-tracker.md).
 
 See [ADR 0005](../adr/0005-documentation-context-structure.md) for why the docs
 are structured this way.
@@ -34,10 +34,10 @@ Use this template when logging or closing a session.
 
 ## Status at end of session
 
-<brief historical outcome, linking to ../current-state.md for live status>
+<brief historical outcome; link unfinished work to its issue>
 ```
 
 How to fill it: keep bullets terse and factual; **link, don't restate** —
-decisions live in `../domain-decisions.md` / `../adr/`, live status lives in
-`../current-state.md`. The session file is an immutable record of _what
+decisions live in `../domain-decisions.md` / `../adr/`, open work lives in the
+issue tracker. The session file is an immutable record of _what
 happened_, so don't edit past sessions when things later change.
