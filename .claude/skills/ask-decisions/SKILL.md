@@ -28,7 +28,7 @@ Write what exists, not only what is dropped: "the email log lists failed emails;
 
 Group coupled decisions in one item or mark the dependency. Order by when the work needs them, and say which items block the next piece of work. Mark routine items that can take the default with "ok". Split batches above about 15 items.
 
-Use AskUserQuestion for 1–4 independent choices with at most 4 options each, UI choices above all: put each option's mockup in its preview, and keep the feature reminder and current spec in the question text. A batch, coupled decisions, or an item whose context needs more than a paragraph go into a written decision document committed with the project's docs (for example `docs/open-decisions.md`); then use AskUserQuestion for what stays open, a few items at a time.
+Use the available structured question tool for a few independent choices, within its question and option limits, UI choices above all: show each option's mockup with the option where the tool supports it, and keep the feature reminder and current spec in the question text. A batch, coupled decisions, or an item whose context needs more than a paragraph go into a written decision document committed with the project's docs (for example `docs/open-decisions.md`); then ask what stays open, a few items at a time.
 
 ## While waiting
 
