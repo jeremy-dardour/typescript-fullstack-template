@@ -61,7 +61,7 @@ export default [
 | `react`               | @eslint-react, hooks, react-refresh, TanStack Query       |
 | `a11y`                | Accessibility rules (jsx-a11y)                            |
 | `vitest`              | Vitest test rules (`.only`/`.skip` error in CI)           |
-| `boundariesModules`   | API module isolation and public app interfaces            |
+| `boundariesModules`   | API module isolation, public app interfaces, no `@Global` |
 | `boundariesFeatures`  | Web feature folders never import a sibling feature        |
 | `featureInterfaces`   | Named feature exports and repository-only store consumers |
 | `apiFileRoles`        | Closed API source filename roles                          |

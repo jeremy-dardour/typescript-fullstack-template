@@ -97,10 +97,14 @@ By default, extract on the second consumer.
   dynamic imports. `pnpm lint` enforces it with
   `scripts/check-module-cycles.mts`, which prints each cycle with one import
   per edge.
+- No module under `modules/` or `app/` is `@Global()`: consumers import the
+  owning module, and app-wide guards, filters and interceptors are
+  `APP_GUARD`, `APP_FILTER` or `APP_INTERCEPTOR` providers in the root module.
 
-See [ADR 0010](../../docs/adr/0010-public-interfaces-and-file-roles.md) and
-[ADR 0014](../../docs/adr/0014-acyclic-module-dependencies.md) for the
-architecture decisions.
+See [ADR 0010](../../docs/adr/0010-public-interfaces-and-file-roles.md),
+[ADR 0014](../../docs/adr/0014-acyclic-module-dependencies.md) and
+[ADR 0015](../../docs/adr/0015-no-global-modules.md) for the architecture
+decisions.
 
 ## Persistence seam
 

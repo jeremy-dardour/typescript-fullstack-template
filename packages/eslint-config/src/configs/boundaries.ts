@@ -1,10 +1,15 @@
 import { defineConfig } from 'eslint/config';
 import boundariesPlugin from 'eslint-plugin-boundaries';
 
+import { GLOB_TESTS } from '../utils';
+
 import type { Linter } from 'eslint';
 
 const AREA_INTERFACE_SUFFIXES =
   'module,service,store,guard,decorator,types,config,schema,filter,interceptor';
+
+const NO_GLOBAL_MODULES_MESSAGE =
+  'Modules and app areas are not global: import the owning module instead, and register global guards, filters and interceptors with APP_GUARD, APP_FILTER or APP_INTERCEPTOR providers in the root module.';
 
 /**
  * VSA/DDD module boundaries for the API layout:
@@ -210,6 +215,22 @@ export const boundariesModules: Linter.Config[] = defineConfig([
       'boundaries/no-unknown-files': 'off',
       // Disabled: external dependencies (node_modules) trigger false positives
       'boundaries/no-unknown-dependencies': 'off',
+    },
+  },
+  {
+    // A global module's providers are injectable without an import, which
+    // hides the dependency from the boundary rules above.
+    name: 'boundaries/no-global-modules',
+    files: ['src/modules/**/*.ts', 'src/app/**/*.ts'],
+    ignores: GLOB_TESTS,
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: `Decorator[expression.callee.name='Global'], Decorator[expression.callee.property.name='Global'], ImportSpecifier[imported.name='Global'][local.name!='Global']`,
+          message: NO_GLOBAL_MODULES_MESSAGE,
+        },
+      ],
     },
   },
 ]);
