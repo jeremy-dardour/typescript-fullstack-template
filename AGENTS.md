@@ -5,9 +5,11 @@ NestJS API + React SPA monorepo. See [README.md](README.md) for setup and comman
 ## Start here
 
 At session start, read [project purpose](docs/project-purpose.md),
-[domain glossary](CONTEXT.md), [current state](docs/current-state.md), and
-[global standards](STANDARDS.md). Consult relevant [ADRs](docs/adr/) before
-changing documented architectural decisions; record new trade-offs there.
+[domain glossary](CONTEXT.md), and [global standards](STANDARDS.md). Open work,
+next steps and open questions live in the
+[issue tracker](docs/agents/issue-tracker.md). Consult relevant
+[ADRs](docs/adr/) before changing documented architectural decisions; record
+new trade-offs there.
 
 ## Visibility and memory
 
@@ -22,7 +24,6 @@ Keep durable project memory in-repo, with one home per fact:
 | [docs/project-purpose.md](docs/project-purpose.md)   | Purpose, audience, scope                        |
 | [CONTEXT.md](CONTEXT.md)                             | Domain terminology and rules                    |
 | [docs/domain-decisions.md](docs/domain-decisions.md) | Domain decisions and rationale                  |
-| [docs/current-state.md](docs/current-state.md)       | Live status, next steps, open questions         |
 | [docs/sessions/](docs/sessions/)                     | Dated session history, linking to current truth |
 | [docs/adr/](docs/adr/)                               | Architectural decisions                         |
 
