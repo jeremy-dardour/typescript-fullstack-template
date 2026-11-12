@@ -93,9 +93,14 @@ By default, extract on the second consumer.
 - Services depend on their own repositories. Operations that don't need a
   shared transaction use an appropriate public application capability rather
   than exposing persistence internals.
+- Dependencies between feature modules form no cycle, counting type-only and
+  dynamic imports. `pnpm lint` enforces it with
+  `scripts/check-module-cycles.mts`, which prints each cycle with one import
+  per edge.
 
-See [ADR 0010](../../docs/adr/0010-public-interfaces-and-file-roles.md) for the
-architecture decision.
+See [ADR 0010](../../docs/adr/0010-public-interfaces-and-file-roles.md) and
+[ADR 0014](../../docs/adr/0014-acyclic-module-dependencies.md) for the
+architecture decisions.
 
 ## Persistence seam
 

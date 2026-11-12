@@ -13,7 +13,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     root: './',
-    include: ['src/**/*.spec.ts'],
+    include: ['src/**/*.spec.ts', 'scripts/**/*.spec.mts'],
     coverage: {
       provider: VITEST_COVERAGE_PROVIDER,
       reporter: ['json'],
