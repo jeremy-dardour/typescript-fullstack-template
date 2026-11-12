@@ -1,3 +1,3 @@
-import { web } from '@workspace/eslint-config';
+import { boundariesFeatures, web } from '@workspace/eslint-config';
 
-export default web(import.meta.dirname);
+export default [...web(import.meta.dirname), ...boundariesFeatures];

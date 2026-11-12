@@ -1,7 +1,8 @@
 /**
- * Regression tests for API architecture lint rules, run by this package's lint
- * command. Temporary modules exercise allowed dependencies and rejected bypasses;
- * failures exit nonzero so CI catches changes that weaken enforcement.
+ * Regression tests for API and web architecture lint rules, run by this
+ * package's lint command. Temporary modules exercise allowed dependencies and
+ * rejected bypasses; failures exit nonzero so CI catches changes that weaken
+ * enforcement.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -11,7 +12,7 @@ import path from 'node:path';
 import { ESLint } from 'eslint';
 import tsParser from 'typescript-eslint';
 
-import { boundariesModules } from './boundaries';
+import { boundariesFeatures, boundariesModules } from './boundaries';
 import { featureInterfaces } from './feature-interface';
 import { apiFileRoles } from './file-roles';
 
@@ -32,6 +33,10 @@ const fixtures: Record<string, string> = {
   'src/modules/caller/caller.service.ts': '',
   'src/app/logger/logger.service.ts': '',
   'src/commands/example.command.ts': '',
+  'src/features/alpha/alpha-page.ts': '',
+  'src/features/alpha/alpha-form.ts': 'export const form = 1;',
+  'src/features/beta/beta-page.ts': 'export const page = 1;',
+  'src/components/button.ts': 'export const button = 1;',
 };
 try {
   await fs.writeFile(
@@ -60,9 +65,31 @@ try {
       },
     ],
   });
+  // Separate instance: the web config sets its own `boundaries/elements`.
+  const webEslint = new ESLint({
+    cwd: root,
+    overrideConfigFile: true,
+    overrideConfig: [
+      { files: ['**/*.ts'], languageOptions: { parser: tsParser.parser } },
+      ...boundariesFeatures,
+      {
+        settings: {
+          'boundaries/root-path': root,
+          'import/resolver': {
+            typescript: { project: path.join(root, 'tsconfig.json') },
+          },
+        },
+      },
+    ],
+  });
   let count = 0;
-  async function check(file: string, code: string, isDenied = false) {
-    const [result] = await eslint.lintText(code, {
+  async function check(
+    file: string,
+    code: string,
+    isDenied = false,
+    linter = eslint,
+  ) {
+    const [result] = await linter.lintText(code, {
       filePath: path.join(root, file),
     });
     assert.equal(
@@ -270,6 +297,24 @@ try {
     'src/database/seeders/example.ts',
   ])
     await check(file, '');
+  for (const code of [
+    "import { page } from '@/features/beta/beta-page';",
+    "const beta = import('@/features/beta/beta-page');",
+    "export { page } from '@/features/beta/beta-page';",
+  ])
+    await check('src/features/alpha/alpha-page.ts', code, true, webEslint);
+  for (const [file, code] of [
+    [
+      'src/features/alpha/alpha-page.ts',
+      "import { form } from './alpha-form';",
+    ],
+    [
+      'src/features/alpha/alpha-page.ts',
+      "import { button } from '@/components/button';",
+    ],
+    ['src/app/router.ts', "import { page } from '@/features/beta/beta-page';"],
+  ] as const)
+    await check(file, code, false, webEslint);
   process.stdout.write(`Architecture checks passed (${count} cases).\n`);
 } finally {
   await fs.rm(root, { recursive: true, force: true });

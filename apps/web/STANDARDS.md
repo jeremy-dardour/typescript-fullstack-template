@@ -22,6 +22,10 @@ src/
   i18n/           → Translations (i18next, JSON files per locale)
 ```
 
+- A feature imports its own folder and app-wide folders, never another
+  feature. Code a second feature needs moves out of `features/` into an
+  app-wide folder. ESLint (`boundariesFeatures`) enforces this.
+
 ## Components
 
 - Function components with named exports

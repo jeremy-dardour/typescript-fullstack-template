@@ -86,7 +86,7 @@ export function web(tsconfigRootDir: string): Linter.Config[] {
 export { a11y } from './configs/a11y';
 export { featureInterfaces } from './configs/feature-interface';
 export { apiFileRoles } from './configs/file-roles';
-export { boundariesModules } from './configs/boundaries';
+export { boundariesFeatures, boundariesModules } from './configs/boundaries';
 export { depend } from './configs/depend';
 export { ignores } from './configs/ignores';
 export { imports, noRelativeImports } from './configs/imports';
