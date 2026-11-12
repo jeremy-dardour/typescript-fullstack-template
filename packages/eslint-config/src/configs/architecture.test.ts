@@ -274,6 +274,36 @@ try {
     "import * as auth from '@/app/auth';",
     true,
   );
+  for (const [file, code] of [
+    [
+      'src/modules/owner/owner.module.ts',
+      "import { Global, Module } from '@nestjs/common'; @Global() @Module({}) export class OwnerModule {}",
+    ],
+    [
+      'src/app/auth/auth.module.ts',
+      "import { Global, Module } from '@nestjs/common'; @Global() @Module({}) export class AuthModule {}",
+    ],
+    [
+      'src/app/auth/auth.module.ts',
+      "import { Global as Shared, Module } from '@nestjs/common'; @Shared() @Module({}) export class AuthModule {}",
+    ],
+    [
+      'src/app/auth/auth.module.ts',
+      "import * as nest from '@nestjs/common'; @nest.Global() @nest.Module({}) export class AuthModule {}",
+    ],
+  ] as const)
+    await check(file, code, true);
+  for (const [file, code] of [
+    [
+      'src/app.module.ts',
+      "import { Global, Module } from '@nestjs/common'; @Global() @Module({}) export class AppModule {}",
+    ],
+    [
+      'src/modules/owner/owner.module.ts',
+      "import { Module } from '@nestjs/common'; @Module({}) export class OwnerModule {}",
+    ],
+  ] as const)
+    await check(file, code);
   for (const role of [
     'service',
     'repository',
