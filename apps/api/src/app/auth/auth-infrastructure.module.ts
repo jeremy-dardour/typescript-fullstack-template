@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { AuthInitializerService } from '@/app/auth/auth-initializer.service';
 import { AuthGuard } from '@/app/auth/auth.guard';
@@ -7,7 +7,6 @@ import { JwtVerificationService } from '@/app/auth/strategies/jwt/jwt-verificati
 import { OidcDiscoveryService } from '@/app/auth/strategies/jwt/oidc-discovery.service';
 import { MockAuthStrategyService } from '@/app/auth/strategies/mock-auth-strategy.service';
 
-@Global()
 @Module({
   providers: [
     OidcDiscoveryService,
