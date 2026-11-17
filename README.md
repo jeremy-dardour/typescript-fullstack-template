@@ -8,7 +8,7 @@ A production-ready fullstack monorepo template with a **NestJS** API, **React** 
 | ------------ | ---------------------------------------------------------------------------------- |
 | **Monorepo** | Turborepo, pnpm workspaces                                                         |
 | **Frontend** | React 19, Vite 8, TanStack Query 5, shadcn/ui (Tailwind CSS 4), Playwright, Vitest |
-| **Backend**  | NestJS 11, MikroORM 7, PostgreSQL, Swagger/OpenAPI, jose (JWT)                     |
+| **Backend**  | NestJS 12, MikroORM 7, PostgreSQL, Swagger/OpenAPI, jose (JWT)                     |
 | **Shared**   | TypeScript 6, ESLint 10 (flat config), Prettier, OpenAPI contract generation       |
 
 ## Architecture
@@ -18,10 +18,10 @@ apps/
   api/                → NestJS REST API (see apps/api/README.md)
   web/                → React SPA (see apps/web/README.md)
 packages/
-  api-contracts/      → OpenAPI-generated TypeScript types
-  eslint-config/      → Shared ESLint flat config
+  api-contracts/      → OpenAPI-generated TypeScript types (see packages/api-contracts/README.md)
+  eslint-config/      → Shared ESLint flat config (see packages/eslint-config/README.md)
   shared/             → Shared utilities (see packages/shared/README.md)
-  typescript-config/  → Shared tsconfig presets
+  typescript-config/  → Shared tsconfig presets (see packages/typescript-config/README.md)
 ```
 
 ## Quick Start
@@ -85,6 +85,9 @@ A complete working example demonstrating the full stack:
 - **Type Safety**: OpenAPI contract → generated types → typed React Query hooks
 - **i18n**: Translations in English, French, and Spanish
 - **Tests**: Unit tests (Vitest) and E2E tests (supertest for API, Playwright for web)
+
+The API also exposes `GET /api/me` (the caller's identity, see below) and
+unauthenticated health checks at `/health`, `/health/ready` and `/health/live`.
 
 ### Authentication
 
@@ -171,19 +174,21 @@ template ships no production web auth adapter, so add one before deploying
 
 The template ships with a comprehensive GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs on every PR and push to `main` (the test jobs can [reuse a passing result](#reusing-passing-checks)):
 
-| Job                       | What it checks                                                                                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Format Check**          | Prettier formatting compliance                                                                                                                            |
-| **Check Dependencies**    | Dependency health                                                                                                                                         |
-| **Check Types**           | TypeScript `--noEmit` across all packages                                                                                                                 |
-| **Lint**                  | ESLint (flat config) across all packages                                                                                                                  |
-| **API Contract Check**    | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift             |
-| **Unit Tests**            | Vitest for API and Web (parallel matrix), with coverage upload                                                                                            |
-| **API E2E Tests**         | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
-| **Coverage Report**       | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
-| **Web E2E Tests**         | Playwright in headless Chromium, with report and screenshot artifacts on failure                                                                          |
-| **Real-stack Web E2E**    | Native Playwright regression tests against the running API and PostgreSQL                                                                                 |
-| **Production Image Boot** | Builds `deployment/Dockerfile`, boots it with `NODE_ENV=production` against Postgres, and checks migrations, health, SPA routing and API 401/404s         |
+| Job                            | What it checks                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Select Checks**              | Decides whether the test jobs can reuse a passing result for the same inputs (see below)                                                                  |
+| **Format Check**               | Prettier formatting compliance                                                                                                                            |
+| **Check Dependencies**         | Version consistency across workspaces (syncpack)                                                                                                          |
+| **Check Types**                | TypeScript `--noEmit` across all packages                                                                                                                 |
+| **Lint**                       | ESLint (flat config) across all packages, including architecture rules: no cyclic module dependencies, no `@Global()` modules                             |
+| **API Contract Check**         | Starts the API, regenerates OpenAPI types, and fails if the generated contract differs from what's committed — catches frontend/backend drift             |
+| **Unit Tests**                 | Vitest for API and Web (parallel matrix), with coverage upload                                                                                            |
+| **API E2E Tests**              | Supertest against a real PostgreSQL service container — tests auth (JWT lifecycle) and CRUD endpoints, collects coverage                                  |
+| **Coverage Report**            | Merges API unit + E2E coverage into one report and posts sticky PR comments (API and Web) with the evolution vs `main` (baseline cached from main builds) |
+| **Web E2E Tests (Playwright)** | Playwright in headless Chromium against a mocked API, with report and screenshot artifacts on failure                                                     |
+| **Real Stack E2E**             | Native Playwright regression tests against the running API and PostgreSQL                                                                                 |
+| **Production Image Boot**      | Builds `deployment/Dockerfile`, boots it with `NODE_ENV=production` against Postgres, and checks migrations, health, SPA routing and API 401/404s         |
+| **Save Passing Checks**        | Records the input hash once every job has passed, so later commits with the same inputs can skip the test jobs                                            |
 
 Jobs that install dependencies use a shared `ci-setup` composite action for consistent Node.js/pnpm setup and caching.
 
@@ -195,7 +200,7 @@ test jobs ([ADR 0012](docs/adr/0012-ci-reuses-passing-checks.md)).
 **Select Checks** hashes every committed file except the paths listed in
 `NON_TEST_INPUTS` in [`scripts/ci/check-reuse.mjs`](scripts/ci/check-reuse.mjs)
 and looks for a passing result saved under that hash. On a hit, API Contract
-Check, Unit Tests, API E2E, Coverage Report, Web E2E, Real-stack Web E2E and
+Check, Unit Tests, API E2E, Coverage Report, Web E2E, Real Stack E2E and
 Production Image Boot are skipped; GitHub treats a skipped job as passing for
 required status checks. Format, dependencies, types and lint run on every
 commit, and they are what covers the excluded paths.
@@ -259,17 +264,28 @@ subject to the user's authorization.
 
 ## Scripts
 
-| Script                       | Description                               |
-| ---------------------------- | ----------------------------------------- |
-| `pnpm dev`                   | Start all apps in dev mode                |
-| `pnpm build`                 | Build all apps                            |
-| `pnpm check-types`           | TypeScript type checking (all packages)   |
-| `pnpm lint`                  | ESLint (all packages)                     |
-| `pnpm format`                | Prettier + ESLint fix                     |
-| `pnpm test`                  | Unit tests (all packages)                 |
-| `pnpm --filter api test:e2e` | API E2E tests (supertest)                 |
-| `pnpm --filter web test:e2e` | Web E2E tests (Playwright)                |
-| `pnpm generate:api-types`    | Regenerate OpenAPI types from running API |
+| Script                            | Description                                              |
+| --------------------------------- | -------------------------------------------------------- |
+| `pnpm dev`                        | Start PostgreSQL and all apps in dev mode                |
+| `pnpm db:start` / `pnpm db:stop`  | Start or stop the PostgreSQL container                   |
+| `pnpm db:migrate:up`              | Apply pending migrations                                 |
+| `pnpm build`                      | Build all apps                                           |
+| `pnpm build:docker`               | Build the production image (`template-app:local`)        |
+| `pnpm check-types`                | TypeScript type checking (all packages)                  |
+| `pnpm lint`                       | ESLint (all packages)                                    |
+| `pnpm format`                     | Prettier + ESLint fix (all packages)                     |
+| `pnpm fix:all`                    | ESLint fix, then Prettier on packages and root files     |
+| `pnpm dependencies:check`         | Check dependency versions are consistent (syncpack)      |
+| `pnpm test`                       | Unit tests (all packages)                                |
+| `pnpm --filter api test:e2e`      | API E2E tests (supertest)                                |
+| `pnpm --filter web test:e2e`      | Web E2E tests against a mocked API (Playwright)          |
+| `pnpm --filter web test:e2e:real` | Web E2E tests against the running API and database       |
+| `pnpm probe`                      | Explore the running app (snapshots, errors, screenshots) |
+| `pnpm dod`                        | Broad local checks before declaring work done            |
+| `pnpm generate:api-types`         | Regenerate OpenAPI types from running API                |
+
+API-specific scripts (migrations, seeding, CLI commands, coverage) are listed in
+[apps/api/README.md](./apps/api/README.md).
 
 ## Agent Instructions
 
