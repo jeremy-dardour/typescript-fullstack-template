@@ -41,7 +41,7 @@ describe('authGuard', () => {
 
     mockAuthStrategy = {
       authenticate: vi.fn().mockResolvedValue(mockPayload),
-    } as unknown as MockAuthStrategyService;
+    };
   });
 
   describe('strategy selection', () => {

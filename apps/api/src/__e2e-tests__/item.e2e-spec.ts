@@ -19,7 +19,7 @@ function createRequest(app: INestApplication): TestAgent<SuperTestType> {
 }
 
 function paginationLink(header: unknown, relation: string): URL {
-  if (typeof header !== 'string') throw new Error('Expected a Link header');
+  if (typeof header !== 'string') throw new TypeError('Expected a Link header');
   const entry = header
     .split(',')
     .find((link) => link.includes(`rel="${relation}"`));
