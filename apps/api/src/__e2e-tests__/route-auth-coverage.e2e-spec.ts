@@ -67,7 +67,8 @@ function listRoutes(app: INestApplication): Route[] {
           );
         }
 
-        const fullPath = `/${basePath}/${path}`
+        const routePrefix = basePath === 'health' ? '' : '/api';
+        const fullPath = `${routePrefix}/${basePath}/${path}`
           .replaceAll(/\/+/g, '/')
           .replace(/(.)\/$/, '$1');
         const isPublic =
@@ -118,7 +119,7 @@ describe('Route auth coverage', () => {
   });
 
   it('discovers the application routes', () => {
-    expect(routes.map((route) => route.name)).toContain('GET /items');
+    expect(routes.map((route) => route.name)).toContain('GET /api/items');
   });
 
   it('exposes exactly the reviewed public routes', () => {

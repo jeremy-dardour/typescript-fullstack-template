@@ -36,10 +36,10 @@ describe('Item CRUD E2E Tests', () => {
 
   let createdItemId: string;
 
-  describe('POST /items', () => {
+  describe('POST /api/items', () => {
     it('should create an item', async () => {
       const response = await createRequest(app)
-        .post('/items')
+        .post('/api/items')
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Test Item', description: 'A test item' })
         .expect(201);
@@ -62,17 +62,17 @@ describe('Item CRUD E2E Tests', () => {
 
     it('should reject empty name', async () => {
       await createRequest(app)
-        .post('/items')
+        .post('/api/items')
         .set('Authorization', `Bearer ${token}`)
         .send({ name: '', description: 'No name' })
         .expect(422);
     });
   });
 
-  describe('GET /items', () => {
+  describe('GET /api/items', () => {
     it('should return all items', async () => {
       const response = await createRequest(app)
-        .get('/items')
+        .get('/api/items')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -82,10 +82,10 @@ describe('Item CRUD E2E Tests', () => {
     });
   });
 
-  describe('GET /items/:id', () => {
+  describe('GET /api/items/:id', () => {
     it('should return a single item', async () => {
       const response = await createRequest(app)
-        .get(`/items/${createdItemId}`)
+        .get(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -97,7 +97,7 @@ describe('Item CRUD E2E Tests', () => {
 
     it('should return 404 for non-existent item', async () => {
       const response = await createRequest(app)
-        .get('/items/00000000-0000-0000-0000-000000000000')
+        .get('/api/items/00000000-0000-0000-0000-000000000000')
         .set('Authorization', `Bearer ${token}`)
         .expect(404)
         .expect('Content-Type', /application\/problem\+json/);
@@ -111,10 +111,10 @@ describe('Item CRUD E2E Tests', () => {
     });
   });
 
-  describe('PATCH /items/:id', () => {
+  describe('PATCH /api/items/:id', () => {
     it('should update an item', async () => {
       const response = await createRequest(app)
-        .patch(`/items/${createdItemId}`)
+        .patch(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Updated Item' })
         .expect(200);
@@ -127,10 +127,10 @@ describe('Item CRUD E2E Tests', () => {
     });
   });
 
-  describe('PATCH /items/:id with null', () => {
+  describe('PATCH /api/items/:id with null', () => {
     it('rejects null for a non-nullable field instead of reaching the database', async () => {
       await createRequest(app)
-        .patch(`/items/${createdItemId}`)
+        .patch(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ name: null })
         .expect(422);
@@ -138,7 +138,7 @@ describe('Item CRUD E2E Tests', () => {
 
     it('accepts null to clear a nullable field', async () => {
       const response = await createRequest(app)
-        .patch(`/items/${createdItemId}`)
+        .patch(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ description: null })
         .expect(200);
@@ -147,17 +147,17 @@ describe('Item CRUD E2E Tests', () => {
     });
   });
 
-  describe('DELETE /items/:id', () => {
+  describe('DELETE /api/items/:id', () => {
     it('should delete an item', async () => {
       await createRequest(app)
-        .delete(`/items/${createdItemId}`)
+        .delete(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(204);
     });
 
     it('should return 404 after deletion', async () => {
       await createRequest(app)
-        .get(`/items/${createdItemId}`)
+        .get(`/api/items/${createdItemId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
     });

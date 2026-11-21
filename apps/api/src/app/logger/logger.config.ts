@@ -18,6 +18,8 @@ export function createLoggerConfig(config: ConfigService<Env, true>): Params {
   return {
     pinoHttp: {
       level: logLevel,
+      genReqId: (_request, response) =>
+        String(response.getHeader('X-Request-Id')),
 
       // Only log API paths (whitelist)
       autoLogging: {

@@ -17,7 +17,6 @@ import {
   ThrottlerExceptionFilter,
 } from '@/app/filters';
 import { HealthModule } from '@/app/health';
-import { ContextHeadersInterceptor } from '@/app/interceptors';
 import { LoggerModule } from '@/app/logger';
 import { DatabaseModule } from '@/database/database.module';
 import { AuthModule } from '@/modules/auth/auth.module';
@@ -62,7 +61,6 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     AllExceptionsFilter,
     ProblemDetailsFilter,
     ThrottlerExceptionFilter,
-    ContextHeadersInterceptor,
   ],
 })
 export class AppModule implements NestModule {
