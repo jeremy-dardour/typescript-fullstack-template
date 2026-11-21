@@ -1,30 +1,27 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
+
+import { uuidSchema } from '@/shared/schemas/uuid.schema';
 
 import type { Item } from '@/database/entities/item.entity';
 
-export class ItemDto {
-  @ApiProperty({ format: 'uuid' })
-  id!: string;
+export const itemSchema = z
+  .strictObject({
+    id: uuidSchema,
+    name: z.string(),
+    description: z.string().nullable(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .meta({ id: 'ItemDto' });
 
-  @ApiProperty()
-  name!: string;
-
-  @ApiProperty({ nullable: true })
-  description?: string | null;
-
-  @ApiProperty()
-  createdAt!: Date;
-
-  @ApiProperty()
-  updatedAt!: Date;
-}
+export type ItemDto = z.infer<typeof itemSchema>;
 
 export function toItemDto(item: Item): ItemDto {
   return {
     id: item.id,
     name: item.name,
     description: item.description ?? null,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
+    createdAt: item.createdAt.toISOString(),
+    updatedAt: item.updatedAt.toISOString(),
   };
 }

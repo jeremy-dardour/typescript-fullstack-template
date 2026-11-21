@@ -2,6 +2,7 @@ import { Catch, HttpException, Logger } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 
 import { ProblemDetailsException } from '@/shared/exceptions/problem-details.errors';
+import { SchemaValidationException } from '@/shared/exceptions/schema-validation.errors';
 
 import type {
   ProblemDetailsDto,
@@ -56,9 +57,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
     // Add field-level errors for validation failures
     if (status === 400 || status === 422) {
-      const errors = this.extractValidationErrors(
-        exceptionResponse as string | Record<string, unknown>,
-      );
+      const errors =
+        exception instanceof SchemaValidationException
+          ? exception.errors
+          : this.extractValidationErrors(
+              exceptionResponse as string | Record<string, unknown>,
+            );
       if (errors) {
         problemDetails.errors = errors;
       }

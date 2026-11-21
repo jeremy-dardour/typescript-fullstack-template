@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
 import { Item } from '@/database/entities/item.entity';
-import { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
-import { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
 import { ItemRepository } from '@/modules/item/repositories/item.repository';
+
+import type { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
+import type { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
 
 @Injectable()
 export class ItemService {

@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
+import { itemSchema } from '@/modules/item/dtos/output/item.dto';
 
 import type { INestApplication } from '@nestjs/common';
 import type { Test as SuperTestType } from 'supertest';
@@ -58,6 +59,7 @@ describe('Item CRUD E2E Tests', () => {
       expect(body.updatedAt).toBeDefined();
 
       createdItemId = body.id;
+      expect(itemSchema.safeParse(response.body).success).toBe(true);
     });
 
     it('should reject empty name', async () => {
@@ -67,6 +69,61 @@ describe('Item CRUD E2E Tests', () => {
         .send({ name: '', description: 'No name' })
         .expect(422);
     });
+
+    it.each([' '.repeat(3), '\t\n', 'a'.repeat(256), null, 12])(
+      'rejects invalid names before persistence: %j',
+      async (name) => {
+        const response = await createRequest(app)
+          .post('/api/items')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name })
+          .expect(422);
+
+        expect(response.body).toMatchObject({
+          status: 422,
+          errors: [{ field: 'name', pointer: '/name' }],
+        });
+      },
+    );
+
+    it('rejects unknown fields with an escaped field pointer', async () => {
+      const response = await createRequest(app)
+        .post('/api/items')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Item', 'actor~/id': 'client' })
+        .expect(422);
+
+      expect(response.body).toMatchObject({
+        errors: [
+          {
+            field: 'actor~/id',
+            pointer: '/actor~0~1id',
+            code: 'UNKNOWN_FIELD',
+          },
+        ],
+      });
+    });
+
+    it.each([{}, { description: null }])(
+      'returns a required null description when none is supplied: %j',
+      async (description) => {
+        const response = await createRequest(app)
+          .post('/api/items')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: '  Preserved spacing  ', ...description })
+          .expect(201);
+        const item = itemSchema.parse(response.body);
+
+        expect(item).toMatchObject({
+          name: '  Preserved spacing  ',
+          description: null,
+        });
+        await createRequest(app)
+          .delete(`/api/items/${item.id}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(204);
+      },
+    );
   });
 
   describe('GET /api/items', () => {
@@ -83,6 +140,17 @@ describe('Item CRUD E2E Tests', () => {
   });
 
   describe('GET /api/items/:id', () => {
+    it('rejects a malformed UUID with 400 rather than a body-validation status', async () => {
+      const response = await createRequest(app)
+        .get('/api/items/not-a-uuid')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        errors: [{ field: 'id', pointer: '/id', code: 'INVALID_UUID' }],
+      });
+    });
+
     it('should return a single item', async () => {
       const response = await createRequest(app)
         .get(`/api/items/${createdItemId}`)
@@ -112,6 +180,26 @@ describe('Item CRUD E2E Tests', () => {
   });
 
   describe('PATCH /api/items/:id', () => {
+    it.each([{ name: '' }, { name: '  ' }, { actor: 'client' }])(
+      'rejects invalid changes without modifying the record: %j',
+      async (changes) => {
+        await createRequest(app)
+          .patch(`/api/items/${createdItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send(changes)
+          .expect(422);
+
+        const response = await createRequest(app)
+          .get(`/api/items/${createdItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        expect(response.body).toMatchObject({
+          name: 'Test Item',
+          description: 'A test item',
+        });
+      },
+    );
+
     it('should update an item', async () => {
       const response = await createRequest(app)
         .patch(`/api/items/${createdItemId}`)
