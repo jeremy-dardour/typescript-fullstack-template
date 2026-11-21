@@ -128,6 +128,15 @@ export interface components {
       email?: string;
       name?: string;
     };
+    HealthResponse: {
+      [key: string]: {
+        /** @enum {string} */
+        status: 'up' | 'down';
+        message?: string;
+      } & {
+        [key: string]: unknown;
+      };
+    };
     ItemPageDto: {
       data: components['schemas']['ItemDto'][];
       page: number;
@@ -282,60 +291,24 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            /**
-             * @example ok
-             * @enum {string}
-             */
-            status?: 'ok' | 'degraded';
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            info?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /** @example {} */
-            error?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            details?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
+          /**
+           * @example {
+           *       "database": {
+           *         "status": "up",
+           *         "message": "Database is available"
+           *       },
+           *       "memory_heap": {
+           *         "status": "up"
+           *       },
+           *       "memory_rss": {
+           *         "status": "up"
+           *       },
+           *       "storage": {
+           *         "status": "up"
+           *       }
+           *     }
+           */
+          'application/json': components['schemas']['HealthResponse'];
         };
       };
       /**
@@ -447,60 +420,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            /**
-             * @example ok
-             * @enum {string}
-             */
-            status?: 'ok' | 'degraded';
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            info?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /** @example {} */
-            error?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            details?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
+          'application/json': components['schemas']['HealthResponse'];
         };
       };
       /**
@@ -612,60 +532,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            /**
-             * @example ok
-             * @enum {string}
-             */
-            status?: 'ok' | 'degraded';
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            info?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /** @example {} */
-            error?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            } | null;
-            /**
-             * @example {
-             *       "database": {
-             *         "status": "up",
-             *         "responseTime": 12
-             *       }
-             *     }
-             */
-            details?: {
-              [key: string]: {
-                /** @enum {string} */
-                status: 'up' | 'degraded' | 'down';
-                /** @description Time the health indicator took to respond, in ms */
-                responseTime?: number;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
+          'application/json': components['schemas']['HealthResponse'];
         };
       };
       /**

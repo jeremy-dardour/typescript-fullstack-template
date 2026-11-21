@@ -4,11 +4,7 @@ import { ClsService } from 'nestjs-cls';
 import { ProblemDetailsException } from '@/shared/exceptions/problem-details.errors';
 import { SchemaValidationException } from '@/shared/exceptions/schema-validation.errors';
 
-import type {
-  ProblemDetailsDto,
-  FieldError,
-} from '@/shared/dtos/problem-details.dto';
-import type { ValidationErrorItem } from '@/shared/types/validation-error.types';
+import type { ProblemDetailsDto } from '@/shared/dtos/problem-details.dto';
 import type { ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
@@ -55,17 +51,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
-    // Add field-level errors for validation failures
-    if (status === 400 || status === 422) {
-      const errors =
-        exception instanceof SchemaValidationException
-          ? exception.errors
-          : this.extractValidationErrors(
-              exceptionResponse as string | Record<string, unknown>,
-            );
-      if (errors) {
-        problemDetails.errors = errors;
-      }
+    if (exception instanceof SchemaValidationException) {
+      problemDetails.errors = exception.errors;
     }
 
     const logMessage = `${request.method} ${request.url} ${status}`;
@@ -158,7 +145,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     ) {
       const message = exceptionResponse.message;
       if (Array.isArray(message)) {
-        return this.formatValidationErrors(message);
+        return (
+          message
+            .filter((value): value is string => typeof value === 'string')
+            .join('; ') || 'Validation failed'
+        );
       }
       if (typeof message === 'string') {
         return message;
@@ -166,120 +157,5 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     }
 
     return exception.message;
-  }
-
-  /**
-   * Format validation errors into detail string
-   */
-  private formatValidationErrors(messages: unknown[]): string {
-    const details: string[] = [];
-
-    for (const item of messages) {
-      if (typeof item === 'string') {
-        details.push(item);
-      } else if (this.isValidationErrorItem(item)) {
-        const field = item.property;
-        const constraints = item.constraints ?? {};
-        for (const message of Object.values(constraints)) {
-          details.push(`${field}: ${message}`);
-        }
-      }
-    }
-
-    return details.length > 0 ? details.join('; ') : 'Validation failed';
-  }
-
-  /**
-   * Extract validation error details from class-validator
-   */
-  private extractValidationErrors(
-    exceptionResponse: string | Record<string, unknown>,
-  ): FieldError[] | undefined {
-    if (
-      typeof exceptionResponse === 'object' &&
-      'message' in exceptionResponse &&
-      Array.isArray(exceptionResponse.message)
-    ) {
-      const errors: FieldError[] = [];
-
-      for (const item of exceptionResponse.message) {
-        if (typeof item === 'string') {
-          const parts = item.split(' ');
-          const field = parts[0] ?? 'unknown';
-
-          errors.push({
-            field,
-            pointer: `/${field}`,
-            code: this.inferErrorCode(item),
-            message: item,
-          });
-        } else if (this.isValidationErrorItem(item)) {
-          const field = item.property;
-          const constraints = item.constraints ?? {};
-
-          for (const message of Object.values(constraints)) {
-            errors.push({
-              field,
-              pointer: `/${field}`,
-              code: this.inferErrorCode(message),
-              message: message,
-            });
-          }
-        }
-      }
-
-      return errors.length > 0 ? errors : undefined;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Type guard for ValidationErrorItem
-   */
-  private isValidationErrorItem(item: unknown): item is ValidationErrorItem {
-    return (
-      typeof item === 'object' &&
-      item !== null &&
-      'property' in item &&
-      typeof (item as ValidationErrorItem).property === 'string'
-    );
-  }
-
-  /**
-   * Infer error code from message
-   */
-  private inferErrorCode(message: string): string {
-    const lowerMessage = message.toLowerCase();
-
-    if (
-      lowerMessage.includes('must be') ||
-      lowerMessage.includes('should be')
-    ) {
-      if (lowerMessage.includes('email')) return 'INVALID_EMAIL';
-      if (lowerMessage.includes('url')) return 'INVALID_URL';
-      if (lowerMessage.includes('uuid')) return 'INVALID_UUID';
-      return 'INVALID_FORMAT';
-    }
-
-    if (
-      lowerMessage.includes('required') ||
-      lowerMessage.includes('should not be empty')
-    ) {
-      return 'REQUIRED_FIELD';
-    }
-
-    if (
-      lowerMessage.includes('too short') ||
-      lowerMessage.includes('too long')
-    ) {
-      return 'INVALID_LENGTH';
-    }
-
-    if (lowerMessage.includes('min') || lowerMessage.includes('max')) {
-      return 'OUT_OF_RANGE';
-    }
-
-    return 'VALIDATION_ERROR';
   }
 }

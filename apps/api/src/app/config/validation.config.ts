@@ -1,9 +1,4 @@
-import {
-  StandardSchemaValidationPipe,
-  ValidationPipe,
-  UnprocessableEntityException,
-  HttpStatus,
-} from '@nestjs/common';
+import { StandardSchemaValidationPipe } from '@nestjs/common';
 
 import { SchemaValidationException } from '@/shared/exceptions/schema-validation.errors';
 
@@ -22,28 +17,12 @@ export function createValidationPipe(): PipeTransform<
   unknown,
   Promise<unknown>
 > {
-  const legacyPipe = new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-    stopAtFirstError: false,
-    errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-    exceptionFactory: (errors) => new UnprocessableEntityException(errors),
-  });
-
   return {
     async transform(
       value: unknown,
       metadata: ArgumentMetadata,
     ): Promise<unknown> {
-      if (!metadata.schema) {
-        const transformed: unknown = await legacyPipe.transform(
-          value,
-          metadata,
-        );
-        return transformed;
-      }
+      if (!metadata.schema) return value;
 
       const status = metadata.type === 'body' ? 422 : 400;
       const schemaPipe = new StandardSchemaValidationPipe({

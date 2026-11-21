@@ -16,8 +16,8 @@ src/
         <concern>.repository.ts → Persistence operations for an entity,
                                   aggregate, or read model
       dtos/
-        input/    → Create/Update DTOs (class-validator + @ApiProperty)
-        output/   → Response DTOs (@ApiProperty only)
+        input/    → Zod request schemas and inferred DTO types
+        output/   → Zod response schemas and explicit entity mapping
   database/       → Entities, migrations, seeders, factories
   shared/         → Shared types and utilities
   commands/       → CLI commands (nest-commander)
@@ -53,8 +53,8 @@ Source filenames use a role from this closed list:
 | Plain TypeScript     | `.errors.ts`      | Define named error classes that describe failures owned by the area.                                                  |
 | Plain TypeScript     | `.constants.ts`   | Hold stable named runtime values that have no computation or lifecycle.                                               |
 | Plain TypeScript     | `.config.ts`      | Assemble configuration for a framework, library, or application capability.                                           |
-| Plain TypeScript     | `.schema.ts`      | Define runtime validation and parsing for data outside the HTTP DTO validation layer.                                 |
-| HTTP contract        | `.dto.ts`         | Describe an HTTP input or output shape, including validation and API documentation where applicable.                  |
+| Plain TypeScript     | `.schema.ts`      | Define reusable runtime validation, parsing and schema-inferred types.                                                |
+| HTTP contract        | `.dto.ts`         | Define a Zod HTTP input/output contract, inferred DTO type and explicit response mapping where applicable.            |
 | Persistence          | `.entity.ts`      | Define a persisted domain model, its ORM mapping, and entity-local behavior.                                          |
 
 ESLint enforces this closed source-role list. These files follow separate conventions:
@@ -162,15 +162,30 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 
 ## DTOs
 
-- Input DTOs: `class-validator` decorators + `@ApiProperty` for Swagger
-- Output DTOs: `@ApiProperty` only (no validation on responses)
-- Plain classes with `!` non-null assertions, no base class
+- Application-owned structures and boundary validation use Zod. Infer DTO types
+  from their schemas; do not maintain parallel class decorators or structure
+  interfaces. Native framework/SDK payloads remain owned by their libraries.
+- Bind request schemas explicitly with native Nest parameter options, such as
+  `@Body({ schema: createItemSchema })`, `@Param('id', { schema: uuidSchema })`
+  and `@Query({ schema: paginationQuerySchema })`. The global Standard Schema
+  pipe validates only parameters with schema metadata. Route schema coverage
+  checks enforce bindings on every body, path and query parameter; MCP receives
+  its raw transport request through `@Req()` and delegates parsing to the SDK.
+- Use rejecting object schemas for requests. Preserve 422 for body validation
+  and 400 for path/query validation. Field errors include stable codes and
+  correctly escaped JSON Pointers; do not infer codes from English messages.
+- Response documentation uses `@ApiResponse({ standardSchema: itemSchema })`.
+  Preserve established component names with schema metadata, keep entity-to-JSON
+  mapping explicit and regenerate frontend contracts from the running API.
+  Declaring a response schema does not by itself validate a REST return value.
+- Share semantic constraints across transports. REST query schemas may convert
+  strings; MCP arguments use JSON types. Keep omission and null distinct.
 - Actor identity comes from the authenticated request (`@CurrentUser()`).
   Mutation DTOs never accept an actor, author, or current-user ID when the
   server can determine it.
-- A field that may be omitted but must not be `null` uses
-  `@IsOptionalNotNull()`: `@IsOptional()` also lets an explicit `null` through,
-  which reaches a non-nullable column as a 500 instead of a 422.
+- A field that may be omitted but cannot be null uses `.optional()`. A field
+  accepting both omission and null uses `.nullish()`; schemas, inferred types,
+  mappings and generated documentation must agree.
 - A domain error with its own RFC 9457 problem type throws
   `ProblemDetailsException(status, typeSlug, detail)`.
 - Use one canonical output DTO per entity by default. Aggregate responses
@@ -190,8 +205,8 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 
 ## Environment config
 
-- Zod schemas for env validation (not class-validator) — the split is
-  deliberate, see [ADR 0002](../../docs/adr/0002-dual-validation-stack.md)
+- Zod schemas for environment validation follow the same application-owned
+  contract convention, see [ADR 0017](../../docs/adr/0017-schema-first-application-contracts.md).
 - Base schema in `src/shared/types/env.base.schema.ts`
 - App-specific schema extends base in `src/app/config/env.schema.ts`
 

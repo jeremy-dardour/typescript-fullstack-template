@@ -10,6 +10,7 @@ import {
 import { SkipThrottle } from '@nestjs/throttler';
 
 import { Public } from '@/app/auth';
+import { healthResponseSchema } from '@/app/health/health.dto';
 import { MikroORMHealthIndicator } from '@/app/health/mikro-orm-health.service';
 
 import type { Env } from '@/app/config';
@@ -45,13 +46,12 @@ export class HealthController {
   @ApiResponse({
     status: 200,
     description: 'All components healthy',
-    schema: {
-      example: {
-        database: { status: 'up', message: 'Database is available' },
-        memory_heap: { status: 'up' },
-        memory_rss: { status: 'up' },
-        storage: { status: 'up' },
-      },
+    standardSchema: healthResponseSchema,
+    example: {
+      database: { status: 'up', message: 'Database is available' },
+      memory_heap: { status: 'up' },
+      memory_rss: { status: 'up' },
+      storage: { status: 'up' },
     },
   })
   @ApiResponse({
@@ -114,7 +114,11 @@ export class HealthController {
     summary: 'Readiness check',
     description: 'Checks if app is ready to receive traffic (database only)',
   })
-  @ApiResponse({ status: 200, description: 'App is ready' })
+  @ApiResponse({
+    status: 200,
+    description: 'App is ready',
+    standardSchema: healthResponseSchema,
+  })
   @ApiResponse({ status: 503, description: 'App is not ready' })
   async ready() {
     try {
@@ -143,7 +147,11 @@ export class HealthController {
     summary: 'Liveness check',
     description: 'Checks if app is alive (lightweight check)',
   })
-  @ApiResponse({ status: 200, description: 'App is alive' })
+  @ApiResponse({
+    status: 200,
+    description: 'App is alive',
+    standardSchema: healthResponseSchema,
+  })
   @ApiResponse({ status: 503, description: 'App is unhealthy' })
   async live() {
     try {

@@ -38,13 +38,21 @@ headers; a page beyond the collection returns an empty `data` array.
 - Avoid repeating type, nullable, or length info in decorators if TypeScript already expresses it
 - All entity metadata must be statically analyzable — avoid dynamic decorators or runtime tricks
 
-## API DTOs & OpenAPI Annotations
+## API schemas and OpenAPI
 
-- API contract is defined by explicit DTOs, **not entities**
-- Use `@ApiProperty` and `@ApiPropertyOptional` for every DTO field
-- Always specify required, nullable, enum, and format (uuid, date-time, etc.) in DTOs
-- DTOs must align with runtime validation (`class-validator`)
-- Proper OpenAPI annotations ensure correct type generation for frontend consumers
+- Define application-owned request/response structures with Zod and infer their
+  TypeScript types. Keep entity-to-response mapping explicit.
+- Bind input schemas through Nest's native parameter options, for example
+  `@Body({ schema: createItemSchema })`; inferred TypeScript types alone do not
+  validate incoming JSON. The route schema-coverage test checks these bindings.
+- Use strict request objects, explicit nullability and transport-appropriate
+  parsing. Invalid bodies return 422; malformed path/query values return 400.
+- Document responses through `@ApiResponse({ standardSchema: itemSchema })`.
+  The same schemas supply REST documentation and MCP contracts. Preserve schema
+  component names and regenerate frontend types after API changes.
+- The final application uses Zod rather than a parallel class-validator DTO
+  path. See [ADR 0017](../../docs/adr/0017-schema-first-application-contracts.md)
+  and [API standards](STANDARDS.md#dtos) for the complete convention.
 
 ## Database Migration Workflow
 
