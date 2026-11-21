@@ -76,10 +76,29 @@ export function defineTool<
       JSON.stringify(outputJson);
     },
     register(server, invocation) {
-      const inputSchema: StandardSchemaWithJSON<
+      const nativeSchema: StandardSchemaWithJSON<
         unknown,
         StandardSchemaWithJSON.InferOutput<Input>
       > = definition.input;
+      const standard = nativeSchema['~standard'];
+      const inputSchema: typeof nativeSchema = {
+        '~standard': {
+          ...standard,
+          async validate(value, options) {
+            const startedAt = performance.now();
+            const result = await standard.validate(value, options);
+            if (result.issues) {
+              logger.log({
+                tool: definition.name,
+                requestId: invocation.requestId,
+                outcome: 'invalid_input',
+                elapsedMs: performance.now() - startedAt,
+              });
+            }
+            return result;
+          },
+        },
+      };
       server.registerTool<Output, typeof inputSchema>(
         definition.name,
         {
@@ -97,6 +116,7 @@ export function defineTool<
             const result = await definition.handler(input, invocation);
             const output = definition.output.parse(result);
             const text = JSON.stringify(output);
+            if (invocation.signal.aborted) outcome = 'completed_after_abort';
             return {
               structuredContent: output,
               content: [{ type: 'text', text }],

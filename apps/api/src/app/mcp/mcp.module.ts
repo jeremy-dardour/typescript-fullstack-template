@@ -9,6 +9,10 @@ import { McpMetadataController } from '@/app/mcp/mcp-metadata.controller';
 import { McpRateLimitGuard } from '@/app/mcp/mcp-rate-limit.guard';
 import { McpRequestGuard } from '@/app/mcp/mcp-request.guard';
 import { McpTransportService } from '@/app/mcp/mcp-transport.service';
+import {
+  MCP_REQUEST_TIMEOUT,
+  MCP_REQUEST_TIMEOUT_MS,
+} from '@/app/mcp/mcp.config';
 import { McpController } from '@/app/mcp/mcp.controller';
 
 import type { DynamicModule } from '@nestjs/common';
@@ -28,6 +32,7 @@ export class McpModule {
             McpExceptionFilter,
             ProblemDetailsFilter,
             McpCatalogService,
+            { provide: MCP_REQUEST_TIMEOUT, useValue: MCP_REQUEST_TIMEOUT_MS },
           ],
           exports: [McpTransportService],
         }

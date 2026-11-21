@@ -6,3 +6,4 @@ export const MCP_PROTOCOL_VERSIONS = [
 ] as const;
 
 export const MCP_REQUEST_TIMEOUT_MS = 15_000;
+export const MCP_REQUEST_TIMEOUT = Symbol('MCP_REQUEST_TIMEOUT');

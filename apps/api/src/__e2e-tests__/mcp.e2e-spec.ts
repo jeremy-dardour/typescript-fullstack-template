@@ -5,21 +5,30 @@ import {
 } from '@modelcontextprotocol/client';
 import { Client as LegacyClient } from '@modelcontextprotocol/sdk-v1/client/index.js';
 import { StreamableHTTPClientTransport as LegacyTransport } from '@modelcontextprotocol/sdk-v1/client/streamableHttp.js';
+import { Test } from '@nestjs/testing';
+import { firstValueFrom, Subject } from 'rxjs';
 import request from 'supertest';
 import { z } from 'zod';
 
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
+import { OidcDiscoveryService } from '@/app/auth';
+import { configureHttpApplication } from '@/app/config';
+import { MCP_REQUEST_TIMEOUT } from '@/app/mcp/mcp.config';
+import { AppModule } from '@/app.module';
 import { Item } from '@/database/entities/item.entity';
 import {
   itemPageSchema,
   itemSchema,
 } from '@/modules/item/dtos/output/item.dto';
+import { ItemService } from '@/modules/item/item.service';
 
 import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 
 const VERSIONS = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26'];
+const EXPECTED_TOOLS = ['create_item', 'get_item', 'list_items'];
 const textContentSchema = z.object({
   type: z.literal('text'),
   text: z.string(),
@@ -35,6 +44,7 @@ describe('MCP Item tools with PostgreSQL', () => {
   let baseUrl: string;
   let token: string;
   let item: z.infer<typeof itemSchema>;
+  const createdIds = new Set<string>();
 
   beforeAll(async () => {
     await oidc.setup();
@@ -53,11 +63,15 @@ describe('MCP Item tools with PostgreSQL', () => {
       .send({ name: 'MCP read fixture', description: 'Created through REST' })
       .expect(201);
     item = itemSchema.parse(response.body);
+    createdIds.add(item.id);
   });
 
   afterAll(async () => {
-    if (item)
-      await app.get(MikroORM).em.fork().nativeDelete(Item, { id: item.id });
+    if (createdIds.size > 0)
+      await app
+        .get(MikroORM)
+        .em.fork()
+        .nativeDelete(Item, { id: { $in: [...createdIds] } });
     await app?.close();
   });
 
@@ -86,10 +100,7 @@ describe('MCP Item tools with PostgreSQL', () => {
       const client = await connect(version);
       try {
         const catalog = await client.listTools();
-        expect(catalog.tools.map((tool) => tool.name)).toEqual([
-          'get_item',
-          'list_items',
-        ]);
+        expect(catalog.tools.map((tool) => tool.name)).toEqual(EXPECTED_TOOLS);
         expect(client.getServerCapabilities()).toMatchObject({
           tools: { listChanged: false },
         });
@@ -169,10 +180,7 @@ describe('MCP Item tools with PostgreSQL', () => {
         }),
       );
       const catalog = await client.listTools();
-      expect(catalog.tools.map((tool) => tool.name)).toEqual([
-        'get_item',
-        'list_items',
-      ]);
+      expect(catalog.tools.map((tool) => tool.name)).toEqual(EXPECTED_TOOLS);
       const result = resultSchema.parse(
         await client.callTool({ name: 'get_item', arguments: { id: item.id } }),
       );
@@ -184,4 +192,150 @@ describe('MCP Item tools with PostgreSQL', () => {
       await client.close();
     }
   });
+
+  it.each([undefined, null, 'A description'])(
+    'creates Items with aligned description semantics: %j',
+    async (description) => {
+      const client = await connect('2026-07-28');
+      try {
+        const result = resultSchema.parse(
+          await client.callTool({
+            name: 'create_item',
+            arguments: {
+              name: '  Created through MCP  ',
+              ...(description !== undefined && { description }),
+            },
+          }),
+        );
+        const created = itemSchema.parse(result.structuredContent);
+        createdIds.add(created.id);
+        expect(created.name).toBe('  Created through MCP  ');
+        expect(created.description).toBe(description ?? null);
+        expect(result.content[0]?.text).toBe(
+          JSON.stringify(result.structuredContent),
+        );
+        const rest = await request(app.getHttpServer() as never)
+          .get(`/api/items/${created.id}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        expect(itemSchema.parse(rest.body)).toEqual(created);
+      } finally {
+        await client.close();
+      }
+    },
+  );
+
+  it.each([
+    { name: '' },
+    { name: ' '.repeat(3) },
+    { name: 'x'.repeat(256) },
+    { name: null },
+    { name: 'Valid', unknown: 'field' },
+  ])(
+    'rejects create arguments before application behavior: %j',
+    async (arguments_) => {
+      const client = await connect('2026-07-28');
+      const create = vi.spyOn(app.get(ItemService), 'create');
+      try {
+        expect(
+          await client.callTool({ name: 'create_item', arguments: arguments_ }),
+        ).toMatchObject({ isError: true });
+        expect(create).not.toHaveBeenCalled();
+      } finally {
+        create.mockRestore();
+        await client.close();
+      }
+    },
+  );
+
+  it('keeps unexpected create failures private', async () => {
+    const client = await connect('2026-07-28');
+    const create = vi
+      .spyOn(app.get(ItemService), 'create')
+      .mockRejectedValueOnce(new Error('private SELECT statement'));
+    try {
+      const result = await client.callTool({
+        name: 'create_item',
+        arguments: { name: 'Failed create' },
+      });
+      expect(result).toMatchObject({ isError: true });
+      expect(JSON.stringify(result)).not.toContain('SELECT');
+      expect(JSON.stringify(result)).toContain('Request ID:');
+    } finally {
+      create.mockRestore();
+      await client.close();
+    }
+  });
+
+  it.each(['deadline', 'disconnect'])(
+    'does not mistake a %s for rollback of a delayed write',
+    async (mode) => {
+      const module = await Test.createTestingModule({ imports: [AppModule] })
+        .overrideProvider(OidcDiscoveryService)
+        .useValue(oidc)
+        .overrideProvider(MCP_REQUEST_TIMEOUT)
+        .useValue(mode === 'deadline' ? 30 : 15_000)
+        .compile();
+      const delayedApp = module.createNestApplication<NestExpressApplication>({
+        bodyParser: false,
+        logger: false,
+      });
+      configureHttpApplication(delayedApp);
+      await delayedApp.listen(0, '127.0.0.1');
+      const service = delayedApp.get(ItemService);
+      const originalCreate = service.create.bind(service);
+      const gate = new Subject<void>();
+      const entered = new Subject<void>();
+      const finished = new Subject<string>();
+      const mayWrite = firstValueFrom(gate);
+      const invocationEntered = firstValueFrom(entered);
+      const writeFinished = firstValueFrom(finished);
+      const create = vi
+        .spyOn(service, 'create')
+        .mockImplementationOnce(async (input) => {
+          entered.next();
+          await mayWrite;
+          const entity = await originalCreate(input);
+          finished.next(entity.id);
+          return entity;
+        });
+      const client = new Client(
+        { name: 'delayed-client', version: '1.0.0' },
+        { versionNegotiation: { mode: { pin: '2026-07-28' } } },
+      );
+      const controller = new AbortController();
+      try {
+        const address = await delayedApp.getUrl();
+        await client.connect(
+          new StreamableHTTPClientTransport(new URL(`${address}/mcp`), {
+            requestInit: { headers: { Authorization: `Bearer ${token}` } },
+          }),
+        );
+        const pending = client.callTool(
+          { name: 'create_item', arguments: { name: 'Delayed MCP create' } },
+          { signal: controller.signal },
+        );
+        await invocationEntered;
+        if (mode === 'disconnect') controller.abort();
+        if (mode === 'deadline') {
+          await expect(pending).rejects.toMatchObject({ status: 408 });
+        } else {
+          await expect(pending).rejects.toThrow();
+        }
+        gate.next();
+        const id = await writeFinished;
+        createdIds.add(id);
+        const rest = await request(app.getHttpServer() as never)
+          .get(`/api/items/${id}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        expect(itemSchema.parse(rest.body).name).toBe('Delayed MCP create');
+      } finally {
+        gate.next();
+        create.mockRestore();
+        await client.close();
+        await delayedApp.close();
+      }
+    },
+  );
 });

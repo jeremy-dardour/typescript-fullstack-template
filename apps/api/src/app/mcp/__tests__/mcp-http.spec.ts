@@ -193,6 +193,22 @@ describe('mCP HTTP integration', () => {
     );
   });
 
+  it('rejects extra credential fields and accepts a case-insensitive bearer scheme', async () => {
+    await start();
+    const malformed = await request(app.getHttpServer() as never)
+      .get('/mcp')
+      .set('Authorization', `Bearer ${token} extra`)
+      .expect(401);
+    expect(malformed.headers['www-authenticate']).not.toContain(
+      'invalid_token',
+    );
+    const accepted = await request(app.getHttpServer() as never)
+      .get('/mcp')
+      .set('Authorization', `bearer ${token}`)
+      .expect(405);
+    expect(accepted.headers.allow).toBe('POST');
+  });
+
   it.each(['get', 'delete'] as const)(
     'answers authenticated %s with 405 and no session',
     async (method) => {

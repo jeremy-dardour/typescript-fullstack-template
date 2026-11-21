@@ -2,6 +2,7 @@ import { toNodeHandler, toWebRequest } from '@modelcontextprotocol/node';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import {
   Injectable,
+  Inject,
   Logger,
   RequestTimeoutException,
   UnauthorizedException,
@@ -12,7 +13,7 @@ import { z } from 'zod';
 import { McpCatalogService } from '@/app/mcp/mcp-catalog.service';
 import {
   MCP_PROTOCOL_VERSIONS,
-  MCP_REQUEST_TIMEOUT_MS,
+  MCP_REQUEST_TIMEOUT,
 } from '@/app/mcp/mcp.config';
 
 import apiPackage from '@/../package.json';
@@ -61,6 +62,7 @@ export class McpTransportService implements OnModuleDestroy {
   constructor(
     private readonly cls: ClsService,
     private readonly catalog: McpCatalogService,
+    @Inject(MCP_REQUEST_TIMEOUT) private readonly timeoutMs: number,
   ) {}
 
   protected createServer(
@@ -122,9 +124,13 @@ export class McpTransportService implements OnModuleDestroy {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_resolve, reject) => {
       timer = setTimeout(() => {
-        reject(new RequestTimeoutException('MCP request exceeded 15000ms'));
+        reject(
+          new RequestTimeoutException(
+            `MCP request exceeded ${this.timeoutMs}ms`,
+          ),
+        );
         abort.abort();
-      }, MCP_REQUEST_TIMEOUT_MS).unref();
+      }, this.timeoutMs).unref();
     });
     const exchange = async () => {
       const webRequest = await toWebRequest(request, request.body, {

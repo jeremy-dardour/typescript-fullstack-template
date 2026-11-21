@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { defineTool, McpToolProvider } from '@/app/mcp';
+import { createItemSchema } from '@/modules/item/dtos/input/create-item.dto';
 import {
   itemPageSchema,
   itemSchema,
@@ -21,6 +22,21 @@ export class ItemTools implements McpToolProviderContract {
 
   getTools() {
     return [
+      defineTool({
+        name: 'create_item',
+        title: 'Create Item',
+        description:
+          'Create an Item with a name and optional description; return its UUID and timestamps.',
+        input: createItemSchema,
+        output: itemSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+        handler: async (input) => toItemDto(await this.items.create(input)),
+      }),
       defineTool({
         name: 'list_items',
         title: 'List Items',

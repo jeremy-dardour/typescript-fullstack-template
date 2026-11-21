@@ -88,6 +88,13 @@ describe('typed MCP tools', () => {
       expect(result).toMatchObject({ isError: true });
       expect(JSON.stringify(result)).toContain('name');
       expect(handler).not.toHaveBeenCalled();
+      expect(Logger.prototype.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tool: 'greet',
+          outcome: 'invalid_input',
+          requestId: 'tool-request-id',
+        }),
+      );
     } finally {
       await connection.close();
     }
