@@ -3,12 +3,19 @@
   "compilerOptions": {
     "types": ["vitest/globals", "node"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@test-fixtures/*": ["./test-fixtures/*"]
     }
   },
-  "include": ["src/**/*", "__e2e__/**/*", "src/__tests__"],
+  "include": [
+    "src/**/*",
+    "__e2e__/**/*",
+    "src/__tests__",
+    "test-fixtures/**/*"
+  ],
   "exclude": ["node_modules", "dist", "build"]
 }

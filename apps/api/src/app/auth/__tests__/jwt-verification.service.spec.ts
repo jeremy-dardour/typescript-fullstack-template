@@ -1,5 +1,6 @@
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
+import { InsufficientScopesException } from '@/app/auth/exceptions/insufficient-scopes.errors';
 import { InvalidTokenException } from '@/app/auth/exceptions/invalid-token.errors';
 import { JwtVerificationService } from '@/app/auth/strategies/jwt/jwt-verification.service';
 import { envSchema } from '@/app/config/env.schema';
@@ -57,6 +58,40 @@ describe('jwtVerificationService audience', () => {
     await expect(
       service.verify(await tokens.createToken({ aud: CLIENT_ID })),
     ).rejects.toBeInstanceOf(InvalidTokenException);
+  });
+
+  it('accepts the standard scope claim when scp is absent', async () => {
+    const service = createService(oidc);
+    const tokens = new MockTokenFactory(oidc, CLIENT_ID, SCOPE);
+    const token = await tokens.createToken({ scp: undefined, scope: SCOPE });
+
+    await expect(service.verify(token)).resolves.toMatchObject({
+      payload: { scope: SCOPE },
+    });
+  });
+
+  it('preserves scp precedence and never unions conflicting claims', async () => {
+    const service = createService(oidc);
+    const tokens = new MockTokenFactory(oidc, CLIENT_ID, SCOPE);
+    const token = await tokens.createToken({ scp: 'unaccepted', scope: SCOPE });
+
+    await expect(service.verify(token)).rejects.toBeInstanceOf(
+      InsufficientScopesException,
+    );
+    await expect(
+      service.verify(
+        await tokens.createToken({ scp: SCOPE, scope: 'unaccepted' }),
+      ),
+    ).resolves.toMatchObject({ payload: { scp: SCOPE } });
+  });
+
+  it('does not fall back from an explicitly empty scp claim', async () => {
+    const service = createService(oidc);
+    const tokens = new MockTokenFactory(oidc, CLIENT_ID, SCOPE);
+
+    await expect(
+      service.verify(await tokens.createToken({ scp: '', scope: SCOPE })),
+    ).rejects.toBeInstanceOf(InsufficientScopesException);
   });
 });
 
