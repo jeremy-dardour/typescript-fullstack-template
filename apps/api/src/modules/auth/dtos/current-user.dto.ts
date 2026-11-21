@@ -1,14 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { z } from 'zod';
 
-export class CurrentUserDto {
-  @ApiProperty({
-    description: 'Stable subject identifier from the identity provider',
+export const currentUserSchema = z
+  .strictObject({
+    sub: z
+      .string()
+      .describe('Stable subject identifier from the identity provider'),
+    email: z.string().optional(),
+    name: z.string().optional(),
   })
-  sub!: string;
+  .meta({ id: 'CurrentUserDto' });
 
-  @ApiPropertyOptional()
-  email?: string;
-
-  @ApiPropertyOptional()
-  name?: string;
-}
+export type CurrentUserDto = z.infer<typeof currentUserSchema>;
