@@ -16,6 +16,6 @@ import { MockAuthStrategyService } from '@/app/auth/strategies/mock-auth-strateg
     AuthInitializerService,
     AuthGuard,
   ],
-  exports: [AuthInitializerService, AuthGuard],
+  exports: [AuthInitializerService, AuthGuard, OidcDiscoveryService],
 })
 export class AuthInfrastructureModule {}

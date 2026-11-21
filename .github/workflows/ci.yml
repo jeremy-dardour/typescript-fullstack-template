@@ -208,6 +208,7 @@ jobs:
           FAKE_AUTH: true
           NODE_ENV: test
           PORT: 3000
+          MCP_PUBLIC_URL: http://localhost:3000/mcp
 
   # ----------------------------------------------------------------------------
   # Unit Tests (Matrix)
@@ -239,6 +240,10 @@ jobs:
 
       - name: Setup monorepo
         uses: ./.github/actions/ci-setup
+
+      - name: Install API browser test dependencies
+        if: matrix.label == 'Unit Tests API'
+        run: pnpm --filter api exec playwright install --with-deps chromium
 
       - name: Run ${{ matrix.label }}
         run: pnpm turbo run ${{ matrix.task }}
@@ -300,6 +305,9 @@ jobs:
 
       - name: Build shared packages
         run: pnpm turbo run build --filter=@workspace/shared
+
+      - name: Install API OAuth browser dependencies
+        run: pnpm --filter api exec playwright install --with-deps chromium
 
       - name: Run E2E tests (with coverage)
         run: pnpm --filter=api test:cov:e2e
@@ -544,6 +552,7 @@ jobs:
           docker run -d --name app --network host \
             -e NODE_ENV=production \
             -e PORT=3000 \
+            -e MCP_PUBLIC_URL=https://api.example.com/mcp \
             -e DATABASE_URL=postgres://app:app@localhost:5432/app \
             -e DB_SSL=false \
             -e AUTH_CLIENT_ID=ci-boot-test \
@@ -576,6 +585,10 @@ jobs:
           expect_status 200 /
           expect_status 200 /some/client/route
           expect_status 401 /api/items
+          expect_status 401 /mcp
+          curl -sf -H 'Host: api.example.com' \
+            http://localhost:3000/.well-known/oauth-protected-resource/mcp \
+            | jq -e '.resource == "https://api.example.com/mcp"'
           expect_status 404 /api/does-not-exist
           expect_status 404 /openapi.yaml
           expect_status 404 /assets/missing-chunk.js

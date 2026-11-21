@@ -38,6 +38,50 @@ export const envSchema = baseEnvSchema
     HEALTH_MAX_HEAP_MB: z.coerce.number().int().positive().default(512),
     HEALTH_MAX_RSS_MB: z.coerce.number().int().positive().default(1024),
 
+    MCP_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
+    MCP_PUBLIC_URL: z
+      .url()
+      .refine((value) => {
+        const url = new URL(value);
+        return (
+          ['http:', 'https:'].includes(url.protocol) &&
+          url.pathname === '/mcp' &&
+          !url.username &&
+          !url.password &&
+          !url.search &&
+          !url.hash
+        );
+      }, 'MCP_PUBLIC_URL must be an HTTP(S) URL with path /mcp and no credentials, query or fragment')
+      .optional(),
+    MCP_ALLOWED_ORIGINS: z
+      .string()
+      .default('')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .refine(
+        (origins) =>
+          origins.every((origin) => {
+            try {
+              const url = new URL(origin);
+              return (
+                ['http:', 'https:'].includes(url.protocol) &&
+                url.origin === origin
+              );
+            } catch {
+              return false;
+            }
+          }),
+        'MCP_ALLOWED_ORIGINS must contain exact HTTP(S) origins',
+      ),
+    MCP_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(120),
+
     AUTH_CLIENT_ID: z.string().min(1).optional(),
     // Expected `aud` claim; defaults to AUTH_CLIENT_ID. Entra ID access tokens
     // use `api://<client-id>`.
@@ -57,6 +101,25 @@ export const envSchema = baseEnvSchema
       .transform((value) => value.toLowerCase() === 'true'),
   })
   .superRefine((env, context) => {
+    if (env.MCP_ENABLED && !env.MCP_PUBLIC_URL) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MCP_PUBLIC_URL'],
+        message: 'MCP_PUBLIC_URL is required when MCP_ENABLED is true',
+      });
+    }
+    if (
+      env.MCP_ENABLED &&
+      env.NODE_ENV === 'production' &&
+      env.MCP_PUBLIC_URL &&
+      new URL(env.MCP_PUBLIC_URL).protocol !== 'https:'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MCP_PUBLIC_URL'],
+        message: 'MCP_PUBLIC_URL must use HTTPS in production',
+      });
+    }
     if (env.FAKE_AUTH) {
       return;
     }

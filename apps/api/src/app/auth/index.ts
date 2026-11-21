@@ -3,4 +3,8 @@ export * from './auth.guard';
 export * from './auth-infrastructure.module';
 export * from './decorators/current-user.decorator';
 export * from './decorators/public.decorator';
+export { OidcDiscoveryService } from './strategies/jwt/oidc-discovery.service';
+export { InvalidTokenException } from './exceptions/invalid-token.errors';
+export { ExpiredTokenException } from './exceptions/expired-token.errors';
+export { InsufficientScopesException } from './exceptions/insufficient-scopes.errors';
 export type * from './types/token.types';

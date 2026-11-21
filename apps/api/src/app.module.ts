@@ -15,6 +15,7 @@ import {
 import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
 import { HealthModule } from '@/app/health';
 import { LoggerModule } from '@/app/logger';
+import { McpModule } from '@/app/mcp';
 import { DatabaseModule } from '@/database/database.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ItemModule } from '@/modules/item/item.module';
@@ -28,6 +29,10 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
       validate: validateEnv,
       cache: true,
     }),
+    (async () => {
+      await ConfigModule.envVariablesLoaded;
+      return McpModule.register(validateEnv(process.env).MCP_ENABLED);
+    })(),
     ClsModule.forRoot(createClsConfig()),
     LoggerModule,
     AuthInfrastructureModule,
