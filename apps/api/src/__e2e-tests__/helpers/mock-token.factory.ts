@@ -32,7 +32,8 @@ export class MockTokenFactory {
       sub = 'e2e-user-123',
       email = 'e2e@example.com',
       name = 'E2E Test User',
-      scp = this.defaultScope,
+      scp,
+      scope,
       aud = this.audience,
       iss = MockOidcService.ISSUER,
       expiresInSeconds = 3600,
@@ -47,7 +48,8 @@ export class MockTokenFactory {
       email,
       name,
       preferred_username: email,
-      scp,
+      scp: 'scp' in options ? scp : this.defaultScope,
+      scope,
     })
       .setProtectedHeader({
         alg: 'RS256',

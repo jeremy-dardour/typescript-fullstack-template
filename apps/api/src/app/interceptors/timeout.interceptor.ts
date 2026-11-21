@@ -20,10 +20,15 @@ export class TimeoutInterceptor implements NestInterceptor {
     this.timeoutMs = timeoutMs;
   }
 
-  intercept(
-    _context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    if (
+      context
+        .switchToHttp()
+        .getRequest<{ path: string }>()
+        .path.replace(/\/$/, '') === '/mcp'
+    ) {
+      return next.handle();
+    }
     return next.handle().pipe(
       timeout(this.timeoutMs),
       catchError((error: unknown) => {

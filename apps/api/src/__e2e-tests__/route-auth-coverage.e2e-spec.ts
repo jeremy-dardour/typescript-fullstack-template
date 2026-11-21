@@ -23,6 +23,8 @@ const PUBLIC_ROUTES: Record<string, string> = {
   'GET /health': 'monitoring probe',
   'GET /health/ready': 'orchestrator readiness probe',
   'GET /health/live': 'orchestrator liveness probe',
+  'GET /.well-known/oauth-protected-resource/mcp':
+    'OAuth protected-resource discovery for MCP clients',
 };
 
 interface Route {
@@ -67,7 +69,14 @@ function listRoutes(app: INestApplication): Route[] {
           );
         }
 
-        const fullPath = `/${basePath}/${path}`
+        const routePrefix = [
+          'health',
+          'mcp',
+          '.well-known/oauth-protected-resource',
+        ].includes(basePath)
+          ? ''
+          : '/api';
+        const fullPath = `${routePrefix}/${basePath}/${path}`
           .replaceAll(/\/+/g, '/')
           .replace(/(.)\/$/, '$1');
         const isPublic =
@@ -118,7 +127,7 @@ describe('Route auth coverage', () => {
   });
 
   it('discovers the application routes', () => {
-    expect(routes.map((route) => route.name)).toContain('GET /items');
+    expect(routes.map((route) => route.name)).toContain('GET /api/items');
   });
 
   it('exposes exactly the reviewed public routes', () => {

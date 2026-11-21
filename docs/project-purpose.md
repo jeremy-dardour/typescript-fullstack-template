@@ -13,7 +13,7 @@ tooling) every time.
 
 ## What it is
 
-A Turborepo/pnpm monorepo pairing a NestJS 11 + MikroORM + PostgreSQL API with a
+A Turborepo/pnpm monorepo pairing a NestJS 12 + MikroORM + PostgreSQL API with a
 React 19 + Vite + TanStack Query SPA, wired together by OpenAPI contract
 generation so frontend types are derived from the backend, never hand-copied. It
 ships a working Item CRUD example, pluggable OIDC/JWT auth, a CLI shell, shared

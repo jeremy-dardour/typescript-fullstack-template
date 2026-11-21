@@ -1,71 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { z } from 'zod';
 
-/**
- * Offset pagination response base class
- *
- * Spec references:
- * - Google AIP-158 + Stripe API hybrid style
- * - Flat structure, computed fields removed
- */
-export class PaginatedListResponseDto<T> {
-  constructor({
-    data,
-    page,
-    pageSize,
-    total,
-    totalPages,
-  }: {
-    data: T[];
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  }) {
-    this.data = data;
-    this.page = page;
-    this.page_size = pageSize;
-    this.total = total;
-    this.total_pages = totalPages;
-  }
+import {
+  pageNumberSchema,
+  pageSizeSchema,
+} from '@/shared/dtos/offset-pagination.dto';
 
-  @ApiProperty({
-    description: 'Data array',
-    isArray: true,
-    required: true,
-    nullable: false,
-  })
-  data!: T[];
-
-  @ApiProperty({
-    description: 'Current page number',
-    minimum: 1,
-    example: 1,
-    required: true,
-    nullable: false,
-  })
-  page!: number;
-
-  @ApiProperty({
-    description: 'Items per page',
-    example: 20,
-    required: true,
-    nullable: false,
-  })
-  page_size!: number;
-
-  @ApiProperty({
-    description: 'Total items',
-    example: 100,
-    required: true,
-    nullable: false,
-  })
-  total!: number;
-
-  @ApiProperty({
-    description: 'Total pages available',
-    example: 5,
-    required: true,
-    nullable: false,
-  })
-  total_pages!: number;
+export function paginatedListSchema<T extends z.ZodType>(element: T) {
+  return z.strictObject({
+    data: z.array(element),
+    page: pageNumberSchema,
+    page_size: pageSizeSchema,
+    total: z.int().min(0),
+    total_pages: z.int().min(0),
+  });
 }
+
+export type PaginatedListResponseDto<T> = z.infer<
+  ReturnType<typeof paginatedListSchema<z.ZodType<T>>>
+>;

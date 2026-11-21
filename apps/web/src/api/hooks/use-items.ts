@@ -5,9 +5,12 @@ import { $api } from '@/api/api-client';
 import type { components } from '@/types/openapi';
 
 export type Item = components['schemas']['ItemDto'];
+export type ItemPage = components['schemas']['ItemPageDto'];
 
-export function useGetItems() {
-  return $api.useQuery('get', '/api/items');
+export function useGetItems(page = 1) {
+  return $api.useQuery('get', '/api/items', {
+    params: { query: { page } },
+  });
 }
 
 export function useGetItem(id: string) {

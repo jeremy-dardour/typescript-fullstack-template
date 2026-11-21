@@ -79,7 +79,13 @@ export class JwtVerificationService {
         );
       }
 
-      if (error instanceof JOSEError && error.code === 'ERR_JOSE_GENERIC') {
+      if (
+        error instanceof TypeError ||
+        (error instanceof JOSEError &&
+          ['ERR_JOSE_GENERIC', 'ERR_JWKS_TIMEOUT', 'ERR_JWKS_INVALID'].includes(
+            error.code,
+          ))
+      ) {
         throw new OidcServiceUnavailableException(
           'Failed to fetch JWKS from identity provider',
         );
@@ -95,8 +101,9 @@ export class JwtVerificationService {
     }
   }
 
-  private validateScopes({ scp }: JwtPayload): void {
-    const tokenScopes = scp?.split(' ').filter((s) => s.length > 0) ?? [];
+  private validateScopes({ scp, scope }: JwtPayload): void {
+    const tokenScopes =
+      (scp ?? scope)?.split(' ').filter((s) => s.length > 0) ?? [];
 
     const hasRequiredScope = this.acceptedScopes.some((acceptedScope) =>
       tokenScopes.includes(acceptedScope),

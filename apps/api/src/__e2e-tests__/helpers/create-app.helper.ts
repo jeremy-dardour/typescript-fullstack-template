@@ -1,13 +1,11 @@
 import { Test } from '@nestjs/testing';
 
 import { OidcDiscoveryService } from '@/app/auth/strategies/jwt/oidc-discovery.service';
-import { createValidationPipe } from '@/app/config/validation.config';
-import { AllExceptionsFilter } from '@/app/filters/all-exceptions.filter';
-import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
-import { ThrottlerExceptionFilter } from '@/app/filters/throttler-exception.filter';
+import { configureHttpApplication } from '@/app/config';
 import { AppModule } from '@/app.module';
 
 import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { TestingModule } from '@nestjs/testing';
 
 export async function createTestApp({
@@ -27,13 +25,10 @@ export async function createTestApp({
 
   const moduleFixture: TestingModule = await testModuleBuilder.compile();
 
-  const app = moduleFixture.createNestApplication();
-  app.useGlobalPipes(createValidationPipe());
-  app.useGlobalFilters(
-    app.get(ThrottlerExceptionFilter),
-    app.get(ProblemDetailsFilter),
-    app.get(AllExceptionsFilter),
-  );
+  const app = moduleFixture.createNestApplication<NestExpressApplication>({
+    bodyParser: false,
+  });
+  configureHttpApplication(app);
   await app.init();
 
   return app;

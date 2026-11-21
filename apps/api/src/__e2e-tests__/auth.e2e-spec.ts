@@ -28,7 +28,7 @@ describe('Auth E2E Tests', () => {
     tokenFactory = new MockTokenFactory(mockOidc, audience, acceptedScope);
   });
 
-  const PROTECTED_ENDPOINT = '/items';
+  const PROTECTED_ENDPOINT = '/api/items';
 
   describe('with valid OIDC configuration', () => {
     let app: INestApplication;
@@ -50,11 +50,11 @@ describe('Auth E2E Tests', () => {
         .expect(200);
     });
 
-    it('exposes the normalized token identity on GET /me', async () => {
+    it('exposes the normalized token identity on GET /api/me', async () => {
       const token = await tokenFactory.validToken();
 
       const response = await createRequest(app)
-        .get('/me')
+        .get('/api/me')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 

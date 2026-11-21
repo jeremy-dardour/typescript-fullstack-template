@@ -1,27 +1,14 @@
 import 'reflect-metadata';
-import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AuthInitializerService } from '@/app/auth';
 import {
-  corsConfig,
+  configureHttpApplication,
   areApiDocsEnabled,
   setupSwagger,
-  createValidationPipe,
 } from '@/app/config';
-import {
-  AllExceptionsFilter,
-  ProblemDetailsFilter,
-  ThrottlerExceptionFilter,
-} from '@/app/filters';
-import {
-  ContextHeadersInterceptor,
-  LinkHeaderInterceptor,
-  LocationHeaderInterceptor,
-  TimeoutInterceptor,
-} from '@/app/interceptors';
 
 import { AppModule } from './app.module';
 
@@ -31,12 +18,9 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true, // Buffer logs until Logger is ready
+    bodyParser: false,
   });
 
-  // Trust X-Forwarded-* from the reverse proxy in front (ALB, nginx, ...):
-  // absolute URLs (Location/Link headers) get the right protocol and the
-  // throttler sees real client IPs. See docs/adr/0003-trust-proxy.md.
-  app.set('trust proxy', true);
   const logger = app.get(Logger);
   const configService = app.get(ConfigService<Env, true>);
   const env: Env['NODE_ENV'] = configService.get('NODE_ENV');
@@ -48,42 +32,7 @@ async function bootstrap() {
   const authInitializer = app.get(AuthInitializerService);
   await authInitializer.init();
 
-  // CORS config
-  app.enableCors(corsConfig);
-
-  // Global route prefix
-  app.setGlobalPrefix('api', {
-    exclude: [
-      // Exclude health check endpoints
-      { path: 'health', method: RequestMethod.ALL },
-      { path: 'health/{*path}', method: RequestMethod.ALL },
-    ],
-  });
-
-  // Global exception filters (specific to general)
-  app.useGlobalFilters(
-    app.get(ThrottlerExceptionFilter),
-    app.get(ProblemDetailsFilter),
-    app.get(AllExceptionsFilter),
-  );
-
-  // Global interceptors (in execution order)
-  app.useGlobalInterceptors(
-    // 1. Tracing headers (X-Request-Id, X-Correlation-Id, Trace-Id)
-    app.get(ContextHeadersInterceptor),
-
-    // 2. Timeout control (15s)
-    new TimeoutInterceptor(15_000),
-
-    // 3. Location header (201 Created)
-    new LocationHeaderInterceptor(),
-
-    // 4. Link header (pagination links)
-    new LinkHeaderInterceptor(),
-  );
-
-  // Global validation pipe
-  app.useGlobalPipes(createValidationPipe());
+  configureHttpApplication(app);
 
   // Swagger docs
   setupSwagger(app);

@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 import { ProblemDetailsFilter } from '@/app/filters/problem-details.filter';
 import { ProblemDetailsException } from '@/shared/exceptions/problem-details.errors';
+import { SchemaValidationException } from '@/shared/exceptions/schema-validation.errors';
 
 import type { ArgumentsHost, HttpException } from '@nestjs/common';
 import type { ClsService } from 'nestjs-cls';
@@ -28,6 +29,23 @@ function respond(exception: HttpException): Record<string, unknown> {
 }
 
 describe('problemDetailsFilter type URI', () => {
+  it('preserves normalized schema field errors without interpreting their messages', () => {
+    const errors = [
+      {
+        field: 'rows.0.part~/name',
+        pointer: '/rows/0/part~0~1name',
+        code: 'INVALID_TYPE',
+        message: 'A translated validation message',
+      },
+    ];
+
+    expect(respond(new SchemaValidationException(422, errors))).toMatchObject({
+      status: 422,
+      detail: 'Request validation failed',
+      errors,
+    });
+  });
+
   it('derives the type from the status by default', () => {
     expect(respond(new NotFoundException()).type).toBe(
       'https://api.example.com/errors/not-found',

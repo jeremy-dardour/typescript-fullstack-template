@@ -6,7 +6,7 @@ import { GLOB_TESTS } from '../utils';
 import type { Linter } from 'eslint';
 
 const AREA_INTERFACE_SUFFIXES =
-  'module,service,store,guard,decorator,types,config,schema,filter,interceptor';
+  'module,service,store,guard,decorator,types,config,schema,filter,interceptor,errors';
 
 const NO_GLOBAL_MODULES_MESSAGE =
   'Modules and app areas are not global: import the owning module instead, and register global guards, filters and interceptors with APP_GUARD, APP_FILTER or APP_INTERCEPTOR providers in the root module.';

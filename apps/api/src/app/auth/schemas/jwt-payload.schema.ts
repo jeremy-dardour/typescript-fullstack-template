@@ -6,6 +6,7 @@ export const jwtPayloadSchema = z.object({
   name: z.string().optional(),
   preferred_username: z.string().optional(),
   scp: z.string().optional(),
+  scope: z.string().optional(),
   roles: z.array(z.string()).optional(),
   iat: z.number().optional(),
   exp: z.number().optional(),

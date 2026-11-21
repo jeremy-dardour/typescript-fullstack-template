@@ -30,13 +30,23 @@ export class OidcDiscoveryService {
     }
 
     try {
+      const discoveryEndpoint = new URL(discoveryUrl);
+      const isLocalTestProvider =
+        this.configService.get('NODE_ENV', { infer: true }) !== 'production' &&
+        ['localhost', '127.0.0.1', '[::1]'].includes(
+          discoveryEndpoint.hostname,
+        );
       const config = await oidc.discovery(
-        new URL(discoveryUrl),
+        discoveryEndpoint,
         clientId,
         undefined,
         oidc.None(),
         {
           timeout: 30,
+          ...(isLocalTestProvider && {
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- HTTP is intentional only for non-production loopback providers.
+            execute: [oidc.allowInsecureRequests],
+          }),
         },
       );
 

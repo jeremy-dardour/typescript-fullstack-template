@@ -1,12 +1,13 @@
-/**
- * Health indicator result from @nestjs/terminus
- */
-export interface HealthIndicatorResult {
-  status: 'up' | 'down';
-  message?: string;
-}
+import { z } from 'zod';
 
-/**
- * Health check response structure
- */
-export type HealthResponse = Record<string, HealthIndicatorResult>;
+export const healthIndicatorSchema = z.looseObject({
+  status: z.enum(['up', 'down']),
+  message: z.string().optional(),
+});
+
+export const healthResponseSchema = z
+  .record(z.string(), healthIndicatorSchema)
+  .meta({ id: 'HealthResponse' });
+
+export type HealthIndicatorResult = z.infer<typeof healthIndicatorSchema>;
+export type HealthResponse = z.infer<typeof healthResponseSchema>;

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { AuthStrategy } from '@/app/auth/strategies/auth-strategy.types';
 import {
@@ -23,14 +23,6 @@ const SECOND_IDENTITY: AuthenticatedUser = {
 
 @Injectable()
 export class MockAuthStrategyService implements AuthStrategy {
-  private readonly logger = new Logger(MockAuthStrategyService.name);
-
-  constructor() {
-    this.logger.warn(
-      '⚠️  MockAuthStrategyService initialized - using fake authentication',
-    );
-  }
-
   authenticate(request: AuthenticatedRequest): Promise<AuthenticatedUser> {
     const identity =
       request.headers.authorization === `Bearer ${MOCK_SECOND_USER_TOKEN}`

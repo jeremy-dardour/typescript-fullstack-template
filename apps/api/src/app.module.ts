@@ -9,16 +9,13 @@ import {
   createClsConfig,
   validateEnv,
   throttlerConfig,
+  throttlerErrorMessage,
   createStaticAssetsImports,
 } from '@/app/config';
-import {
-  AllExceptionsFilter,
-  ProblemDetailsFilter,
-  ThrottlerExceptionFilter,
-} from '@/app/filters';
+import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
 import { HealthModule } from '@/app/health';
-import { ContextHeadersInterceptor } from '@/app/interceptors';
 import { LoggerModule } from '@/app/logger';
+import { McpModule } from '@/app/mcp';
 import { DatabaseModule } from '@/database/database.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ItemModule } from '@/modules/item/item.module';
@@ -32,17 +29,19 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
       validate: validateEnv,
       cache: true,
     }),
+    (async () => {
+      await ConfigModule.envVariablesLoaded;
+      return McpModule.register(validateEnv(process.env).MCP_ENABLED);
+    })(),
     ClsModule.forRoot(createClsConfig()),
     LoggerModule,
     AuthInfrastructureModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: throttlerConfig.ttl,
-        limit: throttlerConfig.limit,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [throttlerConfig],
+      errorMessage: throttlerErrorMessage,
+    }),
     HealthModule,
     ItemModule,
     // Evaluated when this module is defined. ConfigModule.forRoot above has
@@ -61,8 +60,6 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     },
     AllExceptionsFilter,
     ProblemDetailsFilter,
-    ThrottlerExceptionFilter,
-    ContextHeadersInterceptor,
   ],
 })
 export class AppModule implements NestModule {

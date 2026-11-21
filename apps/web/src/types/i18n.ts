@@ -22,6 +22,11 @@ export interface Translations {
   'items.table.header.createdAt': string;
   'items.table.header.actions': string;
   'items.table.noData': string;
+  'items.table.error': string;
+  'items.pagination.label': string;
+  'items.pagination.previous': string;
+  'items.pagination.next': string;
+  'items.pagination.status': string;
   'items.form.name': string;
   'items.form.description': string;
   'items.form.submit': string;

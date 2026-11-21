@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { parseTraceparent } from '@/shared/utils/trace-context.util';
 
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import type { ClsModuleOptions, ClsService } from 'nestjs-cls';
 
 /**
@@ -13,7 +13,7 @@ export function createClsConfig(): ClsModuleOptions {
   return {
     global: true,
     middleware: {
-      mount: true,
+      mount: false,
       generateId: true,
       idGenerator: (request: Request) => {
         // Use client X-Request-Id or generate new UUID
@@ -27,7 +27,11 @@ export function createClsConfig(): ClsModuleOptions {
 /**
  * Extract and store tracing info from request headers
  */
-function setupClsContext(cls: ClsService, request: Request) {
+function setupClsContext(
+  cls: ClsService,
+  request: Request,
+  response: Response,
+) {
   // Basic request info
   cls.set('userAgent', request.headers['user-agent']);
   cls.set('ip', request.ip);
@@ -38,6 +42,8 @@ function setupClsContext(cls: ClsService, request: Request) {
   const correlationId =
     (request.headers['x-correlation-id'] as string) || randomUUID();
   cls.set('correlationId', correlationId);
+  response.setHeader('X-Request-Id', cls.getId());
+  response.setHeader('X-Correlation-Id', correlationId);
 
   // W3C Trace Context for distributed tracing
   const traceparent = request.headers.traceparent as string;
@@ -47,6 +53,7 @@ function setupClsContext(cls: ClsService, request: Request) {
       cls.set('traceId', traceContext.traceId);
       cls.set('parentId', traceContext.parentId);
       cls.set('traceFlags', traceContext.traceFlags);
+      response.setHeader('Trace-Id', traceContext.traceId);
     }
   }
 

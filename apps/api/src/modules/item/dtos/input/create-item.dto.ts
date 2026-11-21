@@ -1,15 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { z } from 'zod';
 
-export class CreateItemDto {
-  @ApiProperty({ maxLength: 255 })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  name!: string;
+export const itemNameSchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .regex(/\S/, 'Name must contain a non-whitespace character');
 
-  @ApiProperty({ required: false, nullable: true })
-  @IsString()
-  @IsOptional()
-  description?: string;
-}
+export const createItemSchema = z
+  .strictObject({
+    name: itemNameSchema,
+    description: z.string().nullable().optional(),
+  })
+  .meta({ id: 'CreateItemDto' });
+
+export type CreateItemDto = z.infer<typeof createItemSchema>;

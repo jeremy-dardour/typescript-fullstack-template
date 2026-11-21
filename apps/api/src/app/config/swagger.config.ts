@@ -1,7 +1,7 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 
-import { ProblemDetailsDto } from '@/shared/dtos/problem-details.dto';
+import { problemDetailsOpenApiSchema } from '@/shared/dtos/problem-details.dto';
 
 import type { INestApplication } from '@nestjs/common';
 import type { OpenAPIObject, SwaggerCustomOptions } from '@nestjs/swagger';
@@ -38,6 +38,9 @@ export const apiVersionConfig = {
  * Add default error responses to all endpoints (RFC 9457 Problem Details)
  */
 function addDefaultErrorResponses(document: OpenAPIObject): void {
+  document.components ??= {};
+  document.components.schemas ??= {};
+  document.components.schemas.ProblemDetailsDto = problemDetailsOpenApiSchema;
   if (!document.paths) return;
 
   for (const path in document.paths) {
@@ -108,7 +111,6 @@ export function setupSwagger(app: INestApplication): void {
   const document = SwaggerModule.createDocument(app, config, {
     include: [], // Add modules if you want to restrict scanning
     deepScanRoutes: true,
-    extraModels: [ProblemDetailsDto],
     operationIdFactory: (controllerKey: string, methodKey: string) =>
       `${controllerKey}_${methodKey}`,
   });

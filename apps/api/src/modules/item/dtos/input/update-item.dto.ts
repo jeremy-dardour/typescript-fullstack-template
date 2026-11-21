@@ -1,17 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { z } from 'zod';
 
-import { IsOptionalNotNull } from '@/shared/decorators/is-optional-not-null.decorator';
+import { itemNameSchema } from '@/modules/item/dtos/input/create-item.dto';
 
-export class UpdateItemDto {
-  @ApiProperty({ required: false, maxLength: 255 })
-  @IsString()
-  @IsOptionalNotNull()
-  @MaxLength(255)
-  name?: string;
+export const updateItemSchema = z
+  .strictObject({
+    name: itemNameSchema.optional(),
+    description: z.string().nullable().optional(),
+  })
+  .meta({ id: 'UpdateItemDto' });
 
-  @ApiProperty({ required: false, nullable: true })
-  @IsString()
-  @IsOptional()
-  description?: string;
-}
+export type UpdateItemDto = z.infer<typeof updateItemSchema>;

@@ -9,8 +9,18 @@ export class ItemRepository extends EntityRepository<Item> {
     super(em, Item);
   }
 
-  async findAllNewestFirst(): Promise<Item[]> {
-    return this.findAll({ orderBy: { createdAt: 'DESC' } });
+  async findPageNewestFirst(
+    page: number,
+    pageSize: number,
+  ): Promise<[Item[], number]> {
+    return this.findAndCount(
+      {},
+      {
+        orderBy: { createdAt: 'DESC', id: 'DESC' },
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      },
+    );
   }
 
   async save(item: Item): Promise<void> {

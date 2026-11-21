@@ -3,8 +3,8 @@ import request from 'supertest';
 import { vi } from 'vitest';
 
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
+import { healthResponseSchema } from '@/app/health/health.dto';
 
-import type { HealthResponse } from '@/app/health/health.dto';
 import type { INestApplication } from '@nestjs/common';
 import type { Test as SuperTestType } from 'supertest';
 import type TestAgent from 'supertest/lib/agent';
@@ -44,7 +44,7 @@ describe('Health E2E Tests', () => {
         .get('/health/ready')
         .expect(200);
 
-      const health = response.body as HealthResponse;
+      const health = healthResponseSchema.parse(response.body);
       expect(health).toBeDefined();
     });
 
@@ -53,7 +53,7 @@ describe('Health E2E Tests', () => {
         .get('/health/ready')
         .expect(200);
 
-      const health = response.body as HealthResponse;
+      const health = healthResponseSchema.parse(response.body);
 
       expect(health.database).toBeDefined();
       expect(health.database?.status).toBe('up');

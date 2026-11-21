@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { tap } from 'rxjs/operators';
+import { z } from 'zod';
 
+import { paginatedListSchema } from '@/shared/dtos/output/paginated-list-response.dto';
+
+import type { PaginatedListResponseDto } from '@/shared/dtos/output/paginated-list-response.dto';
 import type {
   NestInterceptor,
   ExecutionContext,
@@ -8,6 +12,8 @@ import type {
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import type { Observable } from 'rxjs';
+
+const pageEnvelopeSchema = paginatedListSchema(z.unknown());
 
 /**
  * Link header interceptor (RFC 8288 Web Linking)
@@ -36,8 +42,7 @@ export class LinkHeaderInterceptor implements NestInterceptor {
         }
 
         response.setHeader('X-Total-Count', String(data.total));
-        const totalPages = Math.ceil(data.total / data.page_size);
-        response.setHeader('X-Page-Count', String(totalPages));
+        response.setHeader('X-Page-Count', String(data.total_pages));
       }),
     );
   }
@@ -49,8 +54,6 @@ export class LinkHeaderInterceptor implements NestInterceptor {
     return (
       typeof data === 'object' &&
       data !== null &&
-      'object' in data &&
-      data.object === 'list' &&
       'data' in data &&
       Array.isArray(data.data)
     );
@@ -59,20 +62,10 @@ export class LinkHeaderInterceptor implements NestInterceptor {
   /**
    * Check if response is offset paginated
    */
-  private isOffsetListResponse(data: unknown): data is {
-    total: number;
-    page: number;
-    page_size: number;
-    has_more: boolean;
-  } {
-    return (
-      typeof data === 'object' &&
-      data !== null &&
-      'total' in data &&
-      'page' in data &&
-      'page_size' in data &&
-      typeof (data as Record<string, unknown>).total === 'number'
-    );
+  private isOffsetListResponse(
+    data: unknown,
+  ): data is PaginatedListResponseDto<unknown> {
+    return pageEnvelopeSchema.safeParse(data).success;
   }
 
   /**
@@ -110,10 +103,9 @@ export class LinkHeaderInterceptor implements NestInterceptor {
     if (this.isOffsetListResponse(data)) {
       const page = data.page;
       const page_size = data.page_size;
-      const total = data.total;
-      const totalPages = Math.ceil(total / page_size);
+      const totalPages = data.total_pages;
       const hasPrevious = page > 1;
-      const hasNext = data.has_more;
+      const hasNext = page < totalPages;
 
       if (page > 1) {
         const firstUrl = this.buildUrl(baseUrl, request.query, {
@@ -131,7 +123,10 @@ export class LinkHeaderInterceptor implements NestInterceptor {
         links.push(`<${previousUrl}>; rel="prev"`);
       }
 
-      const selfUrl = this.buildUrl(baseUrl, request.query);
+      const selfUrl = this.buildUrl(baseUrl, request.query, {
+        page,
+        page_size,
+      });
       links.push(`<${selfUrl}>; rel="self"`);
 
       if (hasNext) {

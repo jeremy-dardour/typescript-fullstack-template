@@ -17,6 +17,10 @@ const excludedPaths = [
   '/health/{*path}',
   '/openapi.yaml',
   '/assets/{*path}',
+  '/mcp',
+  '/mcp/{*path}',
+  '/.well-known/oauth-protected-resource/mcp',
+  '/.well-known/oauth-protected-resource/mcp/{*path}',
 ];
 
 /** Hashed assets never change; index.html must be revalidated to pick up a deploy. */

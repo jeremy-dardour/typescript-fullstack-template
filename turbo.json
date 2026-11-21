@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "MCP_ENABLED",
+    "MCP_PUBLIC_URL",
+    "MCP_ALLOWED_ORIGINS",
+    "MCP_RATE_LIMIT_PER_MINUTE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

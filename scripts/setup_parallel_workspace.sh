@@ -30,6 +30,7 @@ set_env_var "$REPO_ROOT/.env" DATABASE_TEST_PORT "$DB_TEST_PORT"
 
 cp "$REPO_ROOT/apps/api/.env.example" "$REPO_ROOT/apps/api/.env"
 set_env_var "$REPO_ROOT/apps/api/.env" PORT "$API_PORT"
+set_env_var "$REPO_ROOT/apps/api/.env" MCP_PUBLIC_URL "http://localhost:${API_PORT}/mcp"
 perl -i -pe "s#^(DATABASE_URL=postgres://postgres:postgres\@localhost:)\d+(/nestjs)#\${1}${DB_PORT}\${2}#" \
   "$REPO_ROOT/apps/api/.env"
 

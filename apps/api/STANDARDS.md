@@ -11,13 +11,14 @@ src/
     <feature>/
       <feature>.module.ts
       <feature>.controller.ts
+      <feature>.tools.ts     → MCP adapter over the same feature service
       <feature>.service.ts
       repositories/
         <concern>.repository.ts → Persistence operations for an entity,
                                   aggregate, or read model
       dtos/
-        input/    → Create/Update DTOs (class-validator + @ApiProperty)
-        output/   → Response DTOs (@ApiProperty only)
+        input/    → Zod request schemas and inferred DTO types
+        output/   → Zod response schemas and explicit entity mapping
   database/       → Entities, migrations, seeders, factories
   shared/         → Shared types and utilities
   commands/       → CLI commands (nest-commander)
@@ -37,6 +38,7 @@ Source filenames use a role from this closed list:
 | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Nest                 | `.module.ts`      | Wire a Nest capability's providers, controllers, imports, and public exports.                                         |
 | Nest                 | `.controller.ts`  | Translate HTTP requests into service calls and map their results to response DTOs.                                    |
+| MCP                  | `.tools.ts`       | Declare a feature's MCP tools and translate calls into shared application behavior.                                   |
 | Nest                 | `.service.ts`     | Implement an injectable application capability or coordinate business behavior through repositories.                  |
 | Persistence          | `.repository.ts`  | Encapsulate its owner's queries, persistence, and transaction orchestration behind a service-facing interface.        |
 | Persistence          | `.store.ts`       | Expose the owner's persistence operations for another module's repository to execute within the caller's transaction. |
@@ -53,8 +55,8 @@ Source filenames use a role from this closed list:
 | Plain TypeScript     | `.errors.ts`      | Define named error classes that describe failures owned by the area.                                                  |
 | Plain TypeScript     | `.constants.ts`   | Hold stable named runtime values that have no computation or lifecycle.                                               |
 | Plain TypeScript     | `.config.ts`      | Assemble configuration for a framework, library, or application capability.                                           |
-| Plain TypeScript     | `.schema.ts`      | Define runtime validation and parsing for data outside the HTTP DTO validation layer.                                 |
-| HTTP contract        | `.dto.ts`         | Describe an HTTP input or output shape, including validation and API documentation where applicable.                  |
+| Plain TypeScript     | `.schema.ts`      | Define reusable runtime validation, parsing and schema-inferred types.                                                |
+| HTTP contract        | `.dto.ts`         | Define a Zod HTTP input/output contract, inferred DTO type and explicit response mapping where applicable.            |
 | Persistence          | `.entity.ts`      | Define a persisted domain model, its ORM mapping, and entity-local behavior.                                          |
 
 ESLint enforces this closed source-role list. These files follow separate conventions:
@@ -162,15 +164,30 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
 
 ## DTOs
 
-- Input DTOs: `class-validator` decorators + `@ApiProperty` for Swagger
-- Output DTOs: `@ApiProperty` only (no validation on responses)
-- Plain classes with `!` non-null assertions, no base class
+- Application-owned structures and boundary validation use Zod. Infer DTO types
+  from their schemas; do not maintain parallel class decorators or structure
+  interfaces. Native framework/SDK payloads remain owned by their libraries.
+- Bind request schemas explicitly with native Nest parameter options, such as
+  `@Body({ schema: createItemSchema })`, `@Param('id', { schema: uuidSchema })`
+  and `@Query({ schema: paginationQuerySchema })`. The global Standard Schema
+  pipe validates only parameters with schema metadata. Route schema coverage
+  checks enforce bindings on every body, path and query parameter; MCP receives
+  its raw transport request through `@Req()` and delegates parsing to the SDK.
+- Use rejecting object schemas for requests. Preserve 422 for body validation
+  and 400 for path/query validation. Field errors include stable codes and
+  correctly escaped JSON Pointers; do not infer codes from English messages.
+- Response documentation uses `@ApiResponse({ standardSchema: itemSchema })`.
+  Preserve established component names with schema metadata, keep entity-to-JSON
+  mapping explicit and regenerate frontend contracts from the running API.
+  Declaring a response schema does not by itself validate a REST return value.
+- Share semantic constraints across transports. REST query schemas may convert
+  strings; MCP arguments use JSON types. Keep omission and null distinct.
 - Actor identity comes from the authenticated request (`@CurrentUser()`).
   Mutation DTOs never accept an actor, author, or current-user ID when the
   server can determine it.
-- A field that may be omitted but must not be `null` uses
-  `@IsOptionalNotNull()`: `@IsOptional()` also lets an explicit `null` through,
-  which reaches a non-nullable column as a 500 instead of a 422.
+- A field that may be omitted but cannot be null uses `.optional()`. A field
+  accepting both omission and null uses `.nullish()`; schemas, inferred types,
+  mappings and generated documentation must agree.
 - A domain error with its own RFC 9457 problem type throws
   `ProblemDetailsException(status, typeSlug, detail)`.
 - Use one canonical output DTO per entity by default. Aggregate responses
@@ -188,10 +205,35 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
   mounted outside controllers (the dev-only API docs) and controllers
   registered only in other environments are out of its reach.
 
+## MCP tool authoring
+
+Keep tools beside their owning feature's controller. Register a provider marked
+`@McpToolProvider()` in that feature's Nest module, implement
+`McpToolProviderContract.getTools()`, and return declarations made through
+`defineTool()` from the MCP area's public interface. The decorator identifies
+providers at runtime, the interface describes the extension contract, and the
+factory binds concrete input/output schemas to handler types. Do not add an
+abstract tool class, central feature catalog, or infrastructure import of a
+feature implementation.
+
+Providers and their dependencies must be singleton-compatible. Keep caller and
+request state in the explicit invocation context, never provider fields.
+Handlers return application values; infrastructure validates output, assembles
+structured and equivalent text results, translates errors and logs outcomes.
+Reuse Zod constraints and response mapping across REST and MCP while parsing
+REST query strings separately from JSON tool arguments. Published schemas use
+SDK-supported references; unsupported schemas and duplicate/invalid names fail
+startup.
+
+Put caller-based authorization in shared application behavior so both adapters
+enforce it. HTTP permission decorators and MCP read-only/destructive annotations
+do not authorize a service operation. Do not relay bearer tokens or log raw tool
+arguments by default.
+
 ## Environment config
 
-- Zod schemas for env validation (not class-validator) — the split is
-  deliberate, see [ADR 0002](../../docs/adr/0002-dual-validation-stack.md)
+- Zod schemas for environment validation follow the same application-owned
+  contract convention, see [ADR 0017](../../docs/adr/0017-schema-first-application-contracts.md).
 - Base schema in `src/shared/types/env.base.schema.ts`
 - App-specific schema extends base in `src/app/config/env.schema.ts`
 
