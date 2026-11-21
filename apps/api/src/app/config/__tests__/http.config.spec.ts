@@ -2,10 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
   Injectable,
+  Param,
   Post,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import {
   Throttle,
@@ -22,7 +25,9 @@ import {
   throttlerConfig,
   throttlerErrorMessage,
 } from '@/app/config/security.config';
+import { setupSwagger } from '@/app/config/swagger.config';
 import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
+import { problemDetailsSchema } from '@/shared/dtos/problem-details.dto';
 
 import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -61,6 +66,16 @@ class TestController {
   limited() {
     return this.getContext();
   }
+
+  @Get('errors/:status')
+  fail(@Param('status') status: string): never {
+    throw new HttpException('Expected failure', Number(status));
+  }
+
+  @Get('unexpected')
+  unexpected(): never {
+    throw new Error('SELECT private_data FROM internal_table');
+  }
 }
 
 describe('http setup', () => {
@@ -77,6 +92,7 @@ describe('http setup', () => {
       ],
       controllers: [TestController],
       providers: [
+        { provide: ConfigService, useValue: new ConfigService() },
         TestAuthGuard,
         ThrottlerGuard,
         AllExceptionsFilter,
@@ -88,6 +104,7 @@ describe('http setup', () => {
     });
     app.useGlobalGuards(app.get(TestAuthGuard), app.get(ThrottlerGuard));
     configureHttpApplication(app);
+    setupSwagger(app);
     await app.init();
   });
 
@@ -232,5 +249,67 @@ describe('http setup', () => {
       'default',
     );
     increment.mockRestore();
+  });
+
+  it.each([400, 401, 403, 404, 422, 429, 500])(
+    'emits schema-valid Problem Details for HTTP %i',
+    async (status) => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/context/errors/${status}`)
+        .set('Authorization', 'Bearer test')
+        .expect(status);
+
+      expect(problemDetailsSchema.parse(response.body)).toMatchObject({
+        status,
+        detail: 'Expected failure',
+        request_id: response.headers['x-request-id'],
+      });
+    },
+  );
+
+  it('keeps unexpected diagnostics out of the response', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/context/unexpected')
+      .set('Authorization', 'Bearer test')
+      .expect(500);
+
+    expect(problemDetailsSchema.parse(response.body)).toMatchObject({
+      detail: 'Internal server error',
+    });
+    expect(response.text).not.toContain('private_data');
+  });
+
+  it('publishes the schema-owned Problem Details component in OpenAPI', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/swagger-json')
+      .expect(200);
+    const document: unknown = response.body;
+
+    expect(document).toMatchObject({
+      components: {
+        schemas: {
+          ProblemDetailsDto: {
+            type: 'object',
+            required: ['type', 'title', 'status'],
+            properties: { errors: { type: 'array' } },
+          },
+        },
+      },
+      paths: {
+        '/api/context': {
+          get: {
+            responses: {
+              default: {
+                content: {
+                  'application/problem+json': {
+                    schema: { $ref: '#/components/schemas/ProblemDetailsDto' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   });
 });

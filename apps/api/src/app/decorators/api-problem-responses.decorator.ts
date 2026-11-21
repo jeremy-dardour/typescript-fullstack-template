@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 
-import { ProblemDetailsDto } from '@/shared/dtos/problem-details.dto';
+import { problemDetailsOpenApiSchema } from '@/shared/dtos/problem-details.dto';
 
 /**
  * Swagger decorator: RFC 9457 Problem Details error responses
@@ -29,9 +29,9 @@ export function ApiBadRequestResponse(description = 'Invalid request format') {
   return ApiResponse({
     status: 400,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/bad-request',
           title: 'Invalid request format',
@@ -58,9 +58,9 @@ export function ApiUnauthorizedResponse(description = 'Authentication failed') {
   return ApiResponse({
     status: 401,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/unauthorized',
           title: 'Authentication failed',
@@ -86,9 +86,9 @@ export function ApiForbiddenResponse(description = 'Insufficient permissions') {
   return ApiResponse({
     status: 403,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/forbidden',
           title: 'Insufficient permissions',
@@ -114,9 +114,9 @@ export function ApiNotFoundResponse(description = 'Resource not found') {
   return ApiResponse({
     status: 404,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/not-found',
           title: 'Resource not found',
@@ -142,9 +142,9 @@ export function ApiConflictResponse(description = 'Resource conflict') {
   return ApiResponse({
     status: 409,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/conflict',
           title: 'Resource conflict',
@@ -164,7 +164,7 @@ export function ApiConflictResponse(description = 'Resource conflict') {
  *
  * Use cases:
  * - Request data failed business rule validation
- * - class-validator validation failed
+ * - Schema validation failed
  *
  * Note: Includes field-level error details (errors array)
  */
@@ -172,9 +172,9 @@ export function ApiValidationFailedResponse(description = 'Validation failed') {
   return ApiResponse({
     status: 422,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/validation-failed',
           title: 'Validation failed',
@@ -215,9 +215,9 @@ export function ApiTooManyRequestsResponse(
   return ApiResponse({
     status: 429,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/rate-limit-exceeded',
           title: 'Rate limit exceeded',
@@ -246,9 +246,9 @@ export function ApiInternalServerErrorResponse(
   return ApiResponse({
     status: 500,
     description,
-    type: ProblemDetailsDto,
     content: {
       'application/problem+json': {
+        schema: problemDetailsOpenApiSchema,
         example: {
           type: 'https://api.example.com/errors/internal-server-error',
           title: 'Internal server error',

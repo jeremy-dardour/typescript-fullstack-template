@@ -128,66 +128,6 @@ export interface components {
       email?: string;
       name?: string;
     };
-    ProblemDetailsDto: {
-      /**
-       * @description Problem type URI (should dereference to human-readable docs)
-       * @example https://api.example.com/errors/validation-failed
-       */
-      type: string;
-      /**
-       * @description Short, human-readable summary
-       * @example Request validation failed
-       */
-      title: string;
-      /**
-       * @description HTTP status code
-       * @example 422
-       */
-      status: number;
-      /**
-       * @description Detailed explanation specific to this occurrence
-       * @example Submitted data failed business rule validation
-       */
-      detail?: string;
-      /**
-       * @description URI reference where problem occurred
-       * @example /api/users
-       */
-      instance?: string;
-      /**
-       * @description Request tracking ID
-       * @example req_xyz789
-       */
-      request_id?: string;
-      /**
-       * @description Correlation ID (business transaction tracking)
-       * @example corr_shop_session_abc123
-       */
-      correlation_id?: string;
-      /**
-       * @description Distributed trace ID (W3C Trace Context)
-       * @example 4bf92f3577b34da6a3ce929d0e0e4736
-       */
-      trace_id?: string;
-      /**
-       * @description Error timestamp (ISO 8601 format)
-       * @example 2024-11-03T10:30:00Z
-       */
-      timestamp?: string;
-      /**
-       * @description Field-level errors (for validation errors)
-       * @example [
-       *       {
-       *         "field": "email",
-       *         "pointer": "/email",
-       *         "code": "INVALID_FORMAT",
-       *         "message": "Invalid email format",
-       *         "expected_format": "user@domain.com"
-       *       }
-       *     ]
-       */
-      errors?: Record<string, never>[];
-    };
     ItemPageDto: {
       data: components['schemas']['ItemDto'][];
       page: number;
@@ -212,6 +152,33 @@ export interface components {
     UpdateItemDto: {
       name?: string;
       description?: string | null;
+    };
+    ProblemDetailsDto: {
+      /** @description Problem type URI */
+      type: string;
+      /** @description Short human-readable summary */
+      title: string;
+      status: number;
+      detail?: string;
+      instance?: string;
+      request_id?: string;
+      correlation_id?: string;
+      trace_id?: string;
+      /** Format: date-time */
+      timestamp?: string;
+      errors?: {
+        /** @description Field name */
+        field: string;
+        /** @description RFC 6901 JSON Pointer to the invalid value */
+        pointer: string;
+        /** @description Stable machine-readable validation code */
+        code: string;
+        message: string;
+        constraints?: {
+          [key: string]: unknown;
+        };
+        expected_format?: string;
+      }[];
     };
   };
   responses: never;
@@ -245,7 +212,44 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ProblemDetailsDto'];
+          /**
+           * @example {
+           *       "type": "https://api.example.com/errors/unauthorized",
+           *       "title": "Authentication failed",
+           *       "status": 401,
+           *       "detail": "Missing valid credentials or token expired",
+           *       "instance": "/users/me",
+           *       "request_id": "req_abc123",
+           *       "timestamp": "2024-11-03T10:30:00Z"
+           *     }
+           */
+          'application/problem+json': {
+            /** @description Problem type URI */
+            type: string;
+            /** @description Short human-readable summary */
+            title: string;
+            status: number;
+            detail?: string;
+            instance?: string;
+            request_id?: string;
+            correlation_id?: string;
+            trace_id?: string;
+            /** Format: date-time */
+            timestamp?: string;
+            errors?: {
+              /** @description Field name */
+              field: string;
+              /** @description RFC 6901 JSON Pointer to the invalid value */
+              pointer: string;
+              /** @description Stable machine-readable validation code */
+              code: string;
+              message: string;
+              constraints?: {
+                [key: string]: unknown;
+              };
+              expected_format?: string;
+            }[];
+          };
         };
       };
       /** @description Error response (400/401/403/404/422/429/500 etc.) */
