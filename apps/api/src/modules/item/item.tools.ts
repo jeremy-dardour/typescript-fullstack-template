@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { defineTool, McpToolProvider } from '@/app/mcp';
 import { createItemSchema } from '@/modules/item/dtos/input/create-item.dto';
+import { updateItemSchema } from '@/modules/item/dtos/input/update-item.dto';
 import {
   itemPageSchema,
   itemSchema,
@@ -22,6 +23,22 @@ export class ItemTools implements McpToolProviderContract {
 
   getTools() {
     return [
+      defineTool({
+        name: 'update_item',
+        title: 'Update Item',
+        description:
+          'Update an Item by UUID; omit description to preserve it or use null to clear it.',
+        input: updateItemSchema.extend({ id: uuidSchema }),
+        output: itemSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+        handler: async ({ id, ...changes }) =>
+          toItemDto(await this.items.update(id, changes)),
+      }),
       defineTool({
         name: 'create_item',
         title: 'Create Item',

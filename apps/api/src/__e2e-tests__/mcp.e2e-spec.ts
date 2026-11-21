@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { MikroORM } from '@mikro-orm/postgresql';
 import {
   Client,
@@ -28,7 +30,7 @@ import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 const VERSIONS = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26'];
-const EXPECTED_TOOLS = ['create_item', 'get_item', 'list_items'];
+const EXPECTED_TOOLS = ['create_item', 'get_item', 'list_items', 'update_item'];
 const textContentSchema = z.object({
   type: z.literal('text'),
   text: z.string(),
@@ -43,12 +45,13 @@ describe('MCP Item tools with PostgreSQL', () => {
   let app: INestApplication;
   let baseUrl: string;
   let token: string;
+  let tokenFactory: MockTokenFactory;
   let item: z.infer<typeof itemSchema>;
   const createdIds = new Set<string>();
 
   beforeAll(async () => {
     await oidc.setup();
-    const tokenFactory = new MockTokenFactory(
+    tokenFactory = new MockTokenFactory(
       oidc,
       'e2e-test-client-id',
       process.env.AUTH_ACCEPTED_SCOPES!,
@@ -76,6 +79,9 @@ describe('MCP Item tools with PostgreSQL', () => {
   });
 
   async function connect(version: string) {
+    const callerToken = await tokenFactory.createToken({
+      sub: `mcp-${randomUUID()}`,
+    });
     const client = new Client(
       { name: 'template-e2e', version: '1.0.0' },
       {
@@ -88,7 +94,7 @@ describe('MCP Item tools with PostgreSQL', () => {
     );
     await client.connect(
       new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`), {
-        requestInit: { headers: { Authorization: `Bearer ${token}` } },
+        requestInit: { headers: { Authorization: `Bearer ${callerToken}` } },
       }),
     );
     return client;
@@ -335,6 +341,94 @@ describe('MCP Item tools with PostgreSQL', () => {
         create.mockRestore();
         await client.close();
         await delayedApp.close();
+      }
+    },
+  );
+
+  it('updates names, preserves omissions and clears descriptions through shared behavior', async () => {
+    const client = await connect('2026-07-28');
+    try {
+      const initial = itemSchema.parse(
+        resultSchema.parse(
+          await client.callTool({
+            name: 'create_item',
+            arguments: { name: 'Original name', description: 'Keep me' },
+          }),
+        ).structuredContent,
+      );
+      createdIds.add(initial.id);
+      const updatedResult = resultSchema.parse(
+        await client.callTool({
+          name: 'update_item',
+          arguments: { id: initial.id, name: '  Renamed  ' },
+        }),
+      );
+      const updated = itemSchema.parse(updatedResult.structuredContent);
+      expect(updated).toMatchObject({
+        id: initial.id,
+        name: '  Renamed  ',
+        description: 'Keep me',
+      });
+      expect(updatedResult.content[0]?.text).toBe(
+        JSON.stringify(updatedResult.structuredContent),
+      );
+      const repeated = itemSchema.parse(
+        resultSchema.parse(
+          await client.callTool({
+            name: 'update_item',
+            arguments: { id: initial.id, name: '  Renamed  ' },
+          }),
+        ).structuredContent,
+      );
+      expect(repeated).toMatchObject({
+        name: '  Renamed  ',
+        description: 'Keep me',
+      });
+      const cleared = itemSchema.parse(
+        resultSchema.parse(
+          await client.callTool({
+            name: 'update_item',
+            arguments: { id: initial.id, description: null },
+          }),
+        ).structuredContent,
+      );
+      expect(cleared.description).toBeNull();
+      const rest = await request(app.getHttpServer() as never)
+        .get(`/api/items/${initial.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(itemSchema.parse(rest.body)).toEqual(cleared);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it.each([
+    { name: null },
+    { name: '' },
+    { name: '\t ' },
+    { name: 'x'.repeat(256) },
+    { unexpected: true },
+  ])(
+    'rejects invalid update arguments and preserves the record: %j',
+    async (changes) => {
+      const client = await connect('2026-07-28');
+      const update = vi.spyOn(app.get(ItemService), 'update');
+      try {
+        const result = await client.callTool({
+          name: 'update_item',
+          arguments: { id: item.id, ...changes },
+        });
+        expect(result).toMatchObject({ isError: true });
+        expect(update).not.toHaveBeenCalled();
+        const rest = await request(app.getHttpServer() as never)
+          .get(`/api/items/${item.id}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        expect(itemSchema.parse(rest.body)).toEqual(item);
+      } finally {
+        update.mockRestore();
+        await client.close();
       }
     },
   );
