@@ -16,6 +16,15 @@ NestJS backend for the fullstack template. Exposes a typed, contract-first REST 
 - Types are generated via `pnpm generate:api-types` at the root and stored in `packages/api-contracts`
 - **Never** edit types manually; always update via OpenAPI
 
+## Item Listing
+
+`GET /api/items?page=1&page_size=20` returns a page containing `data`, `page`,
+`page_size`, `total` and `total_pages`. The default page size is 20 Items and
+the maximum is 100. Results sort by creation time descending, then UUID
+descending to break ties. Offset pages can shift when records change between
+requests. The response includes `Link`, `X-Total-Count` and `X-Page-Count`
+headers; a page beyond the collection returns an empty `data` array.
+
 ## Development Standards
 
 - Controllers are thin, DTOs are explicit and validated

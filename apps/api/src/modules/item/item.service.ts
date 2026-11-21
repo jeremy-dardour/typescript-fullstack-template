@@ -5,13 +5,27 @@ import { ItemRepository } from '@/modules/item/repositories/item.repository';
 
 import type { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
 import type { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
+import type { OffsetPaginationDto } from '@/shared/dtos/offset-pagination.dto';
+import type { PaginatedListResponseDto } from '@/shared/dtos/output/paginated-list-response.dto';
 
 @Injectable()
 export class ItemService {
   constructor(private readonly itemRepository: ItemRepository) {}
 
-  async findAll(): Promise<Item[]> {
-    return this.itemRepository.findAllNewestFirst();
+  async findAll(
+    pagination: OffsetPaginationDto,
+  ): Promise<PaginatedListResponseDto<Item>> {
+    const [data, total] = await this.itemRepository.findPageNewestFirst(
+      pagination.page,
+      pagination.page_size,
+    );
+    return {
+      data,
+      page: pagination.page,
+      page_size: pagination.page_size,
+      total,
+      total_pages: Math.ceil(total / pagination.page_size),
+    };
   }
 
   async findOne(id: string): Promise<Item> {

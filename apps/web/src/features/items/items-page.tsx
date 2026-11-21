@@ -19,27 +19,31 @@ import {
 
 import { ItemFormDialog } from './item-form-dialog';
 
-interface ItemData {
-  id: string;
-  name: string;
-  description?: string | null;
-  createdAt: string;
-}
-
 export function ItemsPage() {
   const { t } = useTranslation();
-  const { data: items, isLoading } = useGetItems();
+  const [page, setPage] = useState(1);
+  const { data: itemsPage, isLoading, isFetching, isError } = useGetItems(page);
+  const items = itemsPage?.data;
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editItem, setEditItem] = useState<ItemData | null>(null);
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+  const editItem = items?.find((item) => item.id === editItemId);
+  const totalPages = Math.max(1, itemsPage?.total_pages ?? 1);
+
+  if (itemsPage && page > totalPages) setPage(totalPages);
 
   const handleCreate = (data: { name: string; description?: string }) => {
     createItem.mutate(
       { body: data },
-      { onSuccess: () => setCreateOpen(false) },
+      {
+        onSuccess: () => {
+          setCreateOpen(false);
+          setPage(1);
+        },
+      },
     );
   };
 
@@ -47,7 +51,7 @@ export function ItemsPage() {
     if (!editItem) return;
     updateItem.mutate(
       { params: { path: { id: editItem.id } }, body: data },
-      { onSuccess: () => setEditItem(null) },
+      { onSuccess: () => setEditItemId(null) },
     );
   };
 
@@ -65,6 +69,8 @@ export function ItemsPage() {
 
       {isLoading ? (
         <p>Loading...</p>
+      ) : isError ? (
+        <p>{t('items.table.error')}</p>
       ) : items?.length ? (
         <Table>
           <TableHeader>
@@ -78,7 +84,7 @@ export function ItemsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(items as ItemData[]).map((item) => (
+            {items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.description ?? '—'}</TableCell>
@@ -90,7 +96,7 @@ export function ItemsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditItem(item)}
+                      onClick={() => setEditItemId(item.id)}
                     >
                       {t('items.edit')}
                     </Button>
@@ -111,6 +117,35 @@ export function ItemsPage() {
         <p className="text-muted-foreground">{t('items.table.noData')}</p>
       )}
 
+      {itemsPage && (
+        <nav
+          aria-label={t('items.pagination.label')}
+          className="flex flex-wrap items-center gap-3"
+        >
+          <Button
+            variant="outline"
+            disabled={page === 1 || isFetching}
+            onClick={() => setPage(page - 1)}
+          >
+            {t('items.pagination.previous')}
+          </Button>
+          <p aria-live="polite">
+            {t('items.pagination.status', {
+              page,
+              pages: totalPages,
+              total: itemsPage.total,
+            })}
+          </p>
+          <Button
+            variant="outline"
+            disabled={page >= totalPages || isFetching}
+            onClick={() => setPage(page + 1)}
+          >
+            {t('items.pagination.next')}
+          </Button>
+        </nav>
+      )}
+
       <ItemFormDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -123,7 +158,7 @@ export function ItemsPage() {
         <ItemFormDialog
           open={true}
           onOpenChange={(open) => {
-            if (!open) setEditItem(null);
+            if (!open) setEditItemId(null);
           }}
           onSubmit={handleUpdate}
           title={t('items.edit')}

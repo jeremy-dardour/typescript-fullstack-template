@@ -1,9 +1,14 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import request from 'supertest';
 
 import { createTestApp } from '@/__e2e-tests__/helpers/create-app.helper';
 import { MockTokenFactory } from '@/__e2e-tests__/helpers/mock-token.factory';
 import { MockOidcService } from '@/__e2e-tests__/mocks/mock-oidc.service';
-import { itemSchema } from '@/modules/item/dtos/output/item.dto';
+import { Item } from '@/database/entities/item.entity';
+import {
+  itemPageSchema,
+  itemSchema,
+} from '@/modules/item/dtos/output/item.dto';
 
 import type { INestApplication } from '@nestjs/common';
 import type { Test as SuperTestType } from 'supertest';
@@ -11,6 +16,16 @@ import type TestAgent from 'supertest/lib/agent';
 
 function createRequest(app: INestApplication): TestAgent<SuperTestType> {
   return request(app.getHttpServer() as never);
+}
+
+function paginationLink(header: unknown, relation: string): URL {
+  if (typeof header !== 'string') throw new Error('Expected a Link header');
+  const entry = header
+    .split(',')
+    .find((link) => link.includes(`rel="${relation}"`));
+  const target = entry?.match(/<([^>]+)>/)?.[1];
+  if (!target) throw new Error(`Missing pagination link: ${relation}`);
+  return new URL(target);
 }
 
 describe('Item CRUD E2E Tests', () => {
@@ -127,15 +142,94 @@ describe('Item CRUD E2E Tests', () => {
   });
 
   describe('GET /api/items', () => {
-    it('should return all items', async () => {
+    it('returns a bounded page with pagination metadata', async () => {
       const response = await createRequest(app)
         .get('/api/items')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      const body = response.body as unknown[];
-      expect(Array.isArray(body)).toBe(true);
-      expect(body.length).toBeGreaterThanOrEqual(1);
+      const body = itemPageSchema.parse(response.body);
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      expect(body.data.length).toBeLessThanOrEqual(20);
+      expect(body).toMatchObject({ page: 1, page_size: 20 });
+      expect(response.headers['x-total-count']).toBe(String(body.total));
+      expect(response.headers['x-page-count']).toBe(String(body.total_pages));
+    });
+
+    it('breaks creation-time ties by UUID and supplies consistent page links', async () => {
+      const em = app.get(MikroORM).em.fork();
+      const ids = [
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      ];
+      const createdAt = new Date('2099-01-01T00:00:00.000Z');
+      const items = ids.map((id) =>
+        em.create(Item, {
+          id,
+          name: 'Pagination tie',
+          createdAt,
+          updatedAt: createdAt,
+        }),
+      );
+      await em.persist(items).flush();
+
+      try {
+        const first = await createRequest(app)
+          .get('/api/items?page=1&page_size=2')
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        const firstPage = itemPageSchema.parse(first.body);
+        expect(firstPage.data.map((item) => item.id)).toEqual([ids[2], ids[1]]);
+        const next = paginationLink(first.headers.link, 'next');
+        expect(next.searchParams.get('page')).toBe('2');
+        expect(next.searchParams.get('page_size')).toBe('2');
+
+        const second = await createRequest(app)
+          .get('/api/items?page=2&page_size=2')
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        const secondPage = itemPageSchema.parse(second.body);
+        expect(secondPage.data[0]?.id).toBe(ids[0]);
+        expect(secondPage.total).toBe(firstPage.total);
+        const previous = paginationLink(second.headers.link, 'prev');
+        const self = paginationLink(second.headers.link, 'self');
+        expect(previous.searchParams.get('page')).toBe('1');
+        expect(previous.searchParams.get('page_size')).toBe('2');
+        expect(self.searchParams.get('page')).toBe('2');
+        expect(self.searchParams.get('page_size')).toBe('2');
+      } finally {
+        await em.nativeDelete(Item, { id: { $in: ids } });
+      }
+    });
+
+    it.each([
+      'page=0',
+      'page=-1',
+      'page=1.5',
+      'page=null',
+      'page=invalid',
+      'page_size=0',
+      'page_size=101',
+      'unknown=1',
+    ])('rejects an invalid pagination query with 400: %s', async (query) => {
+      await createRequest(app)
+        .get(`/api/items?${query}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
+    });
+
+    it('returns an empty data array for a page beyond the collection', async () => {
+      const response = await createRequest(app)
+        .get('/api/items?page=1000000')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(itemPageSchema.parse(response.body)).toMatchObject({
+        data: [],
+        page: 1_000_000,
+        page_size: 20,
+      });
     });
   });
 

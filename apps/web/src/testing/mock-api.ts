@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import type { Item } from '@/api/hooks/use-items';
+import type { Item, ItemPage } from '@/api/hooks/use-items';
 
 /** Must match the apiUrl the test setup gives `@/config/env`. */
 export const API_BASE = 'http://localhost:3000';
@@ -50,7 +50,19 @@ export function setupItemsApi(initialItems: Item[] = []) {
   };
 
   server.use(
-    http.get(`${API_BASE}/api/items`, () => HttpResponse.json(items)),
+    http.get(`${API_BASE}/api/items`, ({ request }) => {
+      const parameters = new URL(request.url).searchParams;
+      const page = Number(parameters.get('page') ?? 1);
+      const pageSize = Number(parameters.get('page_size') ?? 20);
+      const response: ItemPage = {
+        data: items.slice((page - 1) * pageSize, page * pageSize),
+        page,
+        page_size: pageSize,
+        total: items.length,
+        total_pages: Math.ceil(items.length / pageSize),
+      };
+      return HttpResponse.json(response);
+    }),
     http.post(`${API_BASE}/api/items`, async ({ request }) => {
       const error = takeError();
       if (error) return problemResponse(error.status, { detail: error.detail });

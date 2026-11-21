@@ -88,7 +88,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List all items */
+    /** List a page of items, newest first */
     get: operations['ItemController_findAll'];
     put?: never;
     /** Create a new item */
@@ -187,6 +187,13 @@ export interface components {
        *     ]
        */
       errors?: Record<string, never>[];
+    };
+    ItemPageDto: {
+      data: components['schemas']['ItemDto'][];
+      page: number;
+      page_size: number;
+      total: number;
+      total_pages: number;
     };
     ItemDto: {
       /** Format: uuid */
@@ -749,7 +756,10 @@ export interface operations {
   };
   ItemController_findAll: {
     parameters: {
-      query?: never;
+      query?: {
+        page?: number;
+        page_size?: number;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -761,7 +771,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ItemDto'][];
+          'application/json': components['schemas']['ItemPageDto'];
         };
       };
       /** @description Error response (400/401/403/404/422/429/500 etc.) */

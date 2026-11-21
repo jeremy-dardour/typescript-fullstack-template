@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ItemsPage } from '@/features/items/items-page';
 import {
@@ -30,6 +30,61 @@ async function createItem(name: string) {
 }
 
 describe('itemsPage', () => {
+  const pagedItems = Array.from({ length: 21 }, (_, index) => ({
+    ...EXISTING,
+    id: `item-${index}`,
+    name: `Item ${index + 1}`,
+  }));
+
+  it('navigates pages and disables navigation at the boundaries', async () => {
+    setupItemsApi(pagedItems);
+    const user = userEvent.setup();
+    renderWithApp(<ItemsPage />);
+
+    expect(await screen.findByText('Page 1 of 2 · 21 items')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByRole('cell', { name: 'Item 21' })).toBeVisible();
+    expect(
+      screen.queryByRole('cell', { name: 'Item 1' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(await screen.findByRole('cell', { name: 'Item 1' })).toBeVisible();
+  });
+
+  it('returns to the last valid page after deleting its final item', async () => {
+    const api = setupItemsApi(pagedItems);
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
+    renderWithApp(<ItemsPage />);
+    await screen.findByText('Page 1 of 2 · 21 items');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('cell', { name: 'Item 21' });
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByText('Page 1 of 1 · 20 items')).toBeVisible();
+    expect(await screen.findByRole('cell', { name: 'Item 1' })).toBeVisible();
+    expect(api.getItems()).toHaveLength(20);
+  });
+
+  it('returns to page one to show an item created from another page', async () => {
+    setupItemsApi(pagedItems);
+    const user = userEvent.setup();
+    renderWithApp(<ItemsPage />);
+    await screen.findByText('Page 1 of 2 · 21 items');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('cell', { name: 'Item 21' });
+
+    await createItem('New first item');
+
+    expect(
+      await screen.findByRole('cell', { name: 'New first item' }),
+    ).toBeVisible();
+    expect(await screen.findByText('Page 1 of 2 · 22 items')).toBeVisible();
+  });
+
   it('lists the items the API returns', async () => {
     setupItemsApi([EXISTING]);
     renderWithApp(<ItemsPage />);

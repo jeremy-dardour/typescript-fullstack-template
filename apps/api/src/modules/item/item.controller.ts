@@ -8,19 +8,25 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { z } from 'zod';
 
 import { createItemSchema } from '@/modules/item/dtos/input/create-item.dto';
 import { updateItemSchema } from '@/modules/item/dtos/input/update-item.dto';
-import { itemSchema, toItemDto } from '@/modules/item/dtos/output/item.dto';
+import {
+  itemPageSchema,
+  itemSchema,
+  toItemDto,
+} from '@/modules/item/dtos/output/item.dto';
 import { ItemService } from '@/modules/item/item.service';
+import { offsetPaginationQuerySchema } from '@/shared/dtos/offset-pagination.dto';
 import { uuidSchema } from '@/shared/schemas/uuid.schema';
 
 import type { CreateItemDto } from '@/modules/item/dtos/input/create-item.dto';
 import type { UpdateItemDto } from '@/modules/item/dtos/input/update-item.dto';
-import type { ItemDto } from '@/modules/item/dtos/output/item.dto';
+import type { ItemDto, ItemPageDto } from '@/modules/item/dtos/output/item.dto';
+import type { OffsetPaginationDto } from '@/shared/dtos/offset-pagination.dto';
 
 @ApiTags('Items')
 @Controller('items')
@@ -28,11 +34,14 @@ export class ItemController {
   constructor(private readonly itemService: ItemService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all items' })
-  @ApiResponse({ status: 200, standardSchema: z.array(itemSchema) })
-  async findAll(): Promise<ItemDto[]> {
-    const items = await this.itemService.findAll();
-    return items.map((item) => toItemDto(item));
+  @ApiOperation({ summary: 'List a page of items, newest first' })
+  @ApiResponse({ status: 200, standardSchema: itemPageSchema })
+  async findAll(
+    @Query({ schema: offsetPaginationQuerySchema })
+    pagination: OffsetPaginationDto,
+  ): Promise<ItemPageDto> {
+    const page = await this.itemService.findAll(pagination);
+    return { ...page, data: page.data.map((item) => toItemDto(item)) };
   }
 
   @Get(':id')
