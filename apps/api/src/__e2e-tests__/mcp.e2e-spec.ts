@@ -30,7 +30,13 @@ import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 const VERSIONS = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26'];
-const EXPECTED_TOOLS = ['create_item', 'get_item', 'list_items', 'update_item'];
+const EXPECTED_TOOLS = [
+  'create_item',
+  'delete_item',
+  'get_item',
+  'list_items',
+  'update_item',
+];
 const textContentSchema = z.object({
   type: z.literal('text'),
   text: z.string(),
@@ -432,4 +438,150 @@ describe('MCP Item tools with PostgreSQL', () => {
       }
     },
   );
+
+  async function lifecycle(client: {
+    callTool(parameters: {
+      name: string;
+      arguments?: Record<string, unknown>;
+    }): Promise<unknown>;
+  }) {
+    const createdResult = resultSchema.parse(
+      await client.callTool({
+        name: 'create_item',
+        arguments: { name: 'MCP lifecycle', description: 'Original' },
+      }),
+    );
+    const created = itemSchema.parse(createdResult.structuredContent);
+    createdIds.add(created.id);
+    expect(createdResult.content[0]?.text).toBe(JSON.stringify(created));
+    const rest = await request(app.getHttpServer() as never)
+      .get(`/api/items/${created.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(itemSchema.parse(rest.body)).toEqual(created);
+    const read = resultSchema.parse(
+      await client.callTool({
+        name: 'get_item',
+        arguments: { id: created.id },
+      }),
+    );
+    expect(itemSchema.parse(read.structuredContent)).toEqual(created);
+    expect(read.content[0]?.text).toBe(JSON.stringify(read.structuredContent));
+    const list = resultSchema.parse(
+      await client.callTool({
+        name: 'list_items',
+        arguments: { page_size: 100 },
+      }),
+    );
+    const page = itemPageSchema.parse(list.structuredContent);
+    expect(page.data.some((entry) => entry.id === created.id)).toBe(true);
+    expect(list.content[0]?.text).toBe(JSON.stringify(list.structuredContent));
+    const updated = resultSchema.parse(
+      await client.callTool({
+        name: 'update_item',
+        arguments: { id: created.id, name: 'Changed through MCP' },
+      }),
+    );
+    expect(itemSchema.parse(updated.structuredContent)).toMatchObject({
+      name: 'Changed through MCP',
+      description: 'Original',
+    });
+    expect(updated.content[0]?.text).toBe(
+      JSON.stringify(updated.structuredContent),
+    );
+    const cleared = resultSchema.parse(
+      await client.callTool({
+        name: 'update_item',
+        arguments: { id: created.id, description: null },
+      }),
+    );
+    expect(itemSchema.parse(cleared.structuredContent).description).toBeNull();
+    expect(cleared.content[0]?.text).toBe(
+      JSON.stringify(cleared.structuredContent),
+    );
+    const deleted = resultSchema.parse(
+      await client.callTool({
+        name: 'delete_item',
+        arguments: { id: created.id },
+      }),
+    );
+    expect(deleted.structuredContent).toEqual({
+      id: created.id,
+      deleted: true,
+    });
+    expect(deleted.content[0]?.text).toBe(
+      JSON.stringify(deleted.structuredContent),
+    );
+    expect(
+      await client.callTool({
+        name: 'get_item',
+        arguments: { id: created.id },
+      }),
+    ).toMatchObject({ isError: true });
+    expect(
+      await client.callTool({
+        name: 'delete_item',
+        arguments: { id: created.id },
+      }),
+    ).toMatchObject({ isError: true });
+    const absent = await request(app.getHttpServer() as never)
+      .get(`/api/items/${created.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
+    expect(absent.status).toBe(404);
+  }
+
+  it.each(VERSIONS)(
+    'completes the entire Item lifecycle on %s',
+    async (version) => {
+      const client = await connect(version);
+      try {
+        await lifecycle(client);
+      } finally {
+        await client.close();
+      }
+    },
+  );
+
+  it('completes the entire Item lifecycle through a real v1 SDK', async () => {
+    const client = new LegacyClient({
+      name: 'legacy-lifecycle',
+      version: '1.0.0',
+    });
+    try {
+      await client.connect(
+        new LegacyTransport(new URL(`${baseUrl}/mcp`), {
+          requestInit: { headers: { Authorization: `Bearer ${token}` } },
+        }),
+      );
+      await lifecycle(client);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('advertises only the fixed five tools with their intended safety annotations', async () => {
+    const client = await connect('2026-07-28');
+    try {
+      const catalog = await client.listTools();
+      expect(catalog.tools.map((tool) => tool.name)).toEqual(EXPECTED_TOOLS);
+      for (const tool of catalog.tools) {
+        expect(tool.inputSchema).toHaveProperty('type', 'object');
+        expect(tool.outputSchema).toHaveProperty('type', 'object');
+        expect(tool.annotations).toHaveProperty('openWorldHint', false);
+        if (['get_item', 'list_items'].includes(tool.name)) {
+          expect(tool.annotations).toHaveProperty('readOnlyHint', true);
+          expect(tool.annotations).not.toHaveProperty('destructiveHint');
+        } else {
+          expect(tool.annotations).toMatchObject({
+            readOnlyHint: false,
+            destructiveHint: tool.name !== 'create_item',
+            idempotentHint: tool.name !== 'create_item',
+          });
+        }
+      }
+    } finally {
+      await client.close();
+    }
+  });
 });

@@ -24,6 +24,24 @@ export class ItemTools implements McpToolProviderContract {
   getTools() {
     return [
       defineTool({
+        name: 'delete_item',
+        title: 'Delete Item',
+        description:
+          'Delete an Item by UUID; return its UUID and deleted: true.',
+        input: z.strictObject({ id: uuidSchema }),
+        output: z.strictObject({ id: uuidSchema, deleted: z.literal(true) }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+        handler: async ({ id }) => {
+          await this.items.remove(id);
+          return { id, deleted: true as const };
+        },
+      }),
+      defineTool({
         name: 'update_item',
         title: 'Update Item',
         description:
