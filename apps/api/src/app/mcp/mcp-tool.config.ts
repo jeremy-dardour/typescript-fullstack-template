@@ -1,5 +1,6 @@
 import { NotFoundError } from '@mikro-orm/core';
 import { HttpException, Logger } from '@nestjs/common';
+import { z } from 'zod';
 
 import type {
   McpInvocation,
@@ -9,9 +10,9 @@ import type {
   StandardSchemaWithJSON,
   ToolAnnotations,
 } from '@modelcontextprotocol/server';
-import type { z } from 'zod';
 
 const logger = new Logger('McpTools');
+const jsonValueSchema = z.json();
 
 function validateReferences(schema: unknown): void {
   function visit(value: unknown): void {
@@ -115,6 +116,7 @@ export function defineTool<
             invocation.signal.throwIfAborted();
             const result = await definition.handler(input, invocation);
             const output = definition.output.parse(result);
+            jsonValueSchema.parse(output);
             const text = JSON.stringify(output);
             if (invocation.signal.aborted) outcome = 'completed_after_abort';
             return {

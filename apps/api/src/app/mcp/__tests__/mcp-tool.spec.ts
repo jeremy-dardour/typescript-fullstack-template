@@ -9,6 +9,9 @@ import type { McpToolDefinition } from '@/app/mcp/mcp-tool.types';
 
 const input = z.strictObject({ name: z.string().min(1) });
 const output = z.strictObject({ greeting: z.string() });
+const opaqueOutput = z.strictObject({ value: z.unknown() });
+const sparseOutput: unknown[] = [];
+sparseOutput.length = 1;
 const settings = {
   name: 'greet',
   title: 'Greet',
@@ -221,5 +224,86 @@ describe('typed MCP tools', () => {
       handler: () => ({ date: new Date() }),
     });
     expect(() => tool.validateSchemas()).toThrow();
+  });
+
+  it.each([
+    ['undefined', undefined],
+    ['function', () => 'private function result'],
+    ['infinity', Infinity],
+    ['not a number', NaN],
+    ['date', new Date('2020-01-01T00:00:00.000Z')],
+    ['bigint', 123n],
+    ['symbol', Symbol('private value')],
+    ['nested undefined', { nested: [undefined] }],
+    ['nested function', { nested: { value: () => 'private nested function' } }],
+    ['nested non-finite number', { nested: [-Infinity] }],
+    ['sparse array', sparseOutput],
+  ])(
+    'returns a safe tool error for non-JSON output: %s',
+    async (_label, value) => {
+      const connection = await connect(
+        defineTool({
+          ...settings,
+          output: opaqueOutput,
+          handler: () => ({ value }),
+        }),
+      );
+      try {
+        const catalog = await connection.client.listTools();
+        const advertised = catalog.tools.find((tool) => tool.name === 'greet');
+        if (!advertised) throw new Error('Expected advertised tool definition');
+        expect(advertised.outputSchema).toHaveProperty('required', ['value']);
+        const result = await connection.client.callTool(
+          { name: 'greet', arguments: { name: 'reader' } },
+          { toolDefinition: advertised },
+        );
+        expect(result).toMatchObject({
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: 'The tool could not be completed. Request ID: tool-request-id',
+            },
+          ],
+        });
+        expect(result).not.toHaveProperty('structuredContent');
+        expect(Logger.prototype.error).toHaveBeenCalled();
+      } finally {
+        await connection.close();
+      }
+    },
+  );
+
+  it.each([
+    null,
+    true,
+    0,
+    'a string',
+    [],
+    { nested: { values: [null, false, 1.5, 'JSON'] } },
+  ])('preserves valid JSON in an opaque result field: %j', async (value) => {
+    const connection = await connect(
+      defineTool({
+        ...settings,
+        output: opaqueOutput,
+        handler: () => ({ value }),
+      }),
+    );
+    try {
+      const catalog = await connection.client.listTools();
+      const advertised = catalog.tools.find((tool) => tool.name === 'greet');
+      if (!advertised) throw new Error('Expected advertised tool definition');
+      const result = await connection.client.callTool(
+        { name: 'greet', arguments: { name: 'reader' } },
+        { toolDefinition: advertised },
+      );
+      expect(result).toMatchObject({
+        structuredContent: { value },
+        content: [{ type: 'text', text: JSON.stringify({ value }) }],
+      });
+      expect(result.isError).not.toBe(true);
+    } finally {
+      await connection.close();
+    }
   });
 });
