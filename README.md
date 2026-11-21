@@ -8,14 +8,14 @@ A production-ready fullstack monorepo template with a **NestJS** API, **React** 
 | ------------ | ---------------------------------------------------------------------------------- |
 | **Monorepo** | Turborepo, pnpm workspaces                                                         |
 | **Frontend** | React 19, Vite 8, TanStack Query 5, shadcn/ui (Tailwind CSS 4), Playwright, Vitest |
-| **Backend**  | NestJS 12, MikroORM 7, PostgreSQL, Swagger/OpenAPI, jose (JWT)                     |
+| **Backend**  | NestJS 12, MikroORM 7, PostgreSQL, Zod, Swagger/OpenAPI, MCP, jose (JWT)           |
 | **Shared**   | TypeScript 6, ESLint 10 (flat config), Prettier, OpenAPI contract generation       |
 
 ## Architecture
 
 ```
 apps/
-  api/                → NestJS REST API (see apps/api/README.md)
+  api/                → NestJS REST + MCP API (see apps/api/README.md)
   web/                → React SPA (see apps/web/README.md)
 packages/
   api-contracts/      → OpenAPI-generated TypeScript types (see packages/api-contracts/README.md)
@@ -81,13 +81,40 @@ dev server. The E2E test database port is handled separately — see
 A complete working example demonstrating the full stack:
 
 - **API**: `GET/POST/PATCH/DELETE /api/items` with Swagger documentation
-- **Frontend**: Items list page with create/edit/delete dialogs (shadcn/ui)
+- **Frontend**: Paginated Items list with create/edit/delete dialogs (shadcn/ui)
 - **Type Safety**: OpenAPI contract → generated types → typed React Query hooks
 - **i18n**: Translations in English, French, and Spanish
 - **Tests**: Unit tests (Vitest) and E2E tests (supertest for API, Playwright for web)
 
 The API also exposes `GET /api/me` (the caller's identity, see below) and
 unauthenticated health checks at `/health`, `/health/ready` and `/health/live`.
+
+### MCP Server
+
+The API exposes the five Item operations as remote MCP tools at `/mcp`, on the
+same process and port as REST. Tools share application services, persistence,
+Zod contracts and caller authentication with REST. Streamable HTTP is stateless;
+modern clients and supported initialization-based clients use the same URL.
+
+MCP is enabled by default, including production. Set `MCP_PUBLIC_URL` to the
+external `/mcp` URL; local examples and parallel-workspace setup configure it
+for the allocated API port. Set `MCP_ENABLED=false` to disable it. Production
+uses HTTPS and the existing OIDC provider/audience. The API publishes protected
+resource metadata and remains an OAuth resource server.
+
+With the development stack running:
+
+```bash
+pnpm --filter api mcp:smoke
+pnpm --filter api mcp:smoke --legacy
+```
+
+The smoke command checks discovery, pagination and an isolated Item lifecycle,
+then removes its own test records. Real authentication uses an access token
+supplied through `MCP_ACCESS_TOKEN`. SDK tests and a local test provider cover
+OAuth sign-in separately; Claude Code can connect to that fixture as a real
+host. See the [API MCP guide](apps/api/README.md#mcp-server) for configuration,
+Inspector/Claude Code setup, proxy routing and verification limits.
 
 ### Authentication
 
@@ -151,14 +178,16 @@ CI checks for contract drift to prevent frontend/backend type mismatches.
 `deployment/Dockerfile` builds one image holding the API and the built SPA.
 NestJS serves the SPA (with an `index.html` fallback for client routes) when
 `SERVE_STATIC_DIR` is set, which the image does; API paths (`/api/*`,
-`/health/*`, `/openapi.yaml`) never fall through to it. Unset the variable to
+`/health/*`, `/openapi.yaml`, `/mcp` and its protected-resource metadata path)
+never fall through to it. Unset the variable to
 host the SPA elsewhere and run the image as a JSON API. Rationale and when to
 split: [ADR 0009](./docs/adr/0009-spa-served-by-the-api.md).
 
 The container entrypoint applies pending migrations before starting
 ([ADR 0001](./docs/adr/0001-migrations-run-on-container-start.md)) and runs
 as the unprivileged `node` user. It needs `NODE_ENV`, `DATABASE_URL`, and the
-real-auth `AUTH_*` variables (fake auth is refused in production); set
+real-auth `AUTH_*` variables (fake auth is refused in production), plus an HTTPS
+`MCP_PUBLIC_URL` while MCP is enabled; set
 `DB_SSL=false` for a database without TLS.
 
 ```bash

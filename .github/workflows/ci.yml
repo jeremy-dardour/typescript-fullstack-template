@@ -493,6 +493,11 @@ jobs:
       - name: Boot real stack
         run: bash scripts/verify-app.sh
 
+      - name: Exercise MCP clients
+        run: |
+          pnpm --filter api mcp:smoke
+          pnpm --filter api mcp:smoke --legacy
+
       - name: Run real-stack Playwright tests
         run: pnpm --filter web test:e2e:real
 

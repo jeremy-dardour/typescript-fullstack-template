@@ -26,6 +26,7 @@
     "lint": "eslint . --max-warnings=0 && node scripts/check-module-cycles.mts",
     "lint:fix": "eslint . --fix",
     "mcp:oauth:local": "node test-fixtures/run-local-oauth.mts",
+    "mcp:smoke": "node scripts/mcp-smoke.mts",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "start": "nest start",
