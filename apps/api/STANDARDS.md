@@ -11,6 +11,7 @@ src/
     <feature>/
       <feature>.module.ts
       <feature>.controller.ts
+      <feature>.tools.ts     → MCP adapter over the same feature service
       <feature>.service.ts
       repositories/
         <concern>.repository.ts → Persistence operations for an entity,
@@ -37,6 +38,7 @@ Source filenames use a role from this closed list:
 | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Nest                 | `.module.ts`      | Wire a Nest capability's providers, controllers, imports, and public exports.                                         |
 | Nest                 | `.controller.ts`  | Translate HTTP requests into service calls and map their results to response DTOs.                                    |
+| MCP                  | `.tools.ts`       | Declare a feature's MCP tools and translate calls into shared application behavior.                                   |
 | Nest                 | `.service.ts`     | Implement an injectable application capability or coordinate business behavior through repositories.                  |
 | Persistence          | `.repository.ts`  | Encapsulate its owner's queries, persistence, and transaction orchestration behind a service-facing interface.        |
 | Persistence          | `.store.ts`       | Expose the owner's persistence operations for another module's repository to execute within the caller's transaction. |
@@ -202,6 +204,31 @@ See [ENTITIES_STANDARDS.md](./ENTITIES_STANDARDS.md).
   the `@Public()` routes must match a reviewed `PUBLIC_ROUTES` list. Routes
   mounted outside controllers (the dev-only API docs) and controllers
   registered only in other environments are out of its reach.
+
+## MCP tool authoring
+
+Keep tools beside their owning feature's controller. Register a provider marked
+`@McpToolProvider()` in that feature's Nest module, implement
+`McpToolProviderContract.getTools()`, and return declarations made through
+`defineTool()` from the MCP area's public interface. The decorator identifies
+providers at runtime, the interface describes the extension contract, and the
+factory binds concrete input/output schemas to handler types. Do not add an
+abstract tool class, central feature catalog, or infrastructure import of a
+feature implementation.
+
+Providers and their dependencies must be singleton-compatible. Keep caller and
+request state in the explicit invocation context, never provider fields.
+Handlers return application values; infrastructure validates output, assembles
+structured and equivalent text results, translates errors and logs outcomes.
+Reuse Zod constraints and response mapping across REST and MCP while parsing
+REST query strings separately from JSON tool arguments. Published schemas use
+SDK-supported references; unsupported schemas and duplicate/invalid names fail
+startup.
+
+Put caller-based authorization in shared application behavior so both adapters
+enforce it. HTTP permission decorators and MCP read-only/destructive annotations
+do not authorize a service operation. Do not relay bearer tokens or log raw tool
+arguments by default.
 
 ## Environment config
 

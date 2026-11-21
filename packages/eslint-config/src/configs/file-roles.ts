@@ -10,6 +10,7 @@ import type { Linter, Rule } from 'eslint';
 const ROLE_SUFFIXES = [
   'module',
   'controller',
+  'tools',
   'service',
   'repository',
   'store',

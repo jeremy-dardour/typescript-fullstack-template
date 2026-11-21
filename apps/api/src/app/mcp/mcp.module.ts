@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 
 import { AuthInfrastructureModule } from '@/app/auth';
 import { ProblemDetailsFilter } from '@/app/filters';
+import { McpCatalogService } from '@/app/mcp/mcp-catalog.service';
 import { McpExceptionFilter } from '@/app/mcp/mcp-exception.filter';
 import { McpMetadataController } from '@/app/mcp/mcp-metadata.controller';
 import { McpRateLimitGuard } from '@/app/mcp/mcp-rate-limit.guard';
@@ -17,7 +19,7 @@ export class McpModule {
     return isEnabled
       ? {
           module: this,
-          imports: [AuthInfrastructureModule],
+          imports: [AuthInfrastructureModule, DiscoveryModule],
           controllers: [McpController, McpMetadataController],
           providers: [
             McpTransportService,
@@ -25,6 +27,7 @@ export class McpModule {
             McpRateLimitGuard,
             McpExceptionFilter,
             ProblemDetailsFilter,
+            McpCatalogService,
           ],
           exports: [McpTransportService],
         }

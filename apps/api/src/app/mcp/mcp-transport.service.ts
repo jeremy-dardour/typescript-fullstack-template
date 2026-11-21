@@ -9,6 +9,7 @@ import {
 import { ClsService } from 'nestjs-cls';
 import { z } from 'zod';
 
+import { McpCatalogService } from '@/app/mcp/mcp-catalog.service';
 import {
   MCP_PROTOCOL_VERSIONS,
   MCP_REQUEST_TIMEOUT_MS,
@@ -57,13 +58,17 @@ export class McpTransportService implements OnModuleDestroy {
   private readonly logger = new Logger(McpTransportService.name);
   private readonly active = new Map<McpHttpHandler, AbortController>();
 
-  constructor(private readonly cls: ClsService) {}
+  constructor(
+    private readonly cls: ClsService,
+    private readonly catalog: McpCatalogService,
+  ) {}
 
   protected createServer(
-    _caller: AuthenticatedUser,
-    _requestId: string,
+    caller: AuthenticatedUser,
+    requestId: string,
+    signal: AbortSignal,
   ): McpServer {
-    return new McpServer(
+    const server = new McpServer(
       {
         name: 'template-api',
         title: 'Template API',
@@ -71,14 +76,18 @@ export class McpTransportService implements OnModuleDestroy {
       },
       {
         supportedProtocolVersions: [...MCP_PROTOCOL_VERSIONS],
-        instructions:
-          'Items are application records identified by UUID. List Items to find an unknown identifier.',
+        instructions: this.catalog.instructions,
+        capabilities: this.catalog.hasTools
+          ? { tools: { listChanged: false } }
+          : {},
         cacheHints: {
           'server/discover': { ttlMs: 0, cacheScope: 'private' },
           'tools/list': { ttlMs: 0, cacheScope: 'private' },
         },
       },
     );
+    this.catalog.register(server, { caller, requestId, signal });
+    return server;
   }
 
   async handle(
@@ -92,7 +101,7 @@ export class McpTransportService implements OnModuleDestroy {
     const servers = new Set<McpServer>();
     const handler = createMcpHandler(
       () => {
-        const server = this.createServer(caller, requestId);
+        const server = this.createServer(caller, requestId, abort.signal);
         servers.add(server);
         return server;
       },
