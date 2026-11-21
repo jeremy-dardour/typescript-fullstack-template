@@ -10,7 +10,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 /**
  * Create nestjs-pino configuration
  */
-export function createLoggerConfig(config: ConfigService<Env, true>): Params {
+export function createLoggerConfig(config: ConfigService<Env, true>) {
   const nodeEnv: 'development' | 'production' | 'test' = config.get('NODE_ENV');
   const isProduction = nodeEnv === 'production';
   const logLevel = getLogLevel(nodeEnv);
@@ -62,10 +62,9 @@ export function createLoggerConfig(config: ConfigService<Env, true>): Params {
         }),
       },
 
-      // Custom log properties from request headers
-      customProps: (req: IncomingMessage) => ({
-        correlationId: req.headers['x-correlation-id'],
-        traceId: extractTraceId(req.headers.traceparent as string | undefined),
+      customProps: (_request: IncomingMessage, response: ServerResponse) => ({
+        correlationId: response.getHeader('X-Correlation-Id'),
+        traceId: response.getHeader('Trace-Id'),
       }),
 
       customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
@@ -101,7 +100,7 @@ export function createLoggerConfig(config: ConfigService<Env, true>): Params {
       { method: RequestMethod.GET, path: '/health/live' },
       { method: RequestMethod.GET, path: '/health/ready' },
     ],
-  };
+  } satisfies Params;
 }
 
 /**
@@ -119,16 +118,4 @@ function getLogLevel(nodeEnv: 'development' | 'production' | 'test'): string {
       return 'debug';
     }
   }
-}
-
-/**
- * Extract trace-id from W3C traceparent header
- */
-function extractTraceId(traceparent: string | undefined): string | undefined {
-  if (!traceparent) {
-    return undefined;
-  }
-
-  const parts = traceparent.split('-');
-  return parts[1];
 }
