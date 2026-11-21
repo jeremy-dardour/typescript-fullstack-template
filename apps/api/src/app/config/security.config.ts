@@ -1,6 +1,9 @@
 import process from 'node:process';
 
+import type { ExecutionContext } from '@nestjs/common';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import type { ThrottlerLimitDetail } from '@nestjs/throttler';
+import type { Response } from 'express';
 
 /**
  * CORS configuration
@@ -58,3 +61,15 @@ export const throttlerConfig = {
   skipSuccessfulRequests: false,
   skipFailedRequests: false,
 };
+
+export function throttlerErrorMessage(
+  context: ExecutionContext,
+  { limit, ttl, timeToBlockExpire }: ThrottlerLimitDetail,
+): string {
+  const response = context.switchToHttp().getResponse<Response>();
+  response.setHeader('Retry-After', timeToBlockExpire);
+  response.setHeader('X-RateLimit-Limit', limit);
+  response.setHeader('X-RateLimit-Remaining', 0);
+  response.setHeader('X-RateLimit-Reset', timeToBlockExpire);
+  return `You have exceeded ${limit} requests in ${ttl / 1000} seconds. Retry in ${timeToBlockExpire} seconds.`;
+}

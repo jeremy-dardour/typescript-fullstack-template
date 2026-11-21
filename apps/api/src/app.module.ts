@@ -9,13 +9,10 @@ import {
   createClsConfig,
   validateEnv,
   throttlerConfig,
+  throttlerErrorMessage,
   createStaticAssetsImports,
 } from '@/app/config';
-import {
-  AllExceptionsFilter,
-  ProblemDetailsFilter,
-  ThrottlerExceptionFilter,
-} from '@/app/filters';
+import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
 import { HealthModule } from '@/app/health';
 import { LoggerModule } from '@/app/logger';
 import { DatabaseModule } from '@/database/database.module';
@@ -36,12 +33,10 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     AuthInfrastructureModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: throttlerConfig.ttl,
-        limit: throttlerConfig.limit,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [throttlerConfig],
+      errorMessage: throttlerErrorMessage,
+    }),
     HealthModule,
     ItemModule,
     // Evaluated when this module is defined. ConfigModule.forRoot above has
@@ -60,7 +55,6 @@ import type { NestModule, MiddlewareConsumer } from '@nestjs/common';
     },
     AllExceptionsFilter,
     ProblemDetailsFilter,
-    ThrottlerExceptionFilter,
   ],
 })
 export class AppModule implements NestModule {

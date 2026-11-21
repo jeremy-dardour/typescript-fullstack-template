@@ -4,11 +4,7 @@ import { ClsMiddleware } from 'nestjs-cls';
 import { createClsConfig } from '@/app/config/cls.config';
 import { corsConfig } from '@/app/config/security.config';
 import { createValidationPipe } from '@/app/config/validation.config';
-import {
-  AllExceptionsFilter,
-  ProblemDetailsFilter,
-  ThrottlerExceptionFilter,
-} from '@/app/filters';
+import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
 import {
   LinkHeaderInterceptor,
   LocationHeaderInterceptor,
@@ -33,9 +29,8 @@ export function configureHttpApplication(app: NestExpressApplication): void {
     ],
   });
   app.useGlobalFilters(
-    app.get(ThrottlerExceptionFilter),
-    app.get(ProblemDetailsFilter),
     app.get(AllExceptionsFilter),
+    app.get(ProblemDetailsFilter),
   );
   app.useGlobalInterceptors(
     new TimeoutInterceptor(15_000),

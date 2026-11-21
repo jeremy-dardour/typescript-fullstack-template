@@ -7,16 +7,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import {
+  Throttle,
+  ThrottlerGuard,
+  ThrottlerModule,
+  ThrottlerStorage,
+} from '@nestjs/throttler';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import request from 'supertest';
 
 import { createClsConfig } from '@/app/config/cls.config';
 import { configureHttpApplication } from '@/app/config/http.config';
 import {
-  AllExceptionsFilter,
-  ProblemDetailsFilter,
-  ThrottlerExceptionFilter,
-} from '@/app/filters';
+  throttlerConfig,
+  throttlerErrorMessage,
+} from '@/app/config/security.config';
+import { AllExceptionsFilter, ProblemDetailsFilter } from '@/app/filters';
 
 import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -49,6 +55,12 @@ class TestController {
   echo(@Body() body: unknown) {
     return body;
   }
+
+  @Get('limited')
+  @Throttle({ default: { limit: 2, ttl: 60_000, blockDuration: 10_000 } })
+  limited() {
+    return this.getContext();
+  }
 }
 
 describe('http setup', () => {
@@ -56,19 +68,25 @@ describe('http setup', () => {
 
   beforeAll(async () => {
     const fixture = await Test.createTestingModule({
-      imports: [ClsModule.forRoot(createClsConfig())],
+      imports: [
+        ClsModule.forRoot(createClsConfig()),
+        ThrottlerModule.forRoot({
+          throttlers: [throttlerConfig],
+          errorMessage: throttlerErrorMessage,
+        }),
+      ],
       controllers: [TestController],
       providers: [
         TestAuthGuard,
+        ThrottlerGuard,
         AllExceptionsFilter,
         ProblemDetailsFilter,
-        ThrottlerExceptionFilter,
       ],
     }).compile();
     app = fixture.createNestApplication<NestExpressApplication>({
       bodyParser: false,
     });
-    app.useGlobalGuards(app.get(TestAuthGuard));
+    app.useGlobalGuards(app.get(TestAuthGuard), app.get(ThrottlerGuard));
     configureHttpApplication(app);
     await app.init();
   });
@@ -174,5 +192,45 @@ describe('http setup', () => {
       { requestId: 'first-request', correlationId: 'first-request' },
       { requestId: 'second-request', correlationId: 'second-request' },
     ]);
+  });
+
+  it('reports the actual rejecting limiter and remaining retry time', async () => {
+    const increment = vi.spyOn(app.get(ThrottlerStorage), 'increment');
+    const storageRecord = {
+      totalHits: 3,
+      timeToExpire: 50,
+      isBlocked: true,
+      timeToBlockExpire: 9,
+    };
+    increment
+      .mockResolvedValueOnce(storageRecord)
+      .mockResolvedValueOnce({ ...storageRecord, timeToBlockExpire: 4 });
+
+    for (const retry of [9, 4]) {
+      const response = await request(app.getHttpServer())
+        .get('/api/context/limited')
+        .set('Authorization', 'Bearer test')
+        .expect(429);
+
+      expect(response.headers['retry-after']).toBe(String(retry));
+      expect(response.headers['x-ratelimit-limit']).toBe('2');
+      expect(response.headers['x-ratelimit-remaining']).toBe('0');
+      expect(response.headers['x-ratelimit-reset']).toBe(String(retry));
+      expect(response.headers['content-type']).toContain(
+        'application/problem+json',
+      );
+      expect(response.body).toMatchObject({
+        detail: `You have exceeded 2 requests in 60 seconds. Retry in ${retry} seconds.`,
+        request_id: response.headers['x-request-id'],
+      });
+    }
+    expect(increment).toHaveBeenCalledWith(
+      expect.any(String),
+      60_000,
+      2,
+      10_000,
+      'default',
+    );
+    increment.mockRestore();
   });
 });
